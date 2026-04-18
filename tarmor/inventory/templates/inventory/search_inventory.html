@@ -1,0 +1,83 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Search Inv
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'inventory:export_inventory_excel' %}?{{ filter_url }}">Export</a></li>
+        <li><a href="{% url 'inventory:inventory' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Search Inventory </h2>
+    <br>
+
+    <div >
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'inventory:search_inventory' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form id="search-form"  method="GET" action=".">
+                Part Number: <input type="text" name="part_number" value="{{ part_number }}" placeholder="Part Number" class="input"> &nbsp;
+                Supplier: <input type="text" name="supplier" value="{{ supplier }}" placeholder="Supplier" class="input"> &nbsp;
+                Manufacturer: <input type="text" name="manufacturer" value="{{ manufacturer }}" placeholder="Manufacturer" class="input"> &nbsp;
+                Controlled Product: <input type="text" name="controlled_product" value="{{ controlled_product }}" placeholder="Controlled Product" class="input">
+            </form>
+            <br>
+        </div>
+        <div >
+            <h2 > Search Results </h2>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=part_number&{{ filter_url }}" class="sort_header">Part Number{% if sort_by == 'part_number' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=part_description&{{ filter_url }}" class="sort_header">Part Description{% if sort_by == 'part_description' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=supplier&{{ filter_url }}" class="sort_header">Supplier{% if sort_by == 'supplier' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=manufacturer&{{ filter_url }}" class="sort_header">Manufacturer{% if sort_by == 'manufacturer' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=qty&{{ filter_url }}" class="sort_header">Qty{% if sort_by == 'qty' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=uom&{{ filter_url }}" class="sort_header">UoM{% if sort_by == 'uom' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=unit_price&{{ filter_url }}" class="sort_header">Unit Price{% if sort_by == 'unit_price' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=stock&{{ filter_url }}" class="sort_header">Stock{% if sort_by == 'stock' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=controlled_product&{{ filter_url }}" class="sort_header">Controlled Product{% if sort_by == 'controlled_product' %}▲{% endif %}</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in inventory %}
+                            <tr>
+                                <td class="td">{{inv.part_number}}</td>
+                                <td class="td">{{inv.part_description}}</td>
+                                <td class="td">{{inv.supplier}}</td>
+                                <td class="td">{{inv.manufacturer}}</td>
+                                <td class="td">{{inv.qty}}</td>
+                                <td class="td">{{inv.uom}}</td>
+                                <td class="td">{{inv.unit_price}}</td>
+                                <td class="td">{{inv.stock}}</td>
+                                <td class="td">{{inv.controlled_product}}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10">No records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

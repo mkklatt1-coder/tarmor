@@ -1,0 +1,91 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Search Employee
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'suppliers:export_suppliers_excel' %}?{{ filter_url }}">Export</a></li>
+        <li><a href="{% url 'suppliers:suppliers' %}">Return</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Search Employees</h2>
+    <br>
+    <div >
+        <h5 > 
+            &nbsp; Search Criteria &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                <a href="{% url 'suppliers:search_suppliers' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h5>
+        <br>
+        <form id="search-form"  method="GET" action="{% url 'suppliers:search_suppliers' %}">
+            Supplier Name: <input type="text" name="supplier_name" value="{{ supplier_name }}" placeholder="Supplier Name" class="input"> &nbsp;
+            City: <input type="text" name="city" value="{{ city }}" placeholder="City" class="input"> &nbsp;
+            Status: <input type="text" name="location" value="{{ status }}" placeholder="Status" class="input"> <br>
+        </form>
+        <br>
+
+        <div >
+            <h2 > Search Results </h2>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=supplier_name&{{ filter_url }}" class="sort_header">Supplier Name{% if sort_by == 'supplier_name' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=status&{{ filter_url }}" class="sort_header">Status{% if sort_by == 'status' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=street_address&{{ filter_url }}" class="sort_header">Street Address{% if sort_by == 'street_address' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=city&{{ filter_url }}" class="sort_header">City{% if sort_by == 'city' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=province_state&{{ filter_url }}" class="sort_header">Prov / State{% if sort_by == 'province_state' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=country&{{ filter_url }}" class="sort_header">Country{% if sort_by == 'country' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=postal_zip&{{ filter_url }}" class="sort_header">Postal / Zip Code{% if sort_by == 'postal_zip' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=conatact&{{ filter_url }}" class="sort_header">Contact{% if sort_by == 'contact' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=phone&{{ filter_url }}" class="sort_header">Phone{% if sort_by == 'phone' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=email&{{ filter_url }}" class="sort_header">Email{% if sort_by == 'email' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=supplier_discount&{{ filter_url }}" class="sort_header">Supplier Discount{% if sort_by == 'supplier_discount' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=payment_method&{{ filter_url }}" class="sort_header">Payment Method{% if sort_by == 'payment_method' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=supplier_currency&{{ filter_url }}" class="sort_header">Supplier Currency{% if sort_by == 'supplier_currency' %}▲{% endif %}</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for suppliers in suppliers %}
+                            <tr>
+                                <td class="td">{{ suppliers.supplier_name }}</td>
+                                <td class="td">{{ suppliers.status }}</td>
+                                <td class="td">{{ suppliers.street_address }}</td>
+                                <td class="td">{{ suppliers.city }}</td>
+                                <td class="td">{{ suppliers.province_state }}</td>
+                                <td class="td">{{ suppliers.country }}</td>
+                                <td class="td">{{ suppliers.postal_zip }}</td>
+                                <td class="td">{{ suppliers.contact }}</td>
+                                <td class="td">{{ suppliers.phone }}</td>
+                                <td class="td">{{ suppliers.email }}</td>
+                                <td class="td">{{ suppliers.supplier_discount }}</td>
+                                <td class="td">{{ suppliers.payment_method }}</td>
+                                <td class="td">{{ suppliers.supplier_currency }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No suppliers found matching those criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

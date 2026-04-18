@@ -1,0 +1,143 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Add Action
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('create_action').submit();">Save</a>
+            </li>
+            <li><a href="{% url 'failures:actions' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li> <a href="javascript:void(0)" onclick="toggleMassUpload()">Mass Upload</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Add New Action </h2>
+        <br>
+        <div id="mass-upload-instructions" style="display: none; background: #2c2c2c; color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #00d1b2;">Mass Upload Instructions</h3>
+
+            <p>All "KEYS" must be in UPPERCASE</p>
+            <p>File must be <b>.csv</b> format with no header row. Column order:</p>
+
+            <p> Action Key = 3 character <strong>unique</strong> code you generated for the type of action</p>
+
+            <code style="background: #444; color: #fff; padding: 5px; display: block; margin: 10px 0;">
+                Action Name, Action Key
+            </code>
+            <br>
+            <form action="{% url 'failures:mass_upload_actions' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="field has-addons">
+                    <div class="control">
+                        <input class="input" type="file" name="csv_file" accept=".csv" required>
+                    </div>
+                    <br>
+                    <div class="control">
+                        <button type="submit" class="button is-info">Upload CSV</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <h2> &nbsp; Action &nbsp; &nbsp; &nbsp; <button class="button" type="button" id="add_action">Add Action</button></h2>
+        <br>
+
+        <form class="form" id="create_action" method="POST" action=".">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            {% if formset.non_form_errors %}
+                <div>
+                    {{ formset.non_form_errors }}
+                </div>
+                <br>
+            {% endif %}
+                
+            <div class="form" id="form-container">
+                {% for form in formset %}
+                    <div class="action-form">
+                        {% if form.non_field_errors %}
+                            <div>
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <label>Action Name:</label>
+                            {{ form.action_name }}
+                            {% if form.action_name %}
+                                <div>{{ form.action_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <br>
+                        <div>
+                            <label>Action Key:</label>
+                            {{ form.action_key }}
+                            {% if form.action_key.errors %}
+                                <div>{{ form.action_key.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <br>
+                    </div>
+                {% endfor %}
+            </div>
+            <div id="empty-form" style="display:none;">
+                <div class="action-form">
+                    <h4> Next Item: </h4>
+                    <label>Action Name:</label>
+                    {{ formset.empty_form.action_name }}<br>
+                    <br>
+                    <label>Action Key:</label>
+                    {{ formset.empty_form.action_key }}
+                    <br>
+                </div>
+            </div>
+        </form>
+        
+    </div>
+
+    <script>
+        function toggleMassUpload() {
+            const box = document.getElementById("mass-upload-instructions");
+            if (box) {
+                if (box.style.display === "none" || box.style.display === "") {
+                    box.style.display = "block";
+                } else {
+                    box.style.display = "none";
+                }
+            }
+        }
+
+        const addBtn = document.getElementById('add_action');
+        if (addBtn) {
+            addBtn.addEventListener('click', function () {
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                const currentFormCount = parseInt(totalForms.value, 10);
+                const emptyFormElement = document.getElementById('empty-form');
+                    if (emptyFormElement) {
+                        const newFormHtml = emptyFormElement.innerHTML.replace(/__prefix__/g, currentFormCount);
+
+                    const container = document.getElementById('form-container');
+                    container.insertAdjacentHTML('beforeend', newFormHtml);
+                    totalForms.value = currentFormCount + 1;
+                    }
+            });
+        }
+
+    </script>
+{% endblock %}

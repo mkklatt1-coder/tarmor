@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Add Cost Centre {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="document.getElementById('costcentrecreateform').submit();">Save</a> </li>
+            <li> <a href="{% url 'facilities:facilities' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a> </li>
+            <li> <a href="{% url 'core:home' %}">Main</a> </li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Add New Cost Centre</h2>
+    <div>
+        <form method="post" id="costcentrecreateform">
+
+            {% csrf_token %}
+
+            {% if costcentreuploadform.errors %}
+                <strong>Please fix the following:</strong>
+                {{ costcentreuploadform.non_field_errors }}
+
+                {% for field in costcentreuploadform %}
+                    {% if field.errors %}
+                        <p>{{ field.label }}: {{ field.errors|striptags }}</p>
+                    {% endif %}
+                {% endfor %}
+
+            {% endif %}
+            <br>
+            <p> All cost centres must start with "G" with 8 charachters (9 charachters total)</p> <br>
+            <br>
+            <label> Cost Center: </label> {{ costcentreuploadform.Cost_Centre }} <br>
+            <br>
+            <label> Description: </label> {{ costcentreuploadform.Cost_Centre_Description }} <br>
+            <br>
+            <label> Status: </label> {{ costcentreuploadform.Status }}
+        </form>
+    </div>
+</div>
+
+{% endblock %}

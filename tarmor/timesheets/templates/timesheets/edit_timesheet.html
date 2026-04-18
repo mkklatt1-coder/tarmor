@@ -1,0 +1,129 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Edit Timesheet{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="submitTimesheetForm()">Save</a>
+            </li>
+            <li><a href="{% url 'timesheets:timesheets' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+    
+
+    <div class="main">
+        
+        <h2> Edit Timesheet</h2>
+        <br>
+
+        <h5 style="align-items: center;"> 
+            <form method="GET" action="{% url 'timesheets:edit_timesheet' %}" style="display:inline;">
+                &nbsp; Time Entries &nbsp;
+                WO: <input class="input" type="text" name="work_order" value="{{ work_order_query }}">
+                Tech: <input class="input" type="text" name="technician" value="{{ technician_query }}">
+                <button type="submit" style="background:none; border:none; cursor:pointer; padding:0;">
+                    <img src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+                </button>
+                <a href="{% url 'timesheets:edit_timesheet' %}"><img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;"></a>
+            </form>
+        </h5>
+        <br>
+        
+        <p> Please ensure time is separated by work type </p>
+
+        <div class="form">
+            <form method="POST" id="timesheet-form">
+                
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <input type="hidden" name="work_order_search" value="{{ work_order_query }}">
+                <input type="hidden" name="technician_search" value="{{ technician_query }}">
+
+                {% if formset.errors %}
+                    {% for form in formset %}
+                        {% for field in form %}
+                            {% if field.errors %}
+                                {{ field.label }}: {{ field.errors|striptags }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+
+                <table class="centered-table" id="timesheet-table">
+                    <thead>
+                        <tr class="centered-table">
+                            <th> WO Number </th>
+                            <th> Technician </th>
+                            <th> Start Date/Time </th>
+                            <th> Finish Date/Time </th>
+                            <th> Total Time </th>
+                            <th> Work Type </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                            <tr class="timesheet-row">
+                                {{ form.id }} 
+                                <td> {{ form.work_order }} </td>
+                                <td> {{ form.technician }}</td>
+                                <td> {{ form.start_date }} </td>
+                                <td> {{ form.finish_date }} </td>
+                                <td> {{ form.total_time }} </td>
+                                <td> {{ form.time_type }} </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6">No matching timesheets found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+        <br>
+
+        <script>
+            
+            document.addEventListener('change', function(e) {
+                const row = e.target.closest('tr');
+                if (!row) return;
+
+                const startInput = row.querySelector('input[name$="-start_date"]');
+                const finishInput = row.querySelector('input[name$="-finish_date"]');
+                const totalInput = row.querySelector('input[name$="-total_time"]');
+
+                if (startInput.value && finishInput.value) {
+                    const start = new Date(startInput.value);
+                    const finish = new Date(finishInput.value);
+                    
+                    if (!isNaN(start) && !isNaN(finish)) {
+                        const diff = (finish - start) / (1000 * 60 * 60);
+                        totalInput.value = diff >= 0 ? diff.toFixed(2) : "0.00";
+                    }
+                }
+            });
+
+            function submitTimesheetForm() {
+                const form = document.getElementById('timesheet-form');
+                if (form) {
+                    form.submit();
+                }
+            }
+        </script>
+            
+    </div>
+
+{% endblock %}

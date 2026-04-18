@@ -1,0 +1,79 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Edit Supplier
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="document.getElementById('SupplierForm').submit();">Save</a></li>
+        <li><a href="{% url 'suppliers:suppliers' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <div class="form">
+        <h5 class="form">
+            <span> Edit Supplier &nbsp;</span>
+            <form method="GET" action="{% url 'suppliers:edit_supplier' %}?supplier_name={{ supplier.name }}">
+                <input class="input" type="text" name="supplier_name" value="{{ supplier_name }}" class="input" placeholder="Supplier Name">
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+            </form>
+        </h5>
+    </div>
+
+    <br>
+    <form id="SupplierForm" method="POST" action="{% url 'suppliers:edit_supplier' %}">
+        {% csrf_token %}
+        <input type="hidden" name="supplier_id" value="{{ supplier.id }}">
+        {{ cert_formset.management_form }}
+        {% if new_sup_form.errors %}
+            <div class="errorlist">
+                <strong>Please fix the following:</strong><br>
+                {{ new_sup_form.non_field_errors }}
+                {% for field in new_sup_form %}
+                    {% if field.errors %}
+                        <div>{{ field.label }}: {{ field.errors }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <br>
+        {% endif %}
+
+        <div class="form-row">
+            <label>Supplier Name:</label> {{ new_sup_form.supplier_name }} &nbsp;
+            <label>Status:</label> {{ new_sup_form.status }}
+            <br><br>
+            <label>Street Address:</label> {{ new_sup_form.street_address }} &nbsp;
+            <label>City:</label> {{ new_sup_form.city }} &nbsp;
+            <label>Prov / State:</label> {{ new_sup_form.province_state }} &nbsp;
+            <label>Country:</label> {{ new_sup_form.country }} &nbsp;
+            <label>Postal / Zip Code:</label> {{ new_sup_form.postal_zip }} <br>
+            <br>
+            <label>Contact Name:</label> {{ new_sup_form.contact }} &nbsp;
+            <label>Phone Number:</label> {{ new_sup_form.phone }} &nbsp;
+            <label>Email:</label> {{ new_sup_form.email }} <br>
+            <br>
+            <label>Supplier Discount:</label> {{ new_sup_form.supplier_discount }} &nbsp;
+            <label>Payment Method:</label> {{ new_sup_form.payment_method }} &nbsp;
+            <label>Supplier Currency:</label> {{ new_sup_form.supplier_currency }} <br>
+            <br>
+            <label>Additional Information:</label><br>
+            {{ new_sup_form.additional_information }}
+            <br><br>
+        </div>
+    </form>
+</div>
+
+<script>
+
+</script>
+{% endblock %}

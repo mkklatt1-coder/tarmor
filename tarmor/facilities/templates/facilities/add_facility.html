@@ -1,0 +1,55 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Add Facility {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+<div class="leftnavbar">
+    <ul>
+
+        <li> <a href="javascript:void(0)" onclick="document.getElementById('facilitycreateform').submit();">Save</a> </li>
+        <li> <a href="{% url 'facilities:facilities' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a> </li>
+        <li> <a href="{% url 'core:home' %}">Main</a> </li>
+
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2>Add New Facility</h2>
+
+    <form method="post" id="facilitycreateform">
+
+        {% csrf_token %}
+
+        {% if facilityuploadform.errors %}
+            <strong>Please fix the following:</strong>
+            {{ facilityuploadform.non_field_errors }}
+            {% for field in facilityuploadform %}
+                {% if field.errors %}
+                    <p>{{ field.label }}: {{ field.errors|striptags }}</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <p> Facility Code {{ facilityuploadform.Facility_Code }} (4 digit code for shift rotation information)</p>
+        <p> Facility Name {{ facilityuploadform.Facility_Name }} </p>
+        <p> Cost Center {{ facilityuploadform.Cost_Centre }} &nbsp; Status {{ facilityuploadform.Status }} </p>
+        <p> Street Address {{ facilityuploadform.Street_Address }} </p>
+        <p> City {{ facilityuploadform.City }}  &nbsp; Province / State {{ facilityuploadform.Province_State }}  </p>
+        <p> Country {{ facilityuploadform.Country }} </p>
+        <p> Postal / Zip Code {{ facilityuploadform.Postal_Zip_Code }}  </p>
+        <p> Contact Name {{ facilityuploadform.Contact_Name }} </p>
+        <p> Contact Phone Number {{ facilityuploadform.Contact_Phone_Number }} </p>
+        <p> Email Address {{ facilityuploadform.Email_Address }} </p>
+        <p> Additional Information <br> {{ facilityuploadform.Additional_Information }} </p>
+
+    </form>
+</div>
+{% endblock %}

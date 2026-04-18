@@ -1,0 +1,92 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Search WOs{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="{% url 'work_orders:export_wos_excel' %}?{{ filter_url }}">Export</a></li>
+            <li><a href="{% url 'work_orders:work_orders' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2> Search Work Orders </h2>
+    <br>
+    
+    <h5 > 
+        &nbsp; Search Criteria &nbsp;
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-wo" >
+            <a href="{% url 'work_orders:search_work_orders' %}">
+            <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+        </a>
+    </h5>
+    <br>
+        <form id="search-wo"  method="GET" action="{% url 'work_orders:search_work_orders' %}">
+            Work Order: <input type="text" name="work_order" value="{{ work_order }}" placeholder="Work Order" class="input"> &nbsp;
+            Equipment Number: <input type="text" name="equipment_number" value="{{ equipment_number }}" placeholder="Eq Number" class="input"> &nbsp;
+            Equipment Descripton:<input type="text" name="equipment_description" value="{{ equipment_description }}" placeholder="Eq Desc" class="input"> &nbsp;
+            Status: <input type="text" name="job_status" list="status-options" class="input">
+                <datalist id="status-options">
+                    <option value="Troubleshoot">
+                    <option value="Planning">
+                    <option value="Waiting for Parts">
+                    <option value="Waiting to Schedule">
+                    <option value="Execution">
+                    <option value="Reschedule">
+                    <option value="Complete">
+                    <option value="Cancel">
+                </datalist>
+        </form>
+        <br>
+
+    <div>        
+        <h2> Search Results</h2>
+        <br>
+        <table class="table-container">
+            <thead>
+                <tr>
+                    <th class="th"><a href="?sort=work_order&{{ filter_url }}" class="sort_header">Work Order{% if sort_by == 'work_order' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=equipment_number&{{ filter_url }}" class="sort_header">Equipment Number{% if sort_by == 'equipment_number' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=equipment_description&{{ filter_url }}" class="sort_header">Equipment Description{% if sort_by == 'equipment_description' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=troubleshoot_description&{{ filter_url }}" class="sort_header">Troubleshoot Description{% if sort_by == 'troubleshoot_description' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=repair_description&{{ filter_url }}" class="sort_header">Repair Description{% if sort_by == 'repair_description' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=date_created&{{ filter_url }}" class="sort_header">Date Created{% if sort_by == 'date_created' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=plan_start_date&{{ filter_url }}" class="sort_header">Planned Start Date{% if sort_by == 'plan_start_date' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=priority&{{ filter_url }}" class="sort_header">Priority{% if sort_by == 'priority' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=job_status&{{ filter_url }}" class="sort_header">Status{% if sort_by == 'job_status' %}▲{% endif %}</a></th>
+                    <th class="th">Edit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for work_order in work_orders %}
+                <tr>
+                    <td class="td">{{ work_order.work_order }}</td>
+                    <td class="td">{{ work_order.equipment_number }}</td>
+                    <td class="td">{{ work_order.equipment_description }}</td>
+                    <td class="td">{{ work_order.troubleshoot_description }}</td>
+                    <td class="td">{{ work_order.repair_description }}</td>
+                    <td class="td">{{ work_order.date_created }}</td>
+                    <td class="td">{{ work_order.plan_start_date }}</td>
+                    <td class="td">{{ work_order.priority }}</td>
+                    <td class="td">{{ work_order.job_status }}</td>
+                    <td class="td"><a class="button" href="{% url 'work_orders:edit_work_order' work_order.pk %}">Edit</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No work orders found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

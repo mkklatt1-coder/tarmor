@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Work Orders
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'work_orders:add_work_order' %}">WO Create</a> </li>
+            <li><a href="{% url 'work_orders:search_work_orders'  %}">WO Search</a> </li>
+            <li><a href="{% url 'work_orders:edit_work_order' %}">WO Edit</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Work Orders</h2>
+        <div>
+        <img class="image" src="{% static 'Images/WO Flow.jpeg' %}">
+        </div>
+
+    </div>
+{% endblock %}

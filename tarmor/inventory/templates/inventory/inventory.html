@@ -1,0 +1,35 @@
+
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Inventory
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'inventory:add_inventory_item' %}">New Item</a> </li>
+            <li><a href="{% url 'inventory:search_inventory' %}">Search Items</a> </li>
+            <li><a href="{% url 'inventory:edit_inventory_item' %}">Edit Item</a> </li>
+            <br>
+            <li><a href="{% url 'inventory:manage_inventory' %}">Manage Inv</a> </li> 
+            <br>
+            <li><a href="{% url 'purchasing:purchasing' %}">Return</a> </li> 
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Inventory Management</h2>
+        <div>
+        <img class="image" src="{% static 'Images/inventory_flow.jpeg' %}">
+        </div>
+
+    </div>
+{% endblock %}

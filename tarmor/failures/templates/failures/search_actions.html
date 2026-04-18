@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Search Actions
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'failures:actions' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Search Actions </h2>
+        <br>
+        <div>
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'failures:search_actions' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form id="search-form"  method="GET" action="{% url 'failures:search_actions' %}">
+                Action Name: <input type="text" name="action_name" value="{{ action_name }}" placeholder="Action Name" class="input"> &nbsp;
+                Action Key: <input type="text" name="action_key" value="{{ action_key }}" placeholder="Action Key" class="input"> &nbsp;
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+            </form>
+            <br>
+        </div>
+
+        <div class="form">
+            <form class="form" id="sesarch_form" method="POST">
+                <h2> Search Results </h2>
+                <br>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=action_name&{{ filter_url }}" class="sort_header">Action Name:{% if sort_by == 'action_name' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=action_key&{{ filter_url }}" class="sort_header">Action Key:{% if sort_by == 'action_key' %}▲{% endif %}</a></th>
+                        </tr>
+                    <thead>
+                    <tbody>
+                        {% for action in actions %}
+                            <tr>
+                                <td class="td">{{ action.action_name }}</td>
+                                <td class="td">{{ action.action_key }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No actions found matching those criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+    <script>
+        function exportExcel() {
+            const currentParams = window.location.search;
+            window.location.href = "{% url 'failures:export_actions_excel' %}" + currentParams;
+        }
+        </script>
+{% endblock %}

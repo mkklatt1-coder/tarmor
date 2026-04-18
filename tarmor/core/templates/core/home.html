@@ -1,0 +1,32 @@
+{% extends "core/base.html" %}
+{% load static %}
+<!doctype html>
+
+<html lang="en">
+
+{%block title %}
+	TARMOR
+{% endblock %}
+
+{% block top_navigation %}
+    <div id="navbar">
+        <ul>
+            <li><a href="{% url 'equipment:equipment' %}">Equipment</a></li>
+            <li><a href="{% url 'work_orders:work_orders' %}">Work Orders</a></li>
+            <li><a href="{% url 'timesheets:timesheets' %}">Time Sheets</a></li>
+            <li><a href="{% url 'meters:meters' %}">Meter Readings</a></li>
+            <li><a href="{% url 'planning:planning' %}">Planning</a></li>
+            <li><a href="{% url 'scheduling:scheduling' %}">Scheduling</a></li>
+            <li><a href="{% url 'purchasing:purchasing' %}">Purchasing</a></li>
+            <li><a href="{% url 'facilities:facilities' %}">Facilities</a></li>
+            <li><a href="{% url 'personnel:personnel' %}">Personnel</a></li>
+            <li><a href="{% url 'reliability:reliability' %}">Reliability</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+
+{% block content %}
+    <img class="image" src="{% static 'Images/Process Flow.jpeg' %}" />
+{% endblock %}

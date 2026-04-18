@@ -1,0 +1,153 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Create Eq
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="document.getElementById('EqUploadForm').submit();">Save</a></li>
+        <li><a href="{% url 'equipment:equipment' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<script src="{% static 'js/htmx.min.js' %}"></script>
+<div class="main"><h2>Create New Equipment</h2>
+    <br>
+    <form id="EqUploadForm" method='POST' action="{% url 'equipment:equpload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {% if equploadform.errors or meter_formset.errors %}
+            <div class="error-banner">
+                <strong>Please fix the following:</strong>
+                {{ equploadform.non_field_errors }}
+                <ul>
+                    {% for field in equploadform %}{% if field.errors %}
+                    <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+                    {% endif %}{% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {{ meter_formset.management_form }}
+
+        <div class="form-row" id="dynamic-form-fields">
+            <label>Eq Number:</label> {{equploadform.Equipment_Number}} &nbsp;
+
+            <label>Asset Type:</label>
+            <select name="Asset_Type" 
+                hx-get="{% url 'equipment:load_options' %}" 
+                hx-target="#dynamic-form-fields" 
+                hx-include="closest form" 
+                class="input">
+                {% for value, text in equploadform.fields.Asset_Type.choices %}
+                    <option value="{{ value }}" {% if equploadform.Asset_Type.value == value %}selected{% endif %}>{{ text }}</option>
+                {% endfor %}
+            </select>&nbsp;
+
+            <label>Eq Type:</label> 
+            <select name="Equipment_Type" 
+                hx-get="{% url 'equipment:load_options' %}" 
+                hx-target="#dynamic-form-fields" 
+                hx-include="closest form"
+                class="input">
+                {% for value, text in equploadform.fields.Equipment_Type.choices %}
+                    <option value="{{ value }}" {% if equploadform.Equipment_Type.value == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                {% endfor %}
+            </select> &nbsp;
+            <label>Eq Status:</label> {{equploadform.Equipment_Status}} <br>
+            <br>
+            <label>Eq Description:</label> {{equploadform.Equipment_Description}} &nbsp;
+            <label>Commission Date:</label> {{equploadform.Commissioning_Date}} &nbsp;
+            <label>Decommission Date:</label> {{equploadform.Decommissioning_Date}} <br>
+            <br>
+            <label>Make:</label> {{equploadform.Make}} &nbsp;
+            <label>Model:</label> {{equploadform.Model}} &nbsp;
+            <label>Serial Number:</label> {{equploadform.Serial_Number}} &nbsp;
+            <label>Resp Garage:</label> {{equploadform.Garage}} <br>
+            <br>
+            <label>Purchase Order:</label> {{equploadform.PO_Number}} &nbsp;
+            <label>Eq Value:</label> {{equploadform.Equipment_Value}} &nbsp;
+            <label>Warranty Start:</label> {{equploadform.Warranty_Start_Date}} &nbsp;
+            <label> Warranty End:</label> {{equploadform.Warranty_End_Date}} <br>
+            <br>
+            <label>Overhaul Period:</label> {{equploadform.Overhaul_Period}} &nbsp;
+            <label>Overhaul Value:</label> {{equploadform.Overhaul_Value}} &nbsp;
+            <label>End Of Life:</label> {{equploadform.End_of_Life}} <br>
+            <br>
+            {% if not equploadform.Engine_HP_Rating.is_hidden %}
+                    <label>Engine HP:</label> {{equploadform.Engine_HP_Rating}} &nbsp;
+            {% endif %} 
+            {% if not equploadform.CANMET_Number.is_hidden %}
+                    <label>CANMET Number:</label> {{equploadform.CANMET_Number}} &nbsp;
+                    <label>Ventilation Rating:</label> {{equploadform.Ventilation_Rating}} <br>
+            {% endif %} 
+            <br>
+            {% if not equploadform.Eng_Tier.is_hidden %}
+                <label>Eng_Tier:</label> {{ equploadform.Eng_Tier }} &nbsp;
+            {% endif %}
+            {% if not equploadform.Cab_Style.is_hidden %}
+                <label>Cab Style:</label> {{ equploadform.Cab_Style }} &nbsp;
+            {% endif %}
+            {% if not equploadform.Box_Type.is_hidden %}
+                <label>Box Style:</label> {{ equploadform.Box_Type }} <br>
+            {% endif %}
+            <br>
+            <label>Additional Information:</label><br>
+            {{equploadform.Additional_Information}}<br>
+            <br>
+        </div>
+
+        <br>
+
+        <div id="meter-section">
+            <h4>Meter Configuration <button type="button" id="add-meter-btn" class="btn-small">Add Meter</button></h4>
+            <div id="meter-form-list">
+                {% for m_form in meter_formset %}
+                    <div class="meter-item">
+                        Meter Type: {{ m_form.meter_type }} 
+                        {% if meter_formset.can_delete %}Delete: {{ m_form.DELETE }}{% endif %}
+                        {% for hidden in m_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="empty-form" style="display:none;">
+    <div class="meter-item">
+        Meter Type: <select name="meters-__prefix__-meter_type" class="input" id="id_meters-__prefix__-meter_type">
+            {% for value, text in meter_formset.empty_form.fields.meter_type.choices %}
+                <option value="{{ value }}">{{ text }}</option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="meters-__prefix__-id" id="id_meters-__prefix__-id">
+        <input type="hidden" name="meters-__prefix__-DELETE" id="id_meters-__prefix__-DELETE">
+    </div>
+</div> 
+
+<script>
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'add-meter-btn') {
+            const totalForms = document.getElementById('id_meters-TOTAL_FORMS');
+            const count = parseInt(totalForms.value);
+            const list = document.getElementById('meter-form-list');
+            const emptyForm = document.getElementById('empty-form').innerHTML;
+            
+            const newHtml = emptyForm.replace(/__prefix__/g, count);
+            list.insertAdjacentHTML('beforeend', newHtml);
+            totalForms.value = count + 1;
+        }
+    });
+</script>
+{% endblock %}

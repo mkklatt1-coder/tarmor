@@ -1,0 +1,192 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Add Component
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" id="sidebarSaveLink" onclick="triggerSubmit();">Save</a>
+            </li>
+            <li><a href="{% url 'failures:components' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li> <a href="javascript:void(0)" onclick="toggleMassUpload()">Mass Upload</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Add New Component </h2>
+        <br>
+        <div id="mass-upload-instructions" style="display: none; background: #2c2c2c; color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #00d1b2;">Mass Upload Instructions</h3>
+
+            <p>All "KEYS" must be in UPPERCASE</p>
+            <p>File must be <b>.csv</b> format with no header row. Column order:</p>
+
+            <p> Component Key = 4 character <strong>unique</strong> code you generated for the component</p>
+            <p> Combined System Key = 4 character <strong>unique code</strong> from the "System" database</p>
+            <p> Combined Component Key = Combined System Key + Component Key (this is what will identify the component in the work order)</p>
+
+            <code style="background: #444; color: #fff; padding: 5px; display: block; margin: 10px 0;">
+                Component Name, Combined Component Key, Combined System Key, Component Key
+            </code>
+            <br>
+            <form action="{% url 'failures:mass_upload_components' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="field has-addons">
+                    <div class="control">
+                        <input class="input" type="file" name="csv_file" accept=".csv" required>
+                    </div>
+                    <br>
+                    <div class="control">
+                        <button type="submit" class="button is-info">Upload CSV</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <h2> &nbsp; Component </h2>
+        <br>
+
+        <form class="form" id="componentForm" method="POST" action="{% url 'failures:add_component' %}">
+            {% csrf_token %}
+            <div class="filter-container">
+                <label>Component Name:</label><input class="input" type="text" id="component_name" name= "component_name"><br>
+                <br>
+                <label for="suffix">Component Code:</label><input class="input" type="text" id="component_key" name="component_key" 
+                    maxlength="4" minlength="4" placeholder="e.g. WXYZ" required style="text-transform: uppercase;"> <small> Must be only 4 characters and UPPERCASE</small>
+                <p id="component_keyError" class="error-msg"></p>
+                <br>
+            </div>
+            <div class="filter-container">
+                <label for="systemSearch"><strong>Search Systems (by Name or Asset Key):</strong></label><br>
+                <input class="input" type="text" id="systemSearch" placeholder="Type to filter..." onkeyup="filterAndShowSystems()"><br>
+                <br>
+                <div class="system-list" id="systemList">
+                    {% for system in systems %}
+                    <label class="system-item" data-name="{{ system.system_name }}" data-key="{{ system.combined_sys_key }}">
+                        <input class="input" type="checkbox" name="selected_systems" value="{{ system.id }}" onchange="validateUniqueness()">
+                        {{ system.combined_sys_key }} — {{ system.system_name }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+        
+    </div>
+
+    <script>
+        function toggleMassUpload() {
+            const box = document.getElementById("mass-upload-instructions");
+            if (box) {
+                if (box.style.display === "none" || box.style.display === "") {
+                    box.style.display = "block";
+                } else {
+                    box.style.display = "none";
+                }
+            }
+        }
+
+        function filterAndShowSystems() {
+            const query = document.getElementById('systemSearch').value.toLowerCase();
+            const list = document.getElementById('systemList');
+            const items = document.querySelectorAll('.system-item');
+            
+            if (query.length > 0) {
+                list.style.display = "block";
+            } else {
+                list.style.display = "none";
+                return; 
+            }
+
+            let matchCount = 0;
+            items.forEach(item => {
+                const name = item.getAttribute('data-name').toLowerCase();
+                const key = item.getAttribute('data-key').toLowerCase();
+                
+                if (name.includes(query) || key.includes(query)) {
+                    item.style.display = "block"; 
+                    matchCount++;
+                } else {
+                    item.style.display = "none";
+                }
+            });
+
+            if (matchCount === 0) {
+                list.style.border = "none";
+            } else {
+                list.style.border = "1px solid #ccc";
+            }
+        }
+
+        const component_keyInput = document.getElementById('component_key');
+        const checkboxes = document.getElementsByName('selected_systems');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function validateUniqueness() {
+    const val = component_keyInput.value.toUpperCase();
+    const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+    
+    if (val.length !== 4 || checkedBoxes.length === 0) {
+        submitBtn.disabled = true;
+        return;
+    }
+
+    const selectedKeys = checkedBoxes.map(cb => cb.closest('.system-item').getAttribute('data-key'));
+
+    fetch(`/failures/check-uniqueness/?suffix=${val}&${selectedKeys.map(k => `asset_keys[]=${k}`).join('&')}`)
+        .then(response => response.json())
+        .then(data => {
+            const existing = data.existing_codes;
+            let hasError = false;
+
+            checkboxes.forEach(cb => {
+                const item = cb.closest('.system-item');
+                const fullCode = item.getAttribute('data-key') + val;
+                
+                if (cb.checked && existing.includes(fullCode)) {
+                    item.style.color = 'red';
+                    hasError = true;
+                } else {
+                    item.style.color = '';
+                }
+            });
+
+            submitBtn.disabled = hasError;
+        })
+        .catch(err => {
+            submitBtn.disabled = false;
+        });
+}
+
+        component_keyInput.addEventListener('input', validateUniqueness);
+        checkboxes.forEach(cb => cb.addEventListener('change', validateUniqueness));
+
+        document.getElementById('componentForm').onsubmit = function(e) {
+            const component_key = document.getElementById('component_key').value;
+            const checkboxes = document.querySelectorAll('input[name="selected_systems"]:checked');
+            
+            if (component_key.length !== 4) {
+                e.preventDefault();
+                alert("Component key must be exactly 4 characters.");
+            } else if (checkboxes.length === 0) {
+                e.preventDefault();
+                alert("Please select at least one system.");
+            }
+        };
+
+    </script>
+{% endblock %}

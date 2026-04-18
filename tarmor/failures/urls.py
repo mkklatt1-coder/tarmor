@@ -1,0 +1,41 @@
+from django.urls import path
+from . import views
+
+app_name = 'failures'
+
+urlpatterns = [
+    path('', views.failure_codes, name='failure_codes'),
+    path('actions/', views.actions, name='actions'),
+    path('system/',views.system, name='system'),
+    path('system_list/',views.create_systems, name='system_list'),
+    path('edit_system/', views.edit_system, name='edit_system'),
+    path('delete-system/<int:pk>/', views.delete_system, name='system_delete'),
+    path('upload-systems-csv/', views.upload_systems_csv, name='upload_systems_csv'),
+    path('search-system/', views.search_system, name='search_system'),
+    path('search-system/clear/', views.search_system, name='search_system_name'),
+    path('export-systems/', views.export_systems_excel, name='export_systems_excel'),
+    path('components/',views.components, name='components'),
+    path('add_component/',views.add_component, name='add_component'),
+    path('check-uniqueness/', views.check_uniqueness, name='check_uniqueness'),
+    path('mass-upload-components/', views.mass_upload_components, name='mass_upload_components'),
+    path('edit_component/', views.edit_component, name='edit_component'),
+    path('delete_component/<int:pk>/', views.delete_component, name='delete_component'),
+    path('search_components/', views.search_components, name='search_components'),
+    path('search_components/clear/', views.search_components, name='search_component_name'),
+    path('export-components/', views.export_components_excel, name='export_components_excel'),
+    path('failure_modes/', views.failure_modes, name='failure_modes'),
+    path('add_failure_mode/', views.add_failure_mode, name='add_failure_mode'),
+    path('mass-upload-fail_codes/', views.mass_upload_fail_codes, name='mass_upload_fail_codes'),
+    path('edit_failure_mode/', views.edit_failure_mode, name='edit_failure_mode'),
+    path('delete_failure_mode/<int:pk>/', views.delete_failure_mode, name='delete_failure_mode'),
+    path('search_failure_modes/', views.search_failure_modes, name='search_failure_modes'),
+    path('search_failure_modes/clear/', views.search_failure_modes, name='search_failure_modes'),
+    path('export-failure_modes_excel/', views.export_failure_modes_excel, name='export_failure_modes_excel'),
+    path('add_action/', views.add_action, name='add_action'),
+    path('mass_upload_actions/', views.mass_upload_actions, name='mass_upload_actions'),
+    path('edit_action/', views.edit_action, name='edit_action'),
+    path('delete_action/<int:pk>/', views.delete_action, name='delete_action'),
+    path('search_actions/', views.search_actions, name='search_actions'),
+    path('search_actions/clear/', views.search_actions, name='search_actions'),
+    path('export-actions_excel/', views.export_actions_excel, name='export_actions_excel'),
+]

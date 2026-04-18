@@ -1,0 +1,368 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Create Purch
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="javascript:void(0)" onclick="submitForm('save')">Save</a></li>
+            <li><a href="javascript:void(0)" onclick="submitForm('return')">Back to WO</a></li>
+            <br>
+            <li><a href="{% url 'purchasing:purchases' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'purchasing:purchases' %}">Return</a></li>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Create Purchase Order</h2>
+    <br>
+    
+    <div class="form" >
+        <form id="purchase-form" method="post" action="?{% if next %}next={{ next|urlencode }}{% endif %}">
+            {% csrf_token %}
+            <input type="hidden" name="action_destination" id="action_destination" value="save">
+    
+            <h2>
+                Purchase {{ purchase.purchase_number }} &nbsp; &nbsp; 
+                <img src="{{ purchase.barcode_image.url }}" alt="Barcode" style="vertical-align: middle; height: 30px;">
+            </h2>
+        
+        
+            {% if form.errors or formset.errors %}
+                <div class="alert alert-danger">
+                    <strong>Please fix the following:</strong>
+                    {{ form.non_field_errors }}
+                    {% for field in form %}
+                        {% if field.errors %}
+                            <div>{{ field.label }}: {{ field.errors|striptags }}</div>
+                        {% endif %}
+                    {% endfor %}
+                    {% for line_form in formset %}
+                        {% for field in line_form %}
+                            {% if field.errors %}
+                                <div>{{ field.label }}: {{ field.errors|striptags }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div >
+                <br>
+                <label for="id_purchase_type">Purchase Type</label> {{ form.purchase_type }} &nbsp;
+                <label>Purchase Number Preview</label> <input type="text" id="purchase-number-preview" class="input" readonly>&nbsp;
+                <label>Barcode Preview:</label> <input type="text" id="barcode-preview" class="input" readonly><br>
+                <br>
+                <label for="id_date">Date</label> {{ form.date }}&nbsp;
+                <label for="id_status">Status</label> {{ form.status }}<br>
+                <br>
+                <label for="id_bill_location">Bill Location</label> {{ form.bill_location }}&nbsp;
+                <label for="id_wo_cc">WO / Cost Centre</label> {{ form.wo_cc }}&nbsp;
+                <label>Grand Total</label> <input type="text" id="grand-total-display" class="input" readonly value="0.00"><br>
+                <br>
+                <label for="id_additional_information">Additional Information</label><br>
+                {{ form.additional_information }}
+            </div>
+            <br>
+
+            {{ formset.management_form }}
+            <h3>Items</h3>
+            <br>
+            <table id="items-table" cellpadding="6" cellspacing="0"  style="border-collapse: collapse; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center;">Part Number</th>
+                        <th style="text-align: center;">Manufacturer</th>
+                        <th style="text-align: center;">Description</th>
+                        <th style="text-align: center;">UOM</th>
+                        <th style="text-align: center;">Supplier</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: center;">Unit Price</th>
+                        <th style="text-align: center;">Total Price</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line_form in formset %}
+                        <tr class="item-row">
+                            <td style="text-align: center;">
+                                {{ line_form.id }}
+                                {{ line_form.inventory_item }}
+                                {{ line_form.part_number_input }}
+                            </td>
+                            <td style="text-align: center;">{{ line_form.manufacturer }}</td>
+                            <td style="text-align: center;">{{ line_form.part_description }}</td>
+                            <td style="text-align: center;">{{ line_form.uom }}</td>
+                            <td style="text-align: center;">{{ line_form.supplier }}</td>
+                            <td style="text-align: center;">{{ line_form.qty }}</td>
+                            <td style="text-align: center;">{{ line_form.unit_price }}</td>
+                            <td style="text-align: center;">
+                                <input type="text" class="input total-price-display" readonly value="0.00">
+                            </td>
+                            <td style="text-align: center;">{{ line_form.row_status }}</td>
+                            <td style="text-align: center;">{{ line_form.DELETE }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div style="margin-top: 10px;">
+                <button type="button" id="add-item-btn">Add Item</button>
+            </div>
+        
+            <table style="display:none;">
+                <tbody>
+                    <tr id="empty-form-row">
+                        <td style="text-align: center;">
+                            {{ formset.empty_form.id }}
+                            {{ formset.empty_form.inventory_item }}
+                            {{ formset.empty_form.part_number_input }}
+                        </td>
+                        <td style="text-align: center;">{{ formset.empty_form.manufacturer }}</td>
+                        <td style="text-align: center;">{{ formset.empty_form.part_description }}</td>
+                        <td style="text-align: center;">{{ formset.empty_form.uom }}</td>
+                        <td style="text-align: center;">{{ formset.empty_form.supplier }}</td>
+                        <td style="text-align: center;">{{ formset.empty_form.qty }}</td>
+                        <td style="text-align: center;">{{ formset.empty_form.unit_price }}</td>
+                        <td style="text-align: center;"><input attr="disabled" type="text" class="input total-price-display"  style="text-align: center;" readonly value="0.00"></td>
+                        <td style="text-align: center;">{{ formset.empty_form.row_status }}</td>
+                        <td style="text-align: center;">{{ formset.empty_form.DELETE }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const purchaseTypeField = document.getElementById('id_purchase_type');
+        const previewField = document.getElementById('purchase-number-preview');
+        const barcodePreview = document.getElementById('barcode-preview');
+        const billLocationField = document.getElementById('id_bill_location');
+        const woCcField = document.getElementById('id_wo_cc');
+        const addItemBtn = document.getElementById('add-item-btn');
+        const totalFormsInput = document.getElementById('id_lines-TOTAL_FORMS');
+        const tableBody = document.querySelector('#items-table tbody');
+        const emptyRow = document.getElementById('empty-form-row');
+
+        // 1. Purchase Number Preview Logic
+        function fetchPurchasePreview() {
+            const purchaseType = purchaseTypeField.value;
+            if (!purchaseType) {
+                previewField.value = '';
+                barcodePreview.value = '';
+                return;
+            }
+            fetch("{% url 'purchasing:purchase_number_preview' %}?purchase_type=" + encodeURIComponent(purchaseType))
+                .then(response => response.json())
+                .then(data => {
+                    previewField.value = data.preview || '';
+                    barcodePreview.value = data.preview || '';
+                });
+        }
+
+        // 2. WO/CC Options Logic
+        function fetchWoCcOptions() {
+            const billLocation = billLocationField.value;
+            woCcField.innerHTML = '<option value="">---------</option>';
+            if (!billLocation) return;
+            fetch("{% url 'purchasing:get_wo_cc_options' %}?bill_location=" + encodeURIComponent(billLocation))
+                .then(response => response.json())
+                .then(data => {
+                    (data.options || []).forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.value;
+                        option.textContent = item.label;
+                        woCcField.appendChild(option);
+                    });
+                });
+        }
+
+        // 3. Calculation Logic
+        function calculateRowTotal(row) {
+            const qty = parseFloat(row.querySelector('.qty')?.value || 0);
+            const unitPrice = parseFloat(row.querySelector('.unit-price')?.value || 0);
+            const totalDisplay = row.querySelector('.total-price-display');
+            if (totalDisplay) {
+                totalDisplay.value = (qty * unitPrice).toFixed(2);
+            }
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+            let grandTotal = 0;
+            document.querySelectorAll('.item-row').forEach(row => {
+                const deleteBox = row.querySelector('input[type="checkbox"][name$="DELETE"]');
+                if (deleteBox && deleteBox.checked) return;
+                const rowTotal = parseFloat(row.querySelector('.total-price-display')?.value || 0);
+                grandTotal += rowTotal;
+            });
+            document.getElementById('grand-total-display').value = grandTotal.toFixed(2);
+        }
+
+        // 4. Inventory Lookup & Alternatives Menu
+        function attachLookup(row) {
+            const partInput = row.querySelector('.part-number-input');
+            const inventoryIdField = row.querySelector('input[type="hidden"][name$="-inventory_item"]');
+            const manufField = row.querySelector('.manufacturer');
+            const descField = row.querySelector('.part-description');
+            const uomField = row.querySelector('.uom');
+            const supplierField = row.querySelector('.supplier');
+            const unitPriceField = row.querySelector('.unit-price');
+            const qtyField = row.querySelector('.qty');
+            const deleteField = row.querySelector('input[type="checkbox"][name$="DELETE"]');
+
+            if (partInput) {
+                partInput.addEventListener('change', function () {
+                    const partNumber = this.value.trim();
+                    const purchaseType = purchaseTypeField.value;
+
+                    if (!partNumber) {
+                        inventoryIdField.value = '';
+                        return;
+                    }
+
+                    // Call the API to find the part + its alternatives
+                    fetch("{% url 'purchasing:get_part_options' %}?part_number=" + encodeURIComponent(partNumber))
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.options && data.options.length > 0) {
+                                showAltMenu(this, data.options, (choice) => {
+                                    // Update all row fields based on user selection
+                                    inventoryIdField.value = choice.id;
+                                    partInput.value = choice.part_number;
+                                    if (manufField) manufField.value = choice.manufacturer;
+                                    if (descField) descField.value = choice.description;
+                                    if (uomField) uomField.value = choice.uom || '';
+                                    if (supplierField) supplierField.value = choice.supplier_id || '';
+                                    if (unitPriceField) unitPriceField.value = choice.unit_price;
+                                    calculateRowTotal(row);
+                                });
+                            } else {
+                                // No inventory match found
+                                inventoryIdField.value = '';
+                            }
+                        });
+                });
+            }
+
+            // Standard Listeners
+            [qtyField, unitPriceField].forEach(field => {
+                if (field) field.addEventListener('input', () => calculateRowTotal(row));
+            });
+            if (deleteField) {
+                deleteField.addEventListener('change', () => calculateGrandTotal());
+            }
+        }
+
+        function showAltMenu(anchor, options, callback) {
+            const existing = document.querySelector('.alt-menu');
+            if (existing) existing.remove();
+
+            const menu = document.createElement('div');
+            menu.className = 'alt-menu';
+
+            const rect = anchor.getBoundingClientRect();
+            menu.style.left = rect.left + window.scrollX + 'px';
+            menu.style.top = rect.bottom + window.scrollY + 'px';
+
+            options.forEach(opt => {
+                const item = document.createElement('div');
+                item.className = 'alt-option';
+                const badgeClass = opt.is_alt ? 'alt-badge-alt' : 'alt-badge-oem';
+                const badgeText = opt.is_alt ? 'ALT' : 'OEM';
+                
+                item.innerHTML = `
+                    <div>
+                        <strong>${opt.manufacturer}</strong> - ${opt.part_number}<br>
+                        <small>${opt.description}</small>
+                    </div>
+                    <div style="text-align:right">
+                        $${opt.unit_price}<br><span class="${badgeClass}">${badgeText}</span>
+                    </div>
+                `;
+                
+                item.onclick = () => {
+                    callback(opt);
+                    menu.remove();
+                };
+                menu.appendChild(item);
+            });
+
+            const manual = document.createElement('div');
+            manual.className = 'alt-manual-btn';
+            manual.innerText = "Use Manual Entry / Close";
+            manual.onclick = () => menu.remove();
+            menu.appendChild(manual);
+
+            document.body.appendChild(menu);
+
+            // Close menu if user clicks elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target) && e.target !== anchor) {
+                        menu.remove();
+                        document.removeEventListener('click', closeMenu);
+                    }
+                }, { once: true });
+            }, 10);
+        }
+
+        function addNewRow() {
+            const totalFormsInput = document.getElementById('id_lines-TOTAL_FORMS');
+            const totalForms = parseInt(totalFormsInput.value, 10);
+            const tableBody = document.querySelector('#items-table tbody');
+            const templateRow = document.getElementById('empty-form-row');
+            let newRowHtml = templateRow.innerHTML.replace(/__prefix__/g, totalForms);
+            const newRow = document.createElement('tr');
+            newRow.className = 'item-row';
+            newRow.innerHTML = newRowHtml;
+            newRow.querySelectorAll('input, select, textarea').forEach(el => {
+                if (el.type === 'checkbox') {
+                    el.checked = false;
+                } else if (el.classList.contains('total-price-display')) {
+                    el.value = '0.00';
+                } else if (el.type !== 'hidden') {
+                    el.value = '';
+                }
+                el.disabled = false;
+            });
+            tableBody.appendChild(newRow);
+            totalFormsInput.value = totalForms + 1;
+            attachLookup(newRow);
+            calculateGrandTotal();
+        }
+
+        // Initialize Page
+        purchaseTypeField.addEventListener('change', fetchPurchasePreview);
+        billLocationField.addEventListener('change', fetchWoCcOptions);
+        addItemBtn.addEventListener('click', addNewRow);
+        document.querySelectorAll('.item-row').forEach(row => attachLookup(row));
+
+        fetchPurchasePreview();
+        fetchWoCcOptions();
+        calculateGrandTotal();
+    });
+
+    function submitForm(destination) {
+        const actionInput = document.getElementById('action_destination');
+        const form = document.getElementById('purchase-form');
+        
+        if (actionInput && form) {
+            actionInput.value = destination;
+            form.submit();
+        }
+    }
+</script>
+
+{% endblock %}

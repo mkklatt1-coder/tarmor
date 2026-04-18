@@ -1,0 +1,93 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Search Employee
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'personnel:export_employees_excel' %}?{{ filter_url }}">Export</a></li>
+        <li><a href="{% url 'personnel:personnel' %}">Return</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Search Employees</h2>
+    <br>
+    <div >
+        <h5 > 
+            &nbsp; Search Criteria &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                <a href="{% url 'personnel:search_employee' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h5>
+        <br>
+        <form id="search-form"  method="GET" action="{% url 'personnel:search_employee' %}">
+            First Name: <input type="text" name="first_name" value="{{ first_name }}" placeholder="First Name" class="input"> &nbsp;
+            Last Name: <input type="text" name="last_name" value="{{ last_name }}" placeholder="Last Name" class="input"> &nbsp;
+            Position: <input type="text" name="position" value="{{ position }}" placeholder="Position" class="input"> &nbsp;
+            Crew: <input type="text" name="crew" value="{{ crew }}" placeholder="Crew" class="input"> &nbsp;
+            Status: <input type="text" name="location" value="{{ status }}" placeholder="Status" class="input"> <br>
+        </form>
+        <br>
+
+        <div >
+            <h2 > Search Results </h2>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=First_Name&{{ filter_url }}" class="sort_header">First Name{% if sort_by == 'First_Name' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Middle_Name&{{ filter_url }}" class="sort_header">Middle Name{% if sort_by == 'Middle_Name' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Last_Name&{{ filter_url }}" class="sort_header">Last Name{% if sort_by == 'Last_Name' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Status&{{ filter_url }}" class="sort_header">Status{% if sort_by == 'Status' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Position&{{ filter_url }}" class="sort_header">Position{% if sort_by == 'Position' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=crew&{{ filter_url }}" class="sort_header">Crew{% if sort_by == 'crew' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Street_Address&{{ filter_url }}" class="sort_header">Street Address{% if sort_by == 'Street_Address' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=City&{{ filter_url }}" class="sort_header">City{% if sort_by == 'City' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Prov_State&{{ filter_url }}" class="sort_header">Prov / State{% if sort_by == 'Prov_State' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Country&{{ filter_url }}" class="sort_header">Country{% if sort_by == 'Country' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Postal_Zip&{{ filter_url }}" class="sort_header">Postal / Zip Code{% if sort_by == 'Postal_Zip' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Phone&{{ filter_url }}" class="sort_header">Phone{% if sort_by == 'Phone' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Email&{{ filter_url }}" class="sort_header">Email{% if sort_by == 'Email' %}▲{% endif %}</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employees %}
+                            <tr>
+                                <td class="td">{{ emp.First_Name }}</td>
+                                <td class="td">{{ emp.Middle_Name }}</td>
+                                <td class="td">{{ emp.Last_Name }}</td>
+                                <td class="td">{{ emp.Status }}</td>
+                                <td class="td">{{ emp.Position }}</td>
+                                <td class="td">{{ emp.crew }}</td>
+                                <td class="td">{{ emp.Street_Address }}</td>
+                                <td class="td">{{ emp.City }}</td>
+                                <td class="td">{{ emp.Prov_State }}</td>
+                                <td class="td">{{ emp.Country }}</td>
+                                <td class="td">{{ emp.Postal_Zip }}</td>
+                                <td class="td">{{ emp.Phone }}</td>
+                                <td class="td">{{ emp.Email }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No employees found matching those criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

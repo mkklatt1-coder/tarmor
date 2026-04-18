@@ -1,0 +1,165 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Add Crew Sched {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li> <a href="javascript:void(0)" onclick="document.getElementById('shiftrotationform').submit();">Save</a> </li>
+        <li> <a href="{% url 'personnel:personnel' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a> </li>
+        <br>
+        <li> <a href="{% url 'core:home' %}">Main</a> </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2>Add New Crew Schedule</h2>
+
+    <form method="post" id="shiftrotationform" action="{% url 'personnel:shiftrotation_upload' %}">
+        {% csrf_token %}
+
+        {% if rotation_form.errors or pattern_form.errors %}
+            <div style="background-color: #f8d7da; color: #842029; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <strong>Please correct the following errors:</strong>
+                <ul>
+                    {% for field in rotation_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+                    {% for field in pattern_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+                    {% for error in rotation_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                    {% for error in pattern_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 50px; align-items: flex-start;">
+            
+            
+            <div style="flex: 1; padding: 20px; border-radius: 8px;">
+
+                <h4 >Deployment Details</h4>
+                
+                <label>Facility / Location:</label> {{ rotation_form.Location }} <br>
+                <br>
+                <label>Coverage Type:</label> {{ rotation_form.Coverage_Type }} <br>
+                <br>
+                <label>Schedule Start Date:</label> {{ rotation_form.Start_Date }} <br>
+                <br>
+                <label>Calendar Month:</label> {{ rotation_form.Calendar_Month }} <br>
+                <br>
+                <label>Province (for Holidays):</label> {{ rotation_form.province }} <br>
+            </div>
+
+            <!-- Section 2: Shift Pattern Logic -->
+            <div style="flex: 1; padding: 20px; border-radius: 8px;">
+
+                <h4 >Rotation Logic (Cycle)</h4>
+
+                <div class="field-group">
+                    <label>Use Existing Pattern:</label><br>
+                    <select id="pattern-selector" class="input" onchange="fillPattern(this)">
+                        <option value="">-- Create New --</option>
+                        {% for p in existing_patterns %}
+                            <option value="{{ p.id }}" data-name="{{ p.name }}" data-seq="{{ p.pattern_sequence }}">{{ p.name }} ({{ p.pattern_sequence }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <br>
+
+                <div id="pattern-fields">
+                    <label>Pattern Name:</label> <input type="text" name="name" id="id_name" class="input">
+                    <label>Sequence:</label> <input type="text" name="pattern_sequence" id="id_pattern_sequence" class="input">
+                </div>
+                <br>
+                <small style="display: block; color: #666;">Enter comma-separated days: <strong>5,5,4,4</strong> 
+                    (Work 5, Off 5, Work 4, Off 4) </small>
+                
+            </div>
+
+        </div>
+    </form>
+    <div id="coverage-preview">
+        <h2>Automated Coverage Preview</h2>
+        <br>
+        <p style="font-size: 0.9rem; color: #586069;">Based on your settings, the following crew schedules will be generated:</p>
+        <table class="table" style="width: 100%; margin-top: 10px; text-align: center;">
+            <thead>
+                <tr>
+                    <th>Crew ID</th>
+                    <th>Shift Letter</th>
+                    <th>Calculated Start Date</th>
+                    <th>Rotation Role</th>
+                </tr>
+            </thead>
+            <tbody id="preview-body">
+                <!-- JavaScript will populate this -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.querySelector('input[name="Start_Date"]');
+    const sequenceInput = document.querySelector('input[name="pattern_sequence"]');
+    const coverageSelect = document.querySelector('select[name="Coverage_Type"]');
+    const previewDiv = document.getElementById('coverage-preview');
+    const previewBody = document.getElementById('preview-body');
+
+    function updatePreview() {
+        const startDateVal = startDateInput.value;
+        const sequenceVal = sequenceInput.value;
+        const coverageVal = coverageSelect.value;
+
+        if (startDateVal && sequenceVal && coverageVal) {
+            const sequence = sequenceVal.split(',').map(x => parseInt(x.trim()));
+            const stagger = sequence[0]; // First 'ON' block duration
+            const baseDate = new Date(startDateVal + 'T00:00:00');
+            
+            // Determine number of crews
+            let numCrews = 1;
+            if (coverageVal === '24H') numCrews = 4;
+            else if (sequenceVal !== '5,2' && (coverageVal === 'DS' || coverageVal === 'NS')) numCrews = 2;
+
+            previewBody.innerHTML = '';
+            for (let i = 0; i < numCrews; i++) {
+                const crewLetter = String.fromCharCode(65 + i);
+                const staggeredDate = new Date(baseDate);
+                staggeredDate.setDate(baseDate.getDate() + (stagger * i));
+                
+                const row = `<tr>
+                    <td>Auto-Generated</td>
+                    <td><strong>${crewLetter}</strong></td>
+                    <td>${staggeredDate.toISOString().split('T')[0]}</td>
+                    <td>${i === 0 ? 'Primary' : 'Staggered Relief'}</td>
+                </tr>`;
+                previewBody.insertAdjacentHTML('beforeend', row);
+            }
+            previewDiv.style.display = 'block';
+        } else {
+            previewDiv.style.display = 'none';
+        }
+    }
+
+    [startDateInput, sequenceInput, coverageSelect].forEach(el => {
+        el.addEventListener('change', updatePreview);
+        el.addEventListener('keyup', updatePreview);
+    });
+});
+
+function fillPattern(select) {
+    const option = select.options[select.selectedIndex];
+    if (option.value !== "") {
+        document.getElementById('id_name').value = option.getAttribute('data-name');
+        document.getElementById('id_pattern_sequence').value = option.getAttribute('data-seq');
+    } else {
+        document.getElementById('id_name').value = "";
+        document.getElementById('id_pattern_sequence').value = "";
+    }
+}
+</script>
+{% endblock %}

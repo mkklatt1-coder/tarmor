@@ -1,0 +1,84 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Manage Inv
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'inventory:export_manage_inventory_excel' %}?{{ filter_url }}">Export</a></li>
+        <li><a href="{% url 'inventory:inventory' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Manage Inventory </h2>
+    <br>
+
+    <div >
+            <h2 > 
+                &nbsp; Edit Inventory Information &nbsp; <button type="submit" form="edit-form" class="button">Update</button>
+                </a>
+            </h2>
+            <br>
+            <form id="edit-form"  method="POST" action=".">
+                {% csrf_token %}
+                <input type="hidden" name="item_id" value="{{ edit_item.id }}">
+                Bin Location: <input type="text" name="bin_location" value="{{ edit_item.bin_location|default:'' }}" placeholder="Bin Location" class="input"> &nbsp;
+                Qty On Hand: <input type="text" name="qty_onhand" value="{{ edit_item.qty_onhand|default:'' }}" placeholder="Qty On Hand" class="input"> &nbsp;
+                Min: <input type="text" name="min_qty" value="{{ edit_item.min_qty|default:'' }}" placeholder="Min Qty" class="input"> &nbsp;
+                Max: <input type="text" name="max_qty" value="{{ edit_item.max_qty|default:'' }}" placeholder="Max Qty" class="input"> &nbsp;
+                UoM: <input type="text" name="uom" value="{{ edit_item.uom|default:'' }}" placeholder="UoM" class="input">
+            </form>
+            <br>
+        </div>
+        <div >
+            <h2 > Inventory </h2>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=InventoryItem__part_number" class="sort_header">Part Number{% if sort_by == 'part_number' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=InventoryItem__part_description" class="sort_header">Part Description{% if sort_by == 'part_description' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=bin_location" class="sort_header">Bin Location{% if sort_by == 'bin_location' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=qty_onhand" class="sort_header">Qty On Hand{% if sort_by == 'qty_onhand' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=min_qty" class="sort_header">Min Qty{% if sort_by == 'min_qty' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=max_qty" class="sort_header">Max Qty{% if sort_by == 'max_qty' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=InventoryItem__uom" class="sort_header">UoM{% if sort_by == 'uom' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=last_transaction_date" class="sort_header">Last Transaction Date{% if sort_by == 'last_transaction_date' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=last_transaction_number" class="sort_header">Last Transaction Number{% if sort_by == 'last_transaction_number' %}▲{% endif %}</a></th>
+                            </tr>
+                    </thead>
+                    <tbody>
+                        {% for manage in manage_inventory %}
+                            <tr>
+                                <td class="td">{{manage.part_number}}</td>
+                                <td class="td">{{manage.part_description}}</td>
+                                <td class="td">{{manage.bin_location}}</td>
+                                <td class="td">{{manage.qty_onhand}}</td>
+                                <td class="td">{{manage.min_qty}}</td>
+                                <td class="td">{{manage.max_qty}}</td>
+                                <td class="td">{{manage.uom}}</td>
+                                <td class="td">{{manage.last_transaction_date}}</td>
+                                <td class="td">{{manage.last_transaction_number}}</td>
+                                <td class="td" style="text-align: center;"><a href="?edit={{ manage.id }}" class="btn-edit-link">Edit</a></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10">No records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Planning
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'planning:create_qm' %}">Create Plan</a> </li>
+            <li><a href="{% url 'planning:search_qm' %}">Search Plan</a> </li>
+            <li><a href="{% url 'planning:edit_qm' %}">Edit Plan</a> </li>
+            <br>
+            <li><a href="{% url 'planning:forecast' %}">Forecast</a> </li>
+            <br>
+            <li><a href="{% url 'planning:search_plan_orders' %}">Search WOs</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Planning</h2>
+        <div>
+        <img class="image" src="{% static 'Images/planning_flow.jpeg' %}" >
+        </div>
+
+    </div>
+{% endblock %}

@@ -1,0 +1,33 @@
+
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Suppliers
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'suppliers:add_supplier' %}">New Sup</a> </li>
+            <li><a href="{% url 'suppliers:search_suppliers' %}">Search Sup</a> </li>
+            <li><a href="{% url 'suppliers:edit_supplier' %}">Edit Sup</a> </li>
+            <br>
+            <li><a href="{% url 'purchasing:purchasing' %}">Return</a> </li> 
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Suppliers</h2>
+        <div>
+        <img class="image" src="{% static 'Images/suppliers.jpg' %}">
+        </div>
+
+    </div>
+{% endblock %}

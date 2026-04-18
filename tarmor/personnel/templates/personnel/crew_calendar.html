@@ -1,0 +1,86 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Crew Calendar {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li> <a >Print</a> </li>
+        <li> <a href="{% url 'personnel:personnel' %}">Return</a> </li>
+        <br>
+        <li> <a href="{% url 'core:home' %}">Main</a> </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="main">
+
+    <div class="print-header">
+        <h1>Work Schedule: {{ crew.full_shift_id }}</h1>
+        <p>Location: {{ crew.location_code }} | Pattern: {{ crew.pattern.name }} ({{ crew.pattern.pattern_sequence }})</p>
+        <p>Year: {{ year }}</p>
+    </div>
+
+    <div class="no-print">
+        <h2>Crew Schedule: {{ crew.full_shift_id }}</h2>
+        <br>
+        <form method="GET" action="{% url 'personnel:crew_calendar' %}" class="form">
+            <label for="crew_id">Select Crew:</label>
+            <select name="crew_id" id="crew_id" class="input" onchange="this.form.submit()">
+                <option value="">-- Choose a Crew --</option>
+                {% for c in all_crews %}
+                    <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_crew_id %}selected{% endif %}>
+                        {{ c.full_shift_id }} ({{ c.location_code }})
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit">View </button>
+        </form>
+
+        
+    </div>
+    <br>
+    <h2>Schedule for {{ crew.full_shift_id }} &nbsp <button onclick="window.print()" class="button">Print</button></h2>
+    {% if crew %}
+        <br>
+    
+    <div class="legend-container">
+        <div class="legend-item"><div class="box status-day"></div> Day Shift</div>
+        <div class="legend-item"><div class="box status-night"></div> Night Shift</div>
+        <div class="legend-item"><div class="box status-holiday"></div> Statutory Holiday</div>
+        <div class="legend-item"><div class="box status-off"></div> Off / Rest Day</div>
+    </div>
+
+    <div class="calendar-container">
+        {% for month in months %}
+        <div class="month-grid">
+            <h4 style="text-align: center; margin: 5px 0;">{{ month.name }}</h4>
+            <table class="month-table" style="width:100%; border-collapse: collapse; font-size: 0.8rem;">
+                <thead>
+                    <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+                </thead>
+                <tbody>
+                    {% for week in month.weeks %}
+                    <tr>
+                        {% for day in week %}
+                        <td class="status-{{ day.status|lower }}" 
+                            style="border: 1px solid #ddd; text-align: center; padding: 4px;"
+                            title="{{ day.tooltip }}">
+                            {{ day.day }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>>
+{% endblock %}

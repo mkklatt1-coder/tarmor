@@ -1,0 +1,196 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Add Comp
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="const f = document.getElementById('CompUploadForm');
+                    if(f) { console.log('Form found, submitting...'); f.submit(); } else { alert('Form NOT found!'); }">Save
+                </a>
+            </li>
+            <li><a href="{% url 'equipment:equipment' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+
+        <h2>Add New Component</h2>
+        <br>
+
+        <div class="form">
+            <h5 class="form">
+                <span> Add New Component for: &nbsp;</span>
+                <div class="search-container"> 
+                    <input class="input" type="text" name="eqedit" placeholder="Equipment Number" value="{{ request.GET.addcomp }}">
+                    <img id="search-btn" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" style="cursor: pointer;">
+                </div>
+            </h5>
+        </div>
+
+        <br>
+
+        <div >
+            <form id="CompUploadForm" method="POST" action="." enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ compuploadform.Equipment }}
+                {% if compuploadform %}
+                    
+                    <div>
+                        <label>Equipment Number:</label> {{ compuploadform.Equipment_Number }} &nbsp;
+                        <label>Equipment Description:</label> {{ compuploadform.Equipment_Description }} &nbsp;
+                        <label>Component Status:</label> {{ compuploadform.Status }} <br>
+                        <br>
+                        <br>
+                    </div>
+                    <div>
+                        <label>Component Number:</label> {{ compuploadform.Component_Number }} &nbsp;
+                        <label>Component Desc:</label> {{ compuploadform.Component_Description }} &nbsp;
+                        <label>Component Type:</label> {{ compuploadform.Component_Type }} <br>
+                        <br>
+                        <br>
+                        <label>Installation Date:</label> {{ compuploadform.Installation_Date }} &nbsp;
+                        <label>Removal Date:</label> {{ compuploadform.Removal_Date }} &nbsp;
+                        <label>Exp Lifespan:</label> {{ compuploadform.Expected_Lifespan }} {{ compuploadform.UoM }} <br>
+                        <br>
+                        <br>
+                        <label>Make:</label> {{ compuploadform.Make }} &nbsp;
+                        <label>Model:</label> {{ compuploadform.Model }} &nbsp;
+                        <label>Serial / XM:</label> {{ compuploadform.Serial_Number }} &nbsp;
+                        <label>PO Number:</label> {{ compuploadform.PO_Number }} <br>                        
+                        <br>
+                        <br>
+                        <label>Warranty Duration:</label> {{ compuploadform.Warranty_Duration }} {{ compuploadform.Wty_UoM }} &nbsp;
+                        <label>Warranty Start:</label> {{ compuploadform.Warranty_Start_Date }} &nbsp;
+                        <label>Warranty End:</label> {{ compuploadform.Warranty_End_Date }} <br>
+                        <br>
+                        <br>
+                        <label>Additional Information:</label><br>
+                        {{compuploadform.Additional_Information}}<br>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+   <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Elements for Search & Equipment
+        const searchIcon = document.querySelector('#search-btn'); 
+        const searchInput = document.querySelector('input[name="eqedit"]');
+        const eqNumDisplay = document.getElementById('id_Equipment_Number');
+        const eqDescDisplay = document.getElementById('id_Equipment_Description');
+        const hiddenEqPk = document.getElementById('id_Equipment'); 
+
+        // 2. Elements for Component Description Auto-gen
+        const compTypeField = document.getElementById('id_Component_Type');
+        const makeField = document.getElementById('id_Make');
+        const modelField = document.getElementById('id_Model');
+        const compNumField = document.getElementById('id_Component_Number');
+        const compDescField = document.getElementById('id_Component_Description');
+
+        // --- DESCRIPTION GENERATION FUNCTION ---
+        function updateComponentDescription() {
+            if (!compDescField || !compTypeField) return;
+
+            // Get the text (e.g., "Engine") and strip the bracketed shortcode if present
+            const typeOption = compTypeField.options[compTypeField.selectedIndex];
+            const typeText = (typeOption && typeOption.text) ? typeOption.text.split(' (')[0] : "";
+            
+            const make = makeField ? makeField.value.trim() : "";
+            const model = modelField ? modelField.value.trim() : "";
+
+            // Filter out empty strings or default dropdown text
+            const descriptionParts = [typeText, make, model].filter(part => 
+                part !== "" && 
+                part !== "Select Component Type" && 
+                part !== "---------" &&
+                part !== "Select"
+            );
+            
+            compDescField.value = descriptionParts.join(", ");
+        }
+
+        // --- SEARCH LOGIC ---
+        if (searchIcon) {
+            searchIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                const query = searchInput.value;
+                if (query) {
+                    fetch(`/equipment/get-equipment-details/?eq_num=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (eqNumDisplay) eqNumDisplay.value = data.number;
+                                if (eqDescDisplay) eqDescDisplay.value = data.description;
+                                if (hiddenEqPk) hiddenEqPk.value = data.id;
+
+                                if (compTypeField) {
+                                    compTypeField.innerHTML = '<option value="">Select Component Type</option>';
+                                    if (data.component_types) {
+                                        data.component_types.forEach(item => {
+                                            const option = document.createElement('option');
+                                            option.value = item.id;
+                                            option.textContent = item.name;
+                                            compTypeField.appendChild(option);
+                                        });
+                                    }
+                                }
+                                searchInput.style.backgroundColor = "#e1ffdf"; 
+                            } else {
+                                alert("Equipment Number not found.");
+                                searchInput.style.backgroundColor = "#ffdfdf";
+                            }
+                        })
+                        .catch(err => console.error("Search Fetch Error:", err));
+                }
+            });
+        }
+
+        // --- COMPONENT ID TRIGGER ---
+        if (compTypeField) {
+            compTypeField.addEventListener('change', function() {
+                const eqIdField = document.getElementById('id_Equipment');
+                const typeId = this.value;
+
+                if (eqIdField && eqIdField.value && typeId) {
+                    fetch(`/equipment/get-next-component-id/?eq_id=${eqIdField.value}&type_id=${typeId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (compNumField) {
+                                compNumField.value = data.full_id;
+                                // After ID is generated, update the description
+                                updateComponentDescription();
+                            }
+                        })
+                        .catch(err => console.error("ID Fetch Error:", err));
+                }
+            });
+        }
+
+        // --- MAKE/MODEL REAL-TIME LISTENERS ---
+        // This ensures the description updates while the user is typing
+        if (makeField) {
+            makeField.addEventListener('input', updateComponentDescription);
+        }
+        if (modelField) {
+            modelField.addEventListener('input', updateComponentDescription);
+        }
+
+    }); // End DOMContentLoaded
+</script>
+
+{% endblock %}

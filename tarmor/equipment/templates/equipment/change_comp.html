@@ -1,0 +1,189 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Change Component{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+        <ul >
+            <li>
+                <a href="javascript:void(0)" onclick="const f = document.getElementById('CompChangeForm');
+                    if(f) { console.log('Form found, submitting...'); f.submit(); } else { alert('Form NOT found!'); }">Save
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'equipment:equipment' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="main"><h2>Change Component</h2>
+        <br>
+
+        <div class="form">
+            <h5 class="form">
+                <span> Change Component for:&nbsp;</span>
+                <form class="search-container"> 
+                    <input class="input" list="eq_numbers" type="text" id="eq_search_input" placeholder="Equipment Number"> &nbsp;
+                    
+                    <select class="input" id="comp_search_select" style="width: 200px;">
+                        <option value="">Select Equipment First</option>
+                    </select>
+                    
+                    <img id="search-btn" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" style="cursor: pointer;">
+                    <datalist id="eq_numbers">
+                        {% for number in all_equipment %}
+                            <option value="{{ number }}">
+                        {% endfor %}
+                    </datalist>
+
+                </form>
+            </h5>
+        </div>
+
+        <br>
+
+        <div >
+            <form id="CompChangeForm" method="POST" action="." enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ compchangeform.Equipment }}
+                {{ compchangeform.Component}}
+                {% if compchangeform %}
+                    
+                    <div>
+                        <label>Component Number:</label> {{ compchangeform.Component_Number }} &nbsp;
+                        <label>Component Description:</label> {{ compchangeform.Component_Description }} <br>
+                        
+                        <br>
+                        <br>
+                        <label>Work Order Number:</label> {{compchangeform.Work_Order_Number}} &nbsp;
+                        <label>Meter Description:</label> {{ compchangeform.Meter_Description }} &nbsp;
+                        <label>Meter Reading:</label> {{ compchangeform.Meter_Reading }} <br>
+                        <br>
+                        <br>
+                        <label>Change Type</label> {{compchangeform.Change_Type}} &nbsp;
+                        <label>Change Date</label> {{compchangeform.Change_Date}} <br>
+                        <br>
+                        <br>
+                    </div>
+
+                    <h4> Update information </h4>
+
+                    <div>
+                        <label>PO Number:</label> {{ compchangeform.New_PO }} &nbsp  
+                        <label>Exp Lifespan:</label> {{ compchangeform.New_Lifespan }} {{ compchangeform.New_UoM }} <br>
+                        <br>
+                        <br>
+                        <label>Make:</label> {{ compchangeform.New_Make }} &nbsp;
+                        <label>Model:</label> {{ compchangeform.New_Model }} &nbsp;
+                        <label>Serial / XM:</label> {{ compchangeform.New_Serial }} <br>
+                        <br>
+                        <br>
+                        <label>Warranty Duration:</label> {{ compchangeform.New_Wty_Dur }} {{ compchangeform.New_Wty_UoM }} &nbsp;
+                        <label>Warranty Start:</label> {{ compchangeform.New_Wty_Start }} &nbsp;
+                        <label>Warranty End:</label> {{ compchangeform.New_Wty_End }} <br>
+                        <br>
+                        <br>
+                        <label>Additional Information:</label><br>
+                        {{compchangeform.Additional_Information}}<br>
+
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const eqInput = document.getElementById('eq_search_input');
+            const compSelect = document.getElementById('comp_search_select');
+            let typingTimer;
+            const doneTypingInterval = 500; // Wait 500ms after user stops typing
+
+            // 1. AUTO-POPULATE when user types
+            eqInput.addEventListener('input', function() {
+                clearTimeout(typingTimer);
+                const query = eqInput.value.trim();
+                
+                if (query.length >= 3) { // Only search if 3+ characters entered
+                    typingTimer = setTimeout(() => {
+                        fetchComponents(query);
+                    }, doneTypingInterval);
+                }
+            });
+
+            // 2. The Fetch Function
+            function fetchComponents(query) {
+                fetch(`/equipment/get-equipment-components/?eq_num=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            compSelect.innerHTML = '<option value="">-- Select Component --</option>';
+                            data.components.forEach(c => {
+                                let opt = document.createElement('option');
+                                opt.value = c.id;
+                                opt.textContent = c.Component_Number; 
+                                compSelect.appendChild(opt);
+                            });
+                            eqInput.style.backgroundColor = "#e1ffdf"; // Success Green
+                        } else {
+                            // Equipment not found yet, keep background neutral
+                            eqInput.style.backgroundColor = ""; 
+                            compSelect.innerHTML = '<option value="">Select Equipment First</option>';
+                        }
+                    });
+            }
+
+            // 3. AUTO-FILL FORM when Component is selected
+            compSelect.addEventListener('change', function() {
+                const compId = this.value;
+                if (!compId) return;
+
+                fetch(`/equipment/get-component-details-by-id/?comp_id=${compId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Foreign Keys
+                        document.getElementById('id_Equipment').value = data.equipment_id;
+                        document.getElementById('id_Component').value = data.id;
+
+                        // Read-only Headers
+                        document.getElementById('id_Component_Number').value = data.number;
+                        document.getElementById('id_Component_Description').value = data.description;
+
+                        // Live Update Fields
+                        const fields = {
+                            'id_New_Make': data.make,
+                            'id_New_Model': data.model,
+                            'id_New_Serial': data.serial,
+                            'id_New_PO': data.po,
+                            'id_New_Lifespan': data.lifespan,
+                            'id_New_UoM': data.uom,
+                            'id_New_Wty_Dur': data.wty_dur,
+                            'id_New_Wty_UoM': data.wty_uom,
+                            'id_New_Wty_Start': data.wty_start,
+                            'id_New_Wty_End': data.wty_end
+                        };
+
+                        for (const [id, value] of Object.entries(fields)) {
+                            const el = document.getElementById(id);
+                            if (el) el.value = value || "";
+                        }
+
+                        compSelect.style.backgroundColor = "#e1ffdf";
+                    });
+            });
+        });
+    </script>
+
+{% endblock %}

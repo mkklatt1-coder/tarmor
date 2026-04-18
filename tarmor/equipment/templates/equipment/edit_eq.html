@@ -1,0 +1,153 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Edit Eq
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul class="leftnavbar">
+            <li><a href="javascript:void(0)" onclick="document.getElementById('EqEditForm').submit();">Save</a></li>
+            <li><a href="{% url 'equipment:equipment' %}" onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel</a></li>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main"><h2>Edit Equipment</h2>
+    <br>
+
+        <div class="form">
+            <h5 class="form">
+                <span> Edit Equipment &nbsp;</span>
+                <form method="GET" action="{% url 'equipment:edit_eq' %}">
+                    <input class="input" list="eq_numbers" type="text" name="eqedit" placeholder="Equipment Number" value="{{ request.GET.eqedit }}">
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+                    <datalist id="eq_numbers">
+                        {% for number in all_equipment %}
+                            <option value="{{ number }}">
+                        {% endfor %}
+                    </datalist>
+                </form>
+            </h5>
+        </div>
+        <br>
+        <div >
+            <form id="EqEditForm" method="POST" action="." enctype="multipart/form-data">
+                {% csrf_token %}
+                {% if eqeditform %}
+                    <!-- Equipment core fields -->
+                    <div>
+                        Eq Number: {{ eqeditform.Equipment_Number }} &nbsp;
+                        Asset Type: {{ eqeditform.Asset_Type }} &nbsp;
+                        Eq Type: {{ eqeditform.Equipment_Type }} &nbsp;
+                        Status: {{ eqeditform.Equipment_Status }} <br>
+                        <br><br>
+                        Description: {{ eqeditform.Equipment_Description }} &nbsp;
+                        Commissioned: {{ eqeditform.Commissioning_Date }} &nbsp;
+                        Decommissioned: {{ eqeditform.Decommissioning_Date }} <br>
+                        <br><br>
+                        Make: {{ eqeditform.Make }} &nbsp;
+                        Model: {{ eqeditform.Model }} &nbsp;
+                        Serial Number: {{ eqeditform.Serial_Number }} &nbsp;
+                        Garage: {{ eqeditform.Garage }} <br>
+                        <br><br>
+                        PO Number: {{ eqeditform.PO_Number }} &nbsp;
+                        Value: {{ eqeditform.Equipment_Value }} &nbsp;
+                        Warranty Start: {{ eqeditform.Warranty_Start_Date }} &nbsp;
+                        Warranty End: {{ eqeditform.Warranty_End_Date }} <br>
+                        <br><br>
+                        Overhaul Period: {{eqeditform.Overhaul_Period}} &nbsp;
+                        Overhaul Value: {{eqeditform.Overhaul_Value}} &nbsp;
+                        End Of Life:{{eqeditform.End_of_Life}} <br>
+                        <br><br>
+                        Engine HP: {{ eqeditform.Engine_HP_Rating }} &nbsp;
+                        CANMET: {{ eqeditform.CANMET_Number }} &nbsp;
+                        Ventilation: {{ eqeditform.Ventilation_Rating }} CFM  <br>
+                        <br><br>
+                        Eng_Tier: {{ eqeditform.Eng_Tier }} &nbsp;
+                        Cab Style: {{ eqeditform.Cab_Style }} &nbsp;
+                        Box Style: {{ eqeditform.Box_Type }} <br>
+                        <br>
+                        Additional Information: <br>
+                        {{ eqeditform.Additional_Information }}
+                        <br><br>
+                    </div>
+
+                    <div id="meter-section">
+                        <h4>
+                            Meter Configuration
+                            <button type="button" class="button" id="add-meter-btn" style="margin-left: 15px;">Add Meter</button>
+                        </h4>
+                        {{ meter_formset.management_form }}
+                        <div id="meter-form-list">
+                            {% for m_form in meter_formset %}
+                                <div class="meter-item" style="margin-bottom: 10px; padding: 10px; background: #f7e7ce;">
+                                    Meter:
+                                    {{ m_form.meter_type }}
+                                    {{ m_form.id }}
+                                    <span style="display:none;">
+                                        {{ m_form.DELETE }}
+                                    </span>
+                                    <button type="button" class="button delete-row-btn" style="background:#ff4444; color:#ffd300; margin-left:10px;">Remove</button>
+                                    {% for hidden in m_form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                    </div>
+
+                    <div id="empty-form" style="display: none;">
+                        <div class="meter-item" style="margin-bottom: 10px; padding: 10px; background: #f7e7ce;">
+                            Meter Type:
+                            <select name="meters-__prefix__-meter_type" class="input">
+                                {% for value, text in meter_formset.empty_form.fields.meter_type.choices %}
+                                    <option value="{{ value }}">{{ text }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="button delete-row-btn" style="background:#ff4444; color:#ffd300; margin-left:10px;">Remove</button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                    <p style="color:red; padding:20px;">
+                        Enter an Equipment Number above and click the magnifying glass to load data.
+                    </p>
+                {% endif %}
+             </form>
+        </div>
+    </div>
+
+<!-- Meter JavaScript -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const addButton = document.getElementById("add-meter-btn");
+        const formList = document.getElementById("meter-form-list");
+        const totalForms = document.getElementById("id_meters-TOTAL_FORMS");
+        const emptyFormTemplate = document.getElementById("empty-form").innerHTML;
+        if (!addButton || !totalForms) return;
+        addButton.addEventListener("click", function() {
+            const formIndex = parseInt(totalForms.value);
+            let html = emptyFormTemplate.replace(/__prefix__/g, formIndex);
+            formList.insertAdjacentHTML("beforeend", html);
+            totalForms.value = formIndex + 1;
+        });
+        formList.addEventListener("click", function(e) {
+            if (e.target.classList.contains("delete-row-btn")) {
+                const row = e.target.closest(".meter-item");
+                const deleteBox = row.querySelector("input[type='checkbox'][name$='DELETE']");
+                if (deleteBox) {
+                    deleteBox.checked = true;
+                    row.style.display = "none";
+                } else {
+                    row.remove();
+                }
+            }
+        });
+    });
+    </script>
+{% endblock %}

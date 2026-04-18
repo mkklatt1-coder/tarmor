@@ -1,0 +1,178 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Top Failures
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'kpis:kpis' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Top Failures </h2>
+        <br>
+        <div>
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'kpis:top_failures' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form class="form" id="search-form"  method="GET" action="{% url 'kpis:top_failures' %}">
+                Start Date: <input type="date" name="start_date" class="input" value="{{ filters.start_date }}"> &nbsp;
+                End Date: <input type="date" name="end_date" class="input" value="{{ filters.end_date }}"> &nbsp;
+
+                Asset Type: <input type="text" name="asset_type" placeholder="Asset Type" class="input" value="{{ filters.asset_type }}"> &nbsp;
+                Equipment Type: <input type="text" name="equipment_type" value="{{ filters.equipment_type }}" placeholder="Equipment Type" class="input"> &nbsp;
+                Equipment Number: <input type="text" name="equipment_number" value="{{ filters.equipment_number }}" placeholder="Equipment Number" class="input"> <br>
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+            </form>
+            <br>
+        </div>
+        <br>
+
+        <h3>Failure Count:</h3>
+        <br>
+
+        <div class="container-wrapper">
+            
+            <table class="table-container">
+                <thead>
+                    <tr>
+                        <th class="th">System</th>
+                        <th class="th">Occurrences</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in system_counts %}
+                    <tr>
+                        <td class="td">{{ item.obj }}</td>
+                        <td class="td"><strong>{{ item.total }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">No failures found for this criteria.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <table class="table-container">
+                <thead>
+                    <tr>
+                        <th class="th">Component</th>
+                        <th class="th">Occurrences</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in component_counts %}
+                    <tr>
+                        <td class="td">{{ item.obj }}</td>
+                        <td class="td"><strong>{{ item.total }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">No failures found for this criteria.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <table class="table-container">
+                <thead>
+                    <tr>
+                        <th class="th">Failure Mode</th>
+                        <th class="th">Occurrences</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in mode_counts %}
+                    <tr>
+                        <td class="td">{{ item.obj }}</td>
+                        <td class="td"><strong>{{ item.total }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">No failures found for this criteria.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <table class="table-container">
+                <thead>
+                    <tr>
+                        <th class="th">Action</th>
+                        <th class="th">Occurrences</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in action_counts %}
+                    <tr>
+                        <td class="td">{{ item.obj }}</td>
+                        <td class="td"><strong>{{ item.total }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2">No failures found for this criteria.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+        <br>
+
+        <div class="form">
+            <form class="form" id="sesarch_failures_form" method="POST">
+                <h3> Search Results </h3>
+                <br>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=work_order&{{ filter_url }}" class="sort_header">WO{% if sort_by == 'work_order' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=repair_description&{{ filter_url }}" class="sort_header">Repair Description{% if sort_by == 'repair_description' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=asset_type&{{ filter_url }}" class="sort_header">Asset Type{% if sort_by == 'asset_type' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=equipment_number&{{ filter_url }}" class="sort_header">Eq Number{% if sort_by == 'equipment_number' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=equipment_description&{{ filter_url }}" class="sort_header">Eq Description{% if sort_by == 'equipment_description' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=fc_system&{{ filter_url }}" class="sort_header">System{% if sort_by == 'fc_system' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=fc_component&{{ filter_url }}" class="sort_header">Component{% if sort_by == 'fc_component' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=fc_failure_mode&{{ filter_url }}" class="sort_header">Failure Mode{% if sort_by == 'fc_failure_mode' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=fc_action&{{ filter_url }}" class="sort_header">Action{% if sort_by == 'fc_action' %}▲{% endif %}</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for wo in work_orders %}
+                        <tr>
+                            <td class="td">{{ wo.work_order }}</td>
+                            <td class="td">{{ wo.repair_description }}</td>
+                            <td class="td">{{ wo.equipment.Asset_Type }}</td>
+                            <td class="td">{{ wo.equipment.Equipment_Number }}</td>
+                            <td class="td">{{ wo.equipment.Equipment_Description }}</td>
+                            <td class="td">{{ wo.fc_system }}</td>
+                            <td class="td">{{ wo.fc_component }}</td>
+                            <td class="td">{{ wo.fc_failure_mode }}</td>
+                            <td class="td">{{ wo.fc_action }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5">No failures found for this criteria.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function exportExcel() {
+            const currentParams = window.location.search;
+            window.location.href = "{% url 'kpis:export_top_failures_excel' %}" + currentParams;
+        }
+    </script>
+{% endblock %}

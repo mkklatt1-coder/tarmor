@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Search Plan WOs{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="{% url 'planning:export_plan_wos_excel' %}?{{ filter_url }}">Export</a></li>
+            <li><a href="{% url 'planning:planning' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2> Search "In Planning" Work Orders </h2>
+    <br>
+    <form class="form" id="search-wo"  method="GET" action="{% url 'planning:search_plan_orders' %}">
+        <table class="table-container">
+            <thead>
+                <tr>
+                    <th class="th"><a href="?sort=work_order&{{ filter_url }}" class="sort_header">Work Order{% if sort_by == 'work_order' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=equipment&{{ filter_url }}" class="sort_header">Equipment Number{% if sort_by == 'equipment' %}▲{% endif %}</a></th>
+                    <th class="th">Equipment Description</th>
+                    <th class="th">Troubleshoot Description</th>
+                    <th class="th">Repair Description</th>
+                    <th class="th"><a href="?sort=date_created&{{ filter_url }}" class="sort_header">Date Created{% if sort_by == 'date_created' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=plan_start_date&{{ filter_url }}" class="sort_header">Plan Start Date{% if sort_by == 'plan_start_date' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?sort=priority&{{ filter_url }}" class="sort_header">Priority{% if sort_by == 'priority' %}▲{% endif %}</a></th>
+                    <th class="th">Edit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for work_order in work_orders %}
+                <tr>
+                    <td class="td">{{ work_order.work_order }}</td>
+                    <td class="td">{{ work_order.equipment_number }}</td>
+                    <td class="td">{{ work_order.equipment_description }}</td>
+                    <td class="td">{{ work_order.troubleshoot_description }}</td>
+                    <td class="td">{{ work_order.repair_description }}</td>
+                    <td class="td">{{ work_order.date_created }}</td>
+                    <td class="td">{{ work_order.plan_start_date }}</td>
+                    <td class="td">{{ work_order.priority }}</td>
+                    <td class="td"><a href="{% url 'work_orders:edit_work_order' work_order.pk %}">Edit</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">No work orders found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+</div>
+{% endblock %}

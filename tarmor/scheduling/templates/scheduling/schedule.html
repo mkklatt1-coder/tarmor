@@ -1,0 +1,95 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %} Schedule {% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <a > Save </a>
+            </li>
+            <li><a href="{% url 'scheduling:scheduling' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h1>Weekly Schedule</h1>
+    <form method="get">
+        <label>Week:</label>
+            <select name="week" onchange="this.form.submit()">
+                {% for w in weeks %}
+                <option value="{{ w.week_number }}" {% if selected_week == w %}selected{% endif %}>
+                    Week {{ w.week_number }}
+                </option>
+                {% endfor %}
+            </select>
+        <label>Garage:</label>
+            <select name="garage" onchange="this.form.submit()">
+                {% for g in garages %}
+                <option value="{{ g.id }}" {% if selected_garage == g %}selected{% endif %}>
+                    {{ g.name }}
+                </option>
+                {% endfor %}
+            </select>
+    </form>
+
+    <h3>Daily Available vs Planned Hours</h3>
+    <table>
+        <tr>
+            {% for i in 0|to:7 %}
+            <th>{{ selected_week.start_date|add_days:i }}</th>
+            {% endfor %}
+        </tr>
+        <tr>
+            {% for i in 0|to:7 %}
+            <td>{{ daily_hours.i|default:0 }}</td>
+            {% endfor %}
+        </tr>
+    </table>
+
+    <h3>Work Orders</h3>
+    <table id="wo-table">
+        <tr>
+            <th>Work Order</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Planned Start</th>
+            <th>Estimated Hours</th>
+        </tr>
+        {% for wo in work_orders %}
+        <tr data-id="{{ wo.id }}">
+            <td>{{ wo.work_order_no }}</td>
+            <td>{{ wo.description }}</td>
+            <td>{{ wo.job_status }}</td>
+            <td>
+            <input type="date" value="{{ wo.planned_start|date:'Y-m-d' }}"
+                    onchange="updateDate({{ wo.id }}, this.value)">
+            </td>
+            <td>{{ wo.estimated_hours }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No work orders match filters.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+<script>
+  function updateDate(woId, dateValue) {
+    fetch(`/scheduling/update/${woId}/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: `planned_start=${dateValue}`
+    });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	KPIs
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'kpis:availability_utilisation_report' %}">Availability</a> </li>
+            <li><a href="{% url 'kpis:mtbf_report' %}">MTBF</a> </li>
+            <li><a href="{% url 'kpis:mttr_report' %}">MTTR</a> </li>
+            <li><a href="{% url 'kpis:failure_frequency_report' %}">Fail Freq</a> </li>
+            <li><a href="{% url 'kpis:top_failures' %}">Top Fail</a> </li>
+            <li><a >Sched Comp</a> </li>
+            <br>
+            <li><a href="{% url 'reliability:reliability' %}">Return</a> </li>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>KPIs</h2>
+        <div>
+        <img class="image" src="{% static 'Images/kpi_flow.jpeg' %}" >
+        </div>
+
+    </div>
+{% endblock %}

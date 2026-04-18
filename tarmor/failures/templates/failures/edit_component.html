@@ -1,0 +1,136 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Edit Component
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('hidden-submit').click();">Save</a>
+            </li>
+            <li><a href="{% url 'failures:components' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            {% if formset.forms %}
+                {% with first_form=formset.forms|first %}
+                    {% if first_form.instance.pk %}
+                        <li>
+                            <a href="{% url 'failures:delete_component' first_form.instance.pk %}" 
+                                class="has-text-danger" 
+                                onclick="return confirm('This will permanently delete the information! Are you sure you want to proceed?');">Delete
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Edit or Remove Component </h2>
+        <br>
+
+        <h5 class="form"> &nbsp; Component &nbsp; &nbsp;
+            <form method="GET" action="{% url 'failures:edit_component' %}" style="display:inline;">
+                <input class="input" type="text" id="component-search" name="component_name" list="component-options" value="{{ component_name }}" placeholder="Component Name.">
+                <datalist id="component-options"> 
+                    {% for comp in all_components %} <option value="{{ comp.component_name }}"> {% endfor %} 
+                </datalist>
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+            </form> 
+        </h5>
+        <br>
+
+        <div id="form-container" style="{% if not component_name %}display: none;{% endif %}">
+            <form class="form" id="edit_component_form" method="POST">
+                {% csrf_token %}
+                {{ formset.management_form }}
+
+                <button type="submit" id="hidden-submit" style="display: none;"></button>
+
+                {% if formset.non_form_errors %}
+                    <div>{{ formset.non_form_errors }}</div>
+                    <br>
+                {% endif %}
+                    
+                <div class="form" id="form-container">
+                    {% for form in formset %}
+
+                        <div class="component-form">
+                            
+                            {{ form.id }}
+
+                            {% if form.errors %}
+                                <div> {{ form.errors }} </div>
+                            {% endif %}
+
+                            <div> 
+                                <label>Combined Component Key:</label>
+                                <input type="text" class="locked" value="{{ form.instance.combined_comp_key }}">
+                            </div>
+                            <br>
+
+                            <div>
+                                <label>Component Name:</label>
+                                {{ form.component_name }}
+                            </div>
+                            <br>
+
+                            <div>
+                                <label>Component Key: <small>Note: this must be 4 characters in UPPERCASE</small></label>
+                                {{ form.component_key }}
+                            </div>
+                            <br>
+
+                            <div>
+                                <label>Combined System Key:</label>
+                                {{ form.combined_sys_key }}
+                            </div>
+                            <br>
+                        </div>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('component-search');
+        const datalist = document.getElementById('component-options');
+        const formContainer = document.getElementById('edit-form-container');
+
+        if ("{{ component_name }}".length > 0) {
+            formContainer.style.display = 'block';
+        }
+
+        searchInput.addEventListener('input', function() {
+            const options = Array.from(datalist.options).map(opt => opt.value);
+            
+            if (options.includes(this.value)) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('component_name', this.value);
+                window.location.href = url.href;
+            }
+        });
+
+        // Auto-submit when an option is selected from the datalist
+        document.getElementById('component-search').addEventListener('input', function() {
+            const options = Array.from(document.getElementById('component-options').options).map(opt => opt.value);
+            if (options.includes(this.value)) {
+                this.form.submit();
+            }
+        });
+    </script>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Edit Cost Centre {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <!-- Updated ID to match the form below -->
+            <li> <a href="javascript:void(0)" onclick="document.getElementById('cost_centre_form').submit();">Save</a> </li>
+            <li> <a href="{% url 'facilities:facilities' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a> </li>
+            <li> <a href="{% url 'core:home' %}">Main</a> </li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <div class="form">
+        <h5 class="form">
+            <span> Edit Cost Centre &nbsp;</span>
+            <form method="GET" action="{% url 'facilities:edit_costcentre' %}" style="display: inline;">
+                <input class="input" type="text" name="q" value="{{ request.GET.q }}" placeholder="Search CC...">
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" style="vertical-align: middle;">
+            </form>
+        </h5>
+    </div>
+    
+    <br>
+
+    <div class="schedule-panel">
+        <form method="post" id="cost_centre_form">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.as_p }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

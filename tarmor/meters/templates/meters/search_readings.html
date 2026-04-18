@@ -1,0 +1,85 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+	Search Mtr Readings
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+
+        <ul class="leftnavbar">
+            <li><a class="nav-link" href="{% url 'meters:export' %}?{{ request.GET.urlencode }}">Export</a> </li>
+            <li><a href="{% url 'meters:meters' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li>   
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <h2> Search Meter Readings </h2>
+        <br>
+
+        <div >
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="meter-search-form" >
+                    <a href="{% url 'meters:search_readings' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form id="meter-search-form"  method="GET" action=".">
+                Equipment Number: <input type="text" name="Equipment_Number" class="input"> &nbsp;
+                Asset Type: <input type="text" name="Asset_Type" class="input"> &nbsp;
+                Equipment Type: <input type="text" name="Equipment_Type" class="input"> <br>
+                <br>
+                Equipment Status: <input type="text" name="Equipment_Status" class="input"> &nbsp;
+                Make: <input type="text" name="Make" class="input"> &nbsp;
+                Model: <input type="text" name="Model" class="input"> <br>
+            </form>
+            <br>
+        </div>
+
+        <div >
+            <h2 > Search Results </h2>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=Equipment__Equipment_Number&{{ request.GET.urlencode }}" class="sort_header">Equipment Number{% if sort_by == 'Equipment__Equipment_Number' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Date&{{ request.GET.urlencode }}" class="sort_header">Date{% if sort_by == 'Date' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Meter_Type&{{ request.GET.urlencode }}" class="sort_header">Meter Type{% if sort_by == 'Meter_Type' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Meter_Reading&{{ request.GET.urlencode }}" class="sort_header">Meter Reading{% if sort_by == 'Meter_Reading' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Reading_Difference&{{ request.GET.urlencode }}" class="sort_header">Meter Diff{% if sort_by == 'Reading_Difference' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Total_Meter_Value&{{ request.GET.urlencode }}" class="sort_header">Total Meter Value{% if sort_by == 'Total_Meter_Value' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Meter_Replaced&{{ request.GET.urlencode }}" class="sort_header">Meter Replaced{% if sort_by == 'Meter_Replaced' %}▲{% endif %}</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in equipment_list %}
+                            <tr>
+                                <td class="td">{{ item.Equipment.Equipment_Number }}</td>
+                                <td class="td">{{ item.Date }}</td>
+                                <td class="td">{{ item.Meter_Type.meter_type }}</td>
+                                <td class="td">{{ item.Meter_Reading }}</td>
+                                <td class="td">{{ item.Reading_Difference }}</td>
+                                <td class="td">{{ item.Total_Meter_Value }}</td>
+                                <td class="td">{{ item.Meter_Replaced }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10">No records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

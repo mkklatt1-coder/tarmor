@@ -1,0 +1,96 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Search Facilities {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+<div class="leftnavbar">
+    <ul>
+
+        <li> <a >Export</a> </li>
+        <li> <a href="{% url 'facilities:facilities' %}">Return</a> </li>
+        <li> <a href="{% url 'core:home' %}">Main</a> </li>
+
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2> Search Facilities </h2>
+    <br>
+
+   <div >
+        <h5 > 
+            &nbsp; Search Criteria &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                <a href="{% url 'facilities:search_facilities' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h5>
+        <br>
+        
+        <form id="search-form"  method="get" action="{% url 'facilities:search_facilities' %}">
+            Facility Code <input type="text" name="Facility_Code" class="input" value="{{ Facility_Code }}"> &nbsp;
+            Facility Name <input type="text" name="Facility_Name" class="input" value="{{ Facility_Name }}"> &nbsp;
+            Cost Centre <input type="text" name="Cost_Centre" class="input" value="{{ Cost_Centre }}"> <br>
+        </form>
+        <br>
+    </div>
+        <br>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <div class="table-container">
+        
+        <table class="table" method="post" id="form">
+            <thead>
+                <tr>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Facility_Code" class="sort_header">Facility Code{% if sort_by == 'Facility_Code' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Facility_Name" class="sort_header">Facility Name{% if sort_by == 'Facility_Name' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Cost_Centre" class="sort_header">Cost Centre{% if sort_by == 'Cost_Centre' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Street_Address" class="sort_header">Street Address{% if sort_by == 'Street_Address' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=City" class="sort_header">City{% if sort_by == 'City' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Province_State" class="sort_header">Province / State{% if sort_by == 'Province_State' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Country" class="sort_header">Country{% if sort_by == 'Country' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Postal_Zip_Code" class="sort_header">Postal / Zip Code{% if sort_by == 'Postal_Zip_Code' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Contact_Name" class="sort_header">Contact Name{% if sort_by == 'Contact_Name' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Contact_Phone_Number" class="sort_header">Contact Phone Number{% if sort_by == 'Contact_Phone_Number' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Email_Address" class="sort_header">Email Address{% if sort_by == 'Email_Address' %}▲{% endif %}</a></th>
+                    <th class="th"><a href="?Facility_Code={{ Facility_Code }}&Facility_Name={{ Facility_Name }}&Cost_Centre={{ Cost_Centre }}&sort=Additional_Information" class="sort_header">Additional Information{% if sort_by == 'Additional_Information' %}▲{% endif %}</a></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in facility_list %}
+                <tr>
+                    <td class="td">{{item.Facility_Code}}</td>
+                    <td class="td">{{item.Facility_Name}}</td>
+                    <td class="td">{{item.Cost_Centre}}</td>
+                    <td class="td">{{item.Street_Address}}</td>
+                    <td class="td">{{item.City}}</td>
+                    <td class="td">{{item.Province_State}}</td>
+                    <td class="td">{{item.Country}}</td>
+                    <td class="td">{{item.Postal_Zip_Code}}</td>
+                    <td class="td">{{item.Contact_Name}}</td>
+                    <td class="td">{{item.Contact_Phone_Number}}</td>
+                    <td class="td">{{item.Email_Address}}</td>
+                    <td class="td">{{item.Additional_Information}}</td>
+                </tr>
+            
+                {% empty %}
+                    <tr><td colspan="12">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Add System
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('create_sys').submit();">Save</a>
+            </li>
+            <li><a href="{% url 'failures:system' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li> <a href="javascript:void(0)" onclick="toggleMassUpload()">Mass Upload</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Add New System </h2>
+        <br>
+        <div id="mass-upload-instructions" style="display: none; background: #2c2c2c; color: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="color: #00d1b2;">Mass Upload Instructions</h3>
+
+            <p>All "KEYS" must be in UPPERCASE</p>
+            <p>File must be <b>.csv</b> format with no header row. Column order:</p>
+            
+            <code style="background: #444; color: #fff; padding: 5px; display: block; margin: 10px 0;">
+                Asset Key (F or M), System Name, System Key (3 chars)
+            </code>
+            <br>
+            <form action="{% url 'failures:upload_systems_csv' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="field has-addons">
+                    <div class="control">
+                        <input class="input" type="file" name="csv_file" accept=".csv" required>
+                    </div>
+                    <br>
+                    <div class="control">
+                        <button type="submit" class="button is-info">Upload CSV</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <h2> &nbsp; System &nbsp; &nbsp; &nbsp; <button class="button" type="button" id="add-sys">Add Sys</button></h2>
+        <br>
+
+        <form class="form" id="create_sys" method="POST" action=".">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            {% if formset.non_form_errors %}
+                <div>
+                    {{ formset.non_form_errors }}
+                </div>
+                <br>
+            {% endif %}
+                
+            <div class="form" id="form-container">
+                {% for form in formset %}
+                    <div class="system-form">
+                        {% if form.non_field_errors %}
+                            <div>
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <label>Asset Key:</label>
+                            {{ form.asset_key }}
+                            {% if form.asset_key.errors %}
+                                <div>{{ form.asset_key.errors }}</div>
+                            {% endif %}
+                            <small>Is this Fixed (F) or Mobile (M) equipment?</small>
+                        </div>
+                        <br>
+                        <div>
+                            <label>System Name:</label>
+                            {{ form.system_name }}
+                            {% if form.system_name.errors %}
+                                <div>{{ form.system_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <br>
+                        <div>
+                            <label>System Key:</label>
+                            {{ form.system_key }}
+                            {% if form.system_key.errors %}
+                                <div>{{ form.system_key.errors }}</div>
+                            {% endif %}
+                            <small>Must be a unique 3 character identifier (uppercase).</small>
+                        </div>
+                        <br>
+                    </div>
+                {% endfor %}
+            </div>
+        </form>
+        <div id="empty-form" style="display:none;">
+            <h4> Next Item: </h4>
+            <div class="system-form">
+                <div>
+                    <label>Asset Key:</label>
+                    {{ formset.empty_form.asset_key }}
+                    <small>Is this Fixed (F) or Mobile (M) equipment?</small>
+                </div>
+                <br>
+                <div>
+                    <label>System Name:</label>
+                    {{ formset.empty_form.system_name }}
+                </div>
+                <br>
+                <div>
+                    <label>System Key:</label>
+                    {{ formset.empty_form.system_key }}
+                    <small>Must be a unique 3 character identifier (uppercase).</small>
+                </div>
+                <br>
+                <hr>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMassUpload() {
+            const box = document.getElementById("mass-upload-instructions");
+            if (box) {
+                if (box.style.display === "none" || box.style.display === "") {
+                    box.style.display = "block";
+                } else {
+                    box.style.display = "none";
+                }
+            }
+        }
+
+        const addBtn = document.getElementById('add-sys');
+        if (addBtn) {
+            addBtn.addEventListener('click', function () {
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                const currentFormCount = parseInt(totalForms.value, 10);
+                const emptyFormTemplate = document.getElementById('empty-form').innerHTML.replace(/__prefix__/g, currentFormCount);
+                const container = document.getElementById('form-container');
+                container.insertAdjacentHTML('beforeend', emptyFormTemplate);
+                totalForms.value = currentFormCount + 1;
+            });
+        }
+    </script>
+{% endblock %}

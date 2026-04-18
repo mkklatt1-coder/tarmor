@@ -1,0 +1,200 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Edit QM Record {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <button type="submit" form="qm-form" name="save_continue" value="1" class="button">
+                    Save/Cont
+                </button>
+            </li>
+             <li>
+                <button type="submit" form="qm-form" name="save_exit" value="1" class="button">
+                    Save/Exit
+                </button>
+            </li>
+            <li><a href="{% url 'planning:planning' %}"
+                onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+        
+    <h2> Edit Quality Maintenance Document</h2>
+    <br>
+    <div class="form">
+        <form method="post" id="qm-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if qmform.errors or step_formset.errors %}
+                **Please fix the following:** 
+                {{ qmform.non_field_errors }}
+                {% for field in qmform %}
+                    {% if field.errors %}
+                    - {{ field.label }}: {{ field.errors|striptags }}
+                    {% endif %}
+                {% endfor %}
+                {% for form in step_formset %}
+                    {% for field in form %}
+                        {% if field.errors %}
+                        - Sequence {{ forloop.parentloop.counter }} {{ field.label }}: {{ field.errors|striptags }}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
+
+            {{ step_formset.management_form }}
+            <label>QM Number:</label> {{ qmform.qm_number }} &nbsp;
+            <label>Equipment:</label> {{ qmform.equipment }} &nbsp;
+            <label>Description:</label> {{ qmform.description }} &nbsp;
+            <label>QM Type:</label> {{ qmform.qm_type }} &nbsp;
+            <label>QM Step Type:</label> {{ qmform.step_type }} <br>
+            <br> 
+            <label>Active:</label> {{ qmform.active }} &nbsp;
+            <label>Meter Start:</label> {{ qmform.meter_start }} &nbsp;
+            <label>Meter Type:</label> {{ qmform.meter_type }} &nbsp;
+            <label>Start Date:</label> {{ qmform.start_date }} &nbsp;
+            <label>Work Order Lead Days:</label> {{ qmform.work_order_lead_days }} <br>
+            <br>
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                <label>Single Interval Value:</label> {{ qmform.single_interval_value }} &nbsp;
+                <label>Calendar Unit:</label> {{ qmform.calendar_unit }} &nbsp;
+                <label>Est Hrs:</label> {{ qmform.est_work_hours }} &nbsp;
+                <label>Checklist:</label>
+                {% if qmform.instance.single_interval_checklist %}
+                    <div style="margin-top: 5px;">
+                        <a href="{{ qmform.instance.single_interval_checklist.url }}" target="_blank" 
+                            class="badge" 
+                            style="text-decoration: none; background-color: #28a745; color: white; padding: 5px; margin-left: 10px; border-radius: 5px;">
+                            ✓ View File
+                        </a>
+                        <a href="javascript:void(0)" 
+                            class="badge"
+                            style="text-decoration: none; background-color: #ff5349; color: white; padding: 5px; margin-left: 10px; border-radius: 5px;"
+                            onclick="this.nextElementSibling.style.display='flex'; this.style.display='none'; this.previousElementSibling.style.display='none';">
+                            Change
+                        </a>
+                        <span style="display: none; margin-left: 10px;">
+                            {{ qmform.single_interval_checklist }}
+                        </span>
+                    </div>
+                {% else %}
+                    <div style="margin-top: 5px;">
+                        {{ qmform.single_interval_checklist }}
+                    </div>
+                {% endif %}
+            </div>
+            <br>
+
+            <p><strong>Sequence Increments:</strong> <button type="button" id="add-step-btn">Add Step</button></p>
+            <div id="step-form-container">
+                {{ formset.management_form }}
+                {% for sform in step_formset %}
+                    <label>Step Order:</label> {{ sform.step_order }} &nbsp;
+                    <label>Interval Value:</label> {{ sform.interval_value }} &nbsp;
+                    <label>Interval Unit:</label> {{ sform.interval_unit }} &nbsp;
+                    <label>Step Label:</label> {{ sform.step_label }} &nbsp;
+                    <label>Est Hrs:</label> {{ sform.est_work_hours }} &nbsp;
+                    <label>Delete?</label> {{ sform.DELETE }}<br>
+                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                        <label>Checklist:</label>
+                        {% if sform.instance.step_checklist %}
+                            <div style="margin-top: 5px;">
+                                <a href="{{ sform.instance.step_checklist.url }}" target="_blank" 
+                                    class="badge" 
+                                    style="text-decoration: none; background-color: #28a745; color: white; padding: 5px; margin-left: 10px; border-radius: 5px;">
+                                    ✓ View File
+                                </a>
+                                <a href="javascript:void(0)" 
+                                    class="badge"
+                                    style="text-decoration: none; background-color: #ff5349; color: white; padding: 5px; margin-left: 10px; border-radius: 5px;"
+                                    onclick="this.nextElementSibling.style.display='flex'; this.style.display='none'; this.previousElementSibling.style.display='none';">
+                                    Change
+                                </a>
+                                <span style="display: none; margin-left: 10px;">
+                                    {{ sform.step_checklist }}
+                                </span>
+                            </div>
+                        {% else %}
+                            <div style="margin-top: 5px;">
+                                {{ sform.step_checklist }}
+                            </div>
+                        {% endif %}
+                    </div> 
+                    <br>
+                    {% for hidden in sform.hidden_fields %}
+                    {{ hidden }}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+
+            <p><strong>Forecast:</strong></p>
+
+            <label>Next Due Date: </label>{{ forecast.next_due_date }} &nbsp;
+            <label>Next Due Meter: </label>{{ forecast.next_due_meter }} &nbsp;
+            <label>Work Order Trigger Date: </label>{{ trigger_date }} &nbsp;
+            {% if qm.qm_type == 'METER' %}
+                <label>Current Meter: </label>{{ current_meter }} &nbsp;
+                <label>Average Daily Usage: </label>{{ avg_daily_usage }}
+            {% endif %}<br>
+            <br>
+
+            <label>Next Service: </label>
+                {% if forecast.step %}
+                    {{ forecast.step.step_order }} - {{ forecast.step.interval_value }} 
+                    {% if forecast.step.step_label %}({{ forecast.step.step_label }}){% endif %}
+                {% else %}
+                N/A
+                {% endif %} &nbsp;
+            <label>Work Order Trigger Date: </label>{{ trigger_date }} <br>
+            <br>
+
+            Create Work Order Now: <a class="button" href="{% url 'planning:create_qm_work_order_now' qm.pk %};">Create WO</a>
+
+
+            <p><strong>QM Information</strong></p>
+
+            <label>QM Number: </label>{{ qm.qm_number }} &nbsp;
+            <label>Created: </label>{{ qm.created_at }} &nbsp;
+            <label>Last Updated: </label>{{ qm.updated_at }} <br>
+             <br>
+        </form>
+        <div id="empty-form-template" style="display: none;">
+            <div class="step-row">
+                <label>Step Order:</label> {{ step_formset.empty_form.step_order }} &nbsp;
+                <label>Interval Value:</label> {{ step_formset.empty_form.interval_value }} &nbsp;
+                <label>Interval Unit:</label> {{ step_formset.empty_form.interval_unit }} &nbsp;
+                <label>Step Label:</label> {{ step_formset.empty_form.step_label }}&nbsp;
+                <label>Delete?</label> {{ step_formset.empty_form.DELETE }}<br>
+                <br>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('add-step-btn').addEventListener('click', function() {
+        const totalForms = document.getElementById('id_steps-TOTAL_FORMS'); 
+        
+        const currentFormCount = parseInt(totalForms.value);
+
+        const template = document.getElementById('empty-form-template').innerHTML;
+
+        const newFormHtml = template.replace(/__prefix__/g, currentFormCount);
+
+        const container = document.getElementById('step-form-container');
+        const newFormElement = document.createElement('div');
+        newFormElement.innerHTML = newFormHtml;
+        container.appendChild(newFormElement);
+
+        totalForms.value = currentFormCount + 1;
+    });
+</script>
+{% endblock %}

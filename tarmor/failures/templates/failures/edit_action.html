@@ -1,0 +1,101 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Edit Action
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('edit_action').submit();">Save</a>
+            </li>
+            <li><a href="{% url 'failures:actions' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            {% if formset.forms %}
+                {% with first_form=formset.forms|first %}
+                    {% if first_form.instance.pk %}
+                        <li>
+                            <a href="{% url 'failures:delete_action' first_form.instance.pk %}" 
+                                class="has-text-danger" 
+                                onclick="return confirm('This will permanently delete the information! Are you sure you want to proceed?');">Delete
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Edit / Delete Action </h2>
+        <br>
+
+        <h5 class="form"> &nbsp; Action &nbsp; &nbsp;
+            <form method="GET" action="{% url 'failures:edit_action' %}" style="display:inline;">
+                <input class="input" type="text" id="action-search" name="action_name" list="action-options" value="{{ action_name }}" placeholder="Action">
+                <datalist id="action-options"> 
+                    {% for act in all_actions %} <option value="{{ act.action_name }}"> {% endfor %} 
+                </datalist>
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+            </form> 
+        </h5>
+        <br>
+
+        <form class="form" id="edit_action" method="POST" action="?action_name={{ action_name|urlencode }}">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            {% if formset.non_form_errors %}
+                <div>
+                    {{ formset.non_form_errors }}
+                </div>
+                <br>
+            {% endif %}
+                
+            <div class="form" id="form-container">
+                {% for form in formset %}
+                    {{ form.id }}
+                    <div class="action-form">
+                        {% if form.non_field_errors %}
+                            <div>
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <label>Action Name:</label>
+                            {{ form.action_name }}
+                        </div>
+                        <br>
+                        <div>
+                            <label>Action Key:</label>
+                            {{ form.action_key }}
+                        </div>
+                        <br>
+                    </div>
+                {% endfor %}
+            </div>
+        </form>
+        
+    </div>
+
+    <script>
+
+        document.getElementById('action-search').addEventListener('input', function() {
+            const options = Array.from(document.getElementById('action-options').options).map(opt => opt.value);
+            if (options.includes(this.value)) {
+                this.form.submit();
+            }
+        });
+
+    </script>
+{% endblock %}

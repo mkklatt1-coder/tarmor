@@ -1,0 +1,89 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Search Certifications
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'personnel:export_certs_excel' %}?{{ filter_url }}">Export</a></li>
+        <li><a href="{% url 'personnel:personnel' %}">Return</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Search Certifications</h2>
+    <br>
+    <div >
+        <h5 > 
+            &nbsp; Search Criteria &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                <a href="{% url 'personnel:search_certifications' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h5>
+        <br>
+        <form id="search-form"  method="GET" action="{% url 'personnel:search_certifications' %}">
+            First Name: <input type="text" name="first_name" value="{{ first_name }}" placeholder="First Name" class="input"> &nbsp;
+            Last Name: <input type="text" name="last_name" value="{{ last_name }}" placeholder="Last Name" class="input"> &nbsp;
+            Position: <input type="text" name="position" value="{{ position }}" placeholder="Position" class="input"> &nbsp;
+            Location: <input type="text" name="location" value="{{ location }}" placeholder="Location" class="input">  &nbsp;
+            Status: <input type="text" name="location" value="{{ status }}" placeholder="Status" class="input"> <br>
+        </form>
+        <br>
+    </div>
+
+    <div >
+        <h2 > Search Results </h2>
+        <br>
+        <div class="table-container">
+            <table  class="table">
+                <thead>
+                    <tr>
+                        <th class="th"><a href="?sort=Employee__First_Name&{{ filter_url }}" class="sort_header">First Name{% if sort_by == 'Employee__First_Name' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Employee__Middle_Name&{{ filter_url }}" class="sort_header">Middle Name{% if sort_by == 'Employee__Middle_Name' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Employee__Last_Name&{{ filter_url }}" class="sort_header">Last Name{% if sort_by == 'Employee__Last_Name' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Employee__Status&{{ filter_url }}" class="sort_header">Status{% if sort_by == 'Employee__Status' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Employee__Position&{{ filter_url }}" class="sort_header">Position{% if sort_by == 'Employee__Position' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Employee__Location&{{ filter_url }}" class="sort_header">Location{% if sort_by == 'Employee__Location' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Certification&{{ filter_url }}" class="sort_header">Certification{% if sort_by == 'Certification' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Institution&{{ filter_url }}" class="sort_header">Institution{% if sort_by == 'Institution' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Date_Cert&{{ filter_url }}" class="sort_header">Cert Date{% if sort_by == 'Date_Cert' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Renewable&{{ filter_url }}" class="sort_header">Renewable{% if sort_by == 'Renewable' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=Renewal_Cost&{{ filter_url }}" class="sort_header">Renewal Cost{% if sort_by == 'Renewal_Cost' %}▲{% endif %}</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cert in certs %}
+                        <tr>
+                            <td class="td">{{ cert.Employee.First_Name }}</td>
+                            <td class="td">{{ cert.Employee.Middle_Name }}</td>
+                            <td class="td">{{ cert.Employee.Last_Name }}</td>
+                            <td class="td">{{ cert.Employee.Status }}</td>
+                            <td class="td">{{ cert.Employee.Position }}</td>
+                            <td class="td">{{ cert.Employee.Location }}</td>
+                            <td class="td">{{ cert.Certification }}</td>
+                            <td class="td">{{ cert.Institution }}</td>
+                            <td class="td">{{ cert.Date_Cert }}</td>
+                            <td class="td">{{ cert.Renewable }}</td>
+                            <td class="td">{{ cert.Renewal_Cost }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center;">No employees found matching those criteria.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

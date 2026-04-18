@@ -1,0 +1,91 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Edit Facility {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+<div class="leftnavbar">
+    <ul>
+
+        <li> <a href="javascript:void(0)" onclick="document.getElementById('form').submit();">Save</a> </li>
+        <li> <a href="{% url 'facilities:facilities' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a> </li>
+        <li> <a href="{% url 'core:home' %}">Main</a> </li>
+
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2> Edit Facilities </h2>
+    <br>
+
+   <div class="form">
+        <h5 class="form"> 
+            &nbsp; Search Facilities: &nbsp;
+                <a><form method="GET" action="{% url 'facilities:edit_facility' %}">
+                    <input class="input" type="text" name="Facility_Name" placeholder="Facility" value="{{ Facility_Name }}">
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo'>
+                </form></a>
+        </h5>
+        <br>
+        {% if messages %}
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
+        {% if matches %}
+            <h4>Matching Facilities</h4>
+            <ul>
+                {% for facility in matches %}
+                    <li>
+                        <a href="{% url 'facilities:edit_facility' facility.pk %}">
+                            {{ facility.Facility_Name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" id="form" enctype="multipart/form-data">
+
+            {% csrf_token %}
+            {% if instance %}
+                
+                Facility Code {{ form.Facility_Code }} <small>(4 digit code for shift rotation information)</small><br>
+                <br>
+                Facility Name {{ form.Facility_Name }}<br>
+                <br>
+                Cost Center {{ form.Cost_Centre }} &nbsp; Status {{ form.Status }}<br>
+                <br>
+                Street Address {{ form.Street_Address }} <br>
+                <br>
+                City {{ form.City }}  &nbsp; Province / State {{ form.Province_State }}  <br>
+                <br>
+                Country {{ form.Country }} <br>
+                <br>
+                Postal / Zip Code {{ form.Postal_Zip_Code }}  <br>
+                <br>
+                Contact Name {{ form.Contact_Name }} <br>
+                <br>
+                Contact Phone Number {{ form.Contact_Phone_Number }} <br>
+                <br>
+                Email Address {{ form.Email_Address }} <br>
+                <br>
+                Additional Information <br> {{ form.Additional_Information }} <br>
+
+            {% else %}
+                <p style="color:red; padding:20px;">
+                    Enter a Facility above and click the magnifying glass to load data.
+                </p>
+            {% endif %}
+        </form>
+    </div>
+
+</div>
+{% endblock %}

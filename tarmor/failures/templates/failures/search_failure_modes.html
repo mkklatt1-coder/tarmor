@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Search Failure Modes
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'failures:failure_modes' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Search Failure Modes </h2>
+        <br>
+        <div>
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'failures:search_failure_modes' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form id="search-form"  method="GET" action="{% url 'failures:search_failure_modes' %}">
+                Failure Mode: <input type="text" name="failure_mode" value="{{ failure_mode }}" placeholder="Failure Mode" class="input"> &nbsp;
+                Failure Code: <input type="text" name="failure_code" value="{{ failure_code }}" placeholder="Failure Code" class="input"> &nbsp;
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+            </form>
+            <br>
+        </div>
+
+        <div class="form">
+            <form class="form" id="sesarch_fm_form" method="POST">
+                <h2> Search Results </h2>
+                <br>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=failure_mode&{{ filter_url }}" class="sort_header">Failure Mode:{% if sort_by == 'failure_mode' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=failure_code&{{ filter_url }}" class="sort_header">Failure Code:{% if sort_by == 'failure_code' %}▲{% endif %}</a></th>
+                        </tr>
+                    <thead>
+                    <tbody>
+                        {% for fm in failure_modes %}
+                            <tr>
+                                <td class="td">{{ fm.failure_mode }}</td>
+                                <td class="td">{{ fm.failure_code }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No failure modes found matching those criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+    <script>
+        function exportExcel() {
+            const currentParams = window.location.search;
+            window.location.href = "{% url 'failures:export_failure_modes_excel' %}" + currentParams;
+        }
+        </script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Edit System
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('edit_system_form').submit();">Save</a>
+            </li>
+            <li><a href="{% url 'failures:system' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            {% if formset.forms.0.instance.pk %}
+                <li>
+                    <a href="{% url 'failures:system_delete' formset.forms.0.instance.pk %}" 
+                        class="has-text-danger" 
+                        onclick="return confirm('This will permanently delete the information! Are you sure you want to proceed?');">Delete
+                    </a>
+                </li>
+            {% endif %}
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Edit or Remove System </h2>
+        <br>
+
+        <h5 class="form"> &nbsp; System &nbsp; &nbsp;
+            <form method="GET" action="{% url 'failures:edit_system' %}" style="display:inline;">
+                <input class="input" type="text" id="system-search" name="system_name" list="system-options" value="{{ system_name }}" placeholder="System Name.">
+                <datalist id="system-options"> 
+                    {% for sys in all_systems %} <option value="{{ sys.system_name }}"> {% endfor %} 
+                </datalist>
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+            </form> 
+        </h5>
+        <br>
+
+        <div id="edit-form-container" style="{% if not system_name %}display: none;{% endif %}">
+            <form class="form" id="edit_system_form" method="POST" action="?system_name={{ system_name|urlencode }}">
+                {% csrf_token %}
+                {{ formset.management_form }}
+
+                {% if formset.non_form_errors %}
+                    <div>{{ formset.non_form_errors }}</div>
+                    <br>
+                {% endif %}
+                    
+                <div class="form" id="form-container">
+                    {% for form in formset %}
+
+                        <div class="system-form">
+                            
+                            {{ form.id }}
+
+                            {% if form.non_field_errors %}
+                                <div> {{ form.non_field_errors }} </div>
+                            {% endif %}
+
+                            <div> <label>Asset Key:</label>
+                                {{ form.asset_key }}
+                            </div>
+                            <br>
+
+                            <div>
+                                <label>System Name:</label>
+                                {{ form.system_name }}
+                            </div>
+                            <br>
+
+                            <div>
+                                <label>System Key:</label>
+                                {{ form.system_key }}
+                            </div>
+                            <br>
+                        </div>
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('system-search');
+        const datalist = document.getElementById('system-options');
+        const formContainer = document.getElementById('edit-form-container');
+
+        if ("{{ system_name }}".length > 0) {
+            formContainer.style.display = 'block';
+        }
+
+        searchInput.addEventListener('input', function() {
+            const options = Array.from(datalist.options).map(opt => opt.value);
+            
+            if (options.includes(this.value)) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('system_name', this.value);
+                window.location.href = url.href;
+            }
+        });
+    </script>
+
+{% endblock %}

@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}TARMOR{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/Stylesheet.css' %}">
+    <style>
+    .notification {
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        position: relative;
+        padding: 1.25rem 2.5rem 1.25rem 1.5rem;
+    }
+    .notification.is-success {
+        background-color: #effaf3; /* Light Green */
+        color: #257942;            /* Dark Green */
+    }
+    .notification.is-danger {
+        background-color: #feecf0; /* Light Red */
+        color: #cc0f35;            /* Dark Red */
+    }
+    
+    .notification .delete {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    color: white;
+    font-weight: bold;
+    line-height: 20px;
+    text-align: center;
+}
+
+/* Add an 'X' via the :before selector */
+.notification .delete:before {
+    content: "×"; /* This is the multiplication sign, looks like an X */
+    font-size: 16px;
+    display: block;
+}
+
+.notification .delete:hover {
+    background: rgba(0, 0, 0, 0.5);
+}
+</style>
+</head>
+
+<body>
+    <div class="site-container">
+        <h1> <img class="logo" src="{% static 'Images/TARMOR.png' %}" ><img class="logo" src="{% static 'Images/blue_ram.png' %}" > 
+            TARMOR - RAM <small>Risk Adverse Maintenance <i>by</i> Total Availability + Reliability Maintenance + Operational Readiness</samll></h1>
+
+        {% block top_navigation %}
+        {% endblock %}
+
+        <div class="container-wrapper">
+
+            <div class="leftnavbar">
+                {% block sidebar %}
+                {% endblock %}
+            </div>
+
+            <div class="main">
+
+                {% if messages %}
+                    <div class="container" style="padding: 1.5rem 1.5rem 0 1.5rem;">
+                        {% for message in messages %}
+                            <div class="notification {% if message.tags == 'success' %}is-success{% else %}is-danger{% endif %}">
+                            <button class="delete"></button>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}
+                {% endblock %}
+
+            </div>
+            
+        </div>
+
+        <div class="footer">
+            Trademark and copyright licences pending
+        </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                (document.querySelectorAll('.notification') || []).forEach(($notification) => {
+                    const $delete = $notification.querySelector('.delete');
+                    
+                    if ($delete) {
+                        $delete.addEventListener('click', () => {
+                            $notification.style.display = 'none';
+                        });
+                    }
+
+                    if ($notification.classList.contains('is-success')) {
+                        setTimeout(() => {
+                            $notification.style.display = 'none';
+                        }, 3000); 
+                    }
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

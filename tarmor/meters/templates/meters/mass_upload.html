@@ -1,0 +1,46 @@
+{% extends "core/base.html" %}
+{% load static%}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+
+        <ul class="leftnavbar">
+            <li><a class="nav-link" href="javascript:void(0)" onclick="document.getElementById('MassUploadForm').submit();">Upload</a> </li>
+            <li><a href="{% url 'meters:meters' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li>   
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    
+    <h2>Mass Upload Meter Readings</h2>
+    <br>
+    
+    <p>Please use our pre-populated CSV template to ensure equipment numbers and meter types match our records.</p>
+    <a class="button is-link" style="cursor: pointer; background-color: #00009c; color: #e5e4e2; padding: 8px 20px; border-radius: 8px;" href="{% url 'meters:download_template' %}">
+        Download
+    </a> 
+    <br>
+    <p>Upload an Excel file (.xlsx) with headers:<strong>Eq_Number, Date, Meter_Type, Reading</strong></p>
+    <br>
+    <form method="POST" id="MassUploadForm" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="file-upload-wrapper">
+            <input type="file" name="excel_file" id="actual-btn" accept=".xlsx, .csv" hidden required 
+                   onchange="document.getElementById('file-chosen').textContent = this.files[0].name">
+            
+            <label for="actual-btn" class="button is-link" style="cursor: pointer; background-color: #00009c; color: #e5e4e2; padding: 8px 20px; border-radius: 8px;">
+                Choose File
+            </label>
+            <span id="file-chosen" style="margin-left: 10px; font-style: italic; color: #666;">No file chosen</span>
+        </div>
+    </form>
+</div>
+{% endblock %}

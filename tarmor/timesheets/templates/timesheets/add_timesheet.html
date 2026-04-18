@@ -1,0 +1,129 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Create Timesheet{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="submitTimesheetForm()">Save</a>
+            </li>
+            {% if next_url %}
+                <li><a href="{{ next_url }}">Cancel</a></li>
+            {% else %}
+                <li><a href="{% url 'timesheets:timesheets' %}" 
+                        onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                    </a>
+                </li>
+            {% endif %}
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+        
+        <h2> Create Timesheet</h2>
+        <br>
+        <div class="form">
+            <form method="POST" id="timesheet-form">
+                
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <input type="hidden" name="next" value="{{ next_url }}">
+                <input type="hidden" name="work_order" value="{{ work_order_id }}">
+
+                <h2 style="align-items: center;"> &nbsp; Time Entry
+                     &nbsp; &nbsp; &nbsp; &nbsp; <button type="button" onclick="addTimesheetRow()" class="button">Add</button> </h2>
+                <br>
+                <p> Please ensure time is separated by work type </p>
+
+                <table class="centered-table" id="timesheet-table">
+                    <thead>
+                        <tr class="centered-table">
+                            <th> WO Number </th>
+                            <th> Technician </th>
+                            <th> Start Date/Time </th>
+                            <th> Finish Date/Time </th>
+                            <th> Total Time </th>
+                            <th> Work Type </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                            {{ form.id }}
+                            <tr class="timesheet-row">
+                                <td> {{ form.work_order }} </td>
+                                <td> {{ form.technician }}</td>
+                                <td> {{ form.start_date }} </td>
+                                <td> {{ form.finish_date }} </td>
+                                <td> {{ form.total_time }} </td>
+                                <td> {{ form.time_type }} </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+        <br>
+
+        <script>
+            function submitTimesheetForm() {
+                const form = document.getElementById('timesheet-form');
+                if (form) {
+                    form.submit();
+                }
+            }
+
+            function addTimesheetRow() {
+                const tableBody = document.querySelector('#timesheet-table tbody');
+                const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
+                const currentFormCount = parseInt(totalForms.value);
+
+                const firstRow = document.querySelector('.timesheet-row');
+                const newRow = firstRow.cloneNode(true);
+
+                const formRegex = /form-(\d+)-/g;
+                newRow.innerHTML = newRow.innerHTML.replace(formRegex, `form-${currentFormCount}-`);
+
+                const inputs = newRow.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    input.value = '';
+                    if (input.name.includes('total_time')) {
+                        input.setAttribute('readonly', true);
+                    }
+                });
+                tableBody.appendChild(newRow);
+                totalForms.value = currentFormCount + 1;
+            }
+
+            document.addEventListener('change', function(e) {
+                if (e.target.type === 'datetime-local') {
+                    const row = e.target.closest('tr');
+                    const startInput = row.querySelector('input[name$="-start_date"]');
+                    const finishInput = row.querySelector('input[name$="-finish_date"]');
+                    const totalInput = row.querySelector('input[name$="-total_time"]');
+
+                    if (startInput.value && finishInput.value) {
+                        const start = new Date(startInput.value);
+                        const finish = new Date(finishInput.value);
+                        const diff = (finish - start) / (1000 * 60 * 60);
+
+                        if (diff >= 0) {
+                            totalInput.value = diff.toFixed(2);
+                        } else {
+                            totalInput.value = "0.00";
+                        }
+                    }
+                }
+            });
+        </script>
+            
+    </div>
+
+{% endblock %}

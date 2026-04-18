@@ -1,0 +1,37 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Facilities
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <p> &nbsp Facilities</p>
+            <li><a href="{% url 'facilities:facility_upload' %}">Add Fac</a> </li>
+            <li><a href="{% url 'facilities:search_facilities' %}">Search Fac</a> </li>
+            <li><a href="{% url 'facilities:edit_facility' %}">Edit Fac</a> </li>
+            <br>
+            <p> &nbsp Cost Centres</p>
+            <li><a href="{% url 'facilities:costcentre_upload' %}">Add CC</a></li>
+            <li><a href="{% url 'facilities:search_costcentre' %}">Srch CC</a></li>
+            <li><a href="{% url 'facilities:edit_costcentre' %}">Edit CC</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Facilities</h2>
+        <div>
+        <img class="image" src="{% static 'Images/factory.jpg' %}" >
+        </div>
+
+    </div>
+{% endblock %}

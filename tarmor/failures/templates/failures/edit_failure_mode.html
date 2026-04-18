@@ -1,0 +1,101 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Edit Failure Mode
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('edit_fms').submit();">Save</a>
+            </li>
+            <li><a href="{% url 'failures:failure_modes' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            {% if formset.forms %}
+                {% with first_form=formset.forms|first %}
+                    {% if first_form.instance.pk %}
+                        <li>
+                            <a href="{% url 'failures:delete_failure_mode' first_form.instance.pk %}" 
+                                class="has-text-danger" 
+                                onclick="return confirm('This will permanently delete the information! Are you sure you want to proceed?');">Delete
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Edit / Delete Failure Mode </h2>
+        <br>
+
+        <h5 class="form"> &nbsp; Failure Mode &nbsp; &nbsp;
+            <form method="GET" action="{% url 'failures:edit_failure_mode' %}" style="display:inline;">
+                <input class="input" type="text" id="failure_mode-search" name="failure_mode" list="failure_mode-options" value="{{ failure_mode }}" placeholder="Failure Mode">
+                <datalist id="failure_mode-options"> 
+                    {% for fail in all_failures %} <option value="{{ fail.failure_mode }}"> {% endfor %} 
+                </datalist>
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+            </form> 
+        </h5>
+        <br>
+
+        <form class="form" id="edit_fms" method="POST" action="?failure_mode={{ failure_mode|urlencode }}">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            {% if formset.non_form_errors %}
+                <div>
+                    {{ formset.non_form_errors }}
+                </div>
+                <br>
+            {% endif %}
+                
+            <div class="form" id="form-container">
+                {% for form in formset %}
+                    {{ form.id }}
+                    <div class="failure-mode-form">
+                        {% if form.non_field_errors %}
+                            <div>
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <label>Failure Mode:</label>
+                            {{ form.failure_mode }}
+                        </div>
+                        <br>
+                        <div>
+                            <label>Failure Code:</label>
+                            {{ form.failure_code }}
+                        </div>
+                        <br>
+                    </div>
+                {% endfor %}
+            </div>
+        </form>
+        
+    </div>
+
+    <script>
+
+        document.getElementById('failure_mode-search').addEventListener('input', function() {
+            const options = Array.from(document.getElementById('failure_mode-options').options).map(opt => opt.value);
+            if (options.includes(this.value)) {
+                this.form.submit();
+            }
+        });
+
+    </script>
+{% endblock %}

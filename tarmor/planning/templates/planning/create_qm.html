@@ -1,0 +1,129 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Create QM {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <button type="submit" form="qm-form" name="save_continue" value="1" class="button">
+                    Save
+                </button>
+            </li>
+            <li><a href="{% url 'planning:planning' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+        
+    <h2> Create Quality Maintenance Document</h2>
+    <br>
+
+    <div class="form">
+        <form method="post" id="qm-form">
+            {% csrf_token %}
+            {% if qmform.errors or step_formset.errors %}
+                **Please fix the following:** 
+                {{ qmform.non_field_errors }}
+                {% for field in qmform %}
+                    {% if field.errors %}
+                    - {{ field.label }}: {{ field.errors|striptags }}
+                    {% endif %}
+                {% endfor %}
+                {% for form in step_formset %}
+                    {% for field in form %}
+                        {% if field.errors %}
+                        - Sequence {{ forloop.parentloop.counter }} {{ field.label }}: {{ field.errors|striptags }}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}<br>
+            {{ step_formset.management_form }}
+            <label>QM Number:</label> {{ qmform.qm_number }} &nbsp;
+            <label>Equipment:</label> {{ qmform.equipment }} &nbsp;
+            <label>Description:</label> {{ qmform.description }} &nbsp;
+            <label>QM Type:</label> {{ qmform.qm_type }} &nbsp;
+            <label>QM Step Type:</label> {{ qmform.step_type }}  <br>
+            <br>
+            <label>Active:</label> {{ qmform.active }} &nbsp;
+            <label>Meter Start:</label> {{ qmform.meter_start }} &nbsp;
+            <label>Meter Type:</label> {{ qmform.meter_type }} &nbsp;
+            <label>Start Date:</label> {{ qmform.start_date }} &nbsp;
+            <label>Work Order Lead Days:</label> {{ qmform.work_order_lead_days }} <br>
+            <br>
+            <label>Single Interval Value:</label> {{ qmform.single_interval_value }} &nbsp;
+            <label>Calendar Unit:</label> {{ qmform.calendar_unit }}  &nbsp;
+            <label>Est Hrs:</label> {{ qmform.est_work_hours }} &nbsp;
+            <label>Checklist:</label> {{ qmform.single_interval_checklist }} <br>
+            <br>
+
+            <p><strong>Sequence Increments:</strong> <button type="button" id="add-step-btn">Add Step</button><br>
+                For Calendar QMs, enter only the service intervals to be applied.<br>
+                Example:
+                1 month = monthly inspection
+                6 month = semi-annual inspection<br>
+                The system determines the next due service from the start date and applies the largest matching interval.<br>
+                <br>
+                For Meter QMs, enter only the service intervals to be applied.<br>
+                Example:
+                250 = 250 service
+                500 = 500 service
+                1000 = 1000 service<br>
+                The system determines the next due service from the current total meter and applies the largest matching interval.</p>
+            <br>
+            <div id="step-form-container">
+                {% for sform in step_formset %}
+                    <label>Step Order:</label> {{ sform.step_order }} &nbsp;
+                    <label>Interval Value:</label> {{ sform.interval_value }} &nbsp;
+                    <label>Interval Unit:</label> {{ sform.interval_unit }} &nbsp;
+                    <label>Step Label:</label> {{ sform.step_label }} &nbsp;
+                    <label>Est Hrs:</label> {{ sform.est_work_hours }} &nbsp;
+                    <label>Checklist:</label> {{ sform.step_checklist }} <br>
+                    <br>
+                    {% for hidden in sform.hidden_fields %}
+                    {{ hidden }}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </form>
+        <div id="empty-form-template" style="display: none;">
+            <div class="step-row">
+                <label>Step Order:</label> {{ step_formset.empty_form.step_order }} &nbsp;
+                <label>Interval Value:</label> {{ step_formset.empty_form.interval_value }} &nbsp;
+                <label>Interval Unit:</label> {{ step_formset.empty_form.interval_unit }} &nbsp;
+                <label>Step Label:</label> {{ step_formset.empty_form.step_label }} &nbsp;
+                <label>Checklist:</label> {{ sform.step_checklist }} 
+                <br><br>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById('add-step-btn').addEventListener('click', function() {
+        const totalForms = document.getElementById('id_steps-TOTAL_FORMS'); 
+        
+        const currentFormCount = parseInt(totalForms.value);
+
+        const template = document.getElementById('empty-form-template').innerHTML;
+
+        const newFormHtml = template.replace(/__prefix__/g, currentFormCount);
+
+        const container = document.getElementById('step-form-container');
+        const newFormElement = document.createElement('div');
+        newFormElement.innerHTML = newFormHtml;
+        container.appendChild(newFormElement);
+
+        totalForms.value = currentFormCount + 1;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "core/base.html" %}
+{% block title %} Purchase Detail {% endblock %}
+{% block top_navigation %}{% endblock %}
+{% block sidebar %}
+<ul>
+    <li><a href="{% url 'purchasing:create_purchase' %}">Create Purchase</a></li>
+    <li><a href="{% url 'core:home' %}">Main</a></li>
+</ul>
+{% endblock %}
+{% block content %}
+<h1>Purchase {{ purchase.purchase_number }}</h1>
+<table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <tr>
+        <th>Purchase Type</th>
+        <td>{{ purchase.get_purchase_type_display }}</td>
+        <th>Date</th>
+        <td>{{ purchase.date }}</td>
+    </tr>
+    <tr>
+        <th>Bill Location</th>
+        <td>{{ purchase.bill_location }}</td>
+        <th>WO / Cost Centre</th>
+        <td>{{ purchase.wo_cc }}</td>
+    </tr>
+    <tr>
+        <th>Status</th>
+        <td>{{ purchase.status }}</td>
+        <th>Grand Total</th>
+        <td>{{ purchase.grand_total }}</td>
+    </tr>
+    <tr>
+        <th>Additional Information</th>
+        <td colspan="3">{{ purchase.additional_information }}</td>
+    </tr>
+</table>
+<h3 style="margin-top: 20px;">Items</h3>
+<table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <thead>
+        <tr>
+            <th>Part Number</th>
+            <th>Manual Part #</th>
+            <th>Description</th>
+            <th>UOM</th>
+            <th>Supplier</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Total Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for line in purchase.lines.all %}
+        <tr>
+            <td>{% if line.part_number %}{{ line.part_number.part_number }}{% endif %}</td>
+            <td>{{ line.manual_part_number }}</td>
+            <td>{{ line.part_description }}</td>
+            <td>{{ line.uom }}</td>
+            <td>{{ line.supplier }}</td>
+            <td>{{ line.qty }}</td>
+            <td>{{ line.unit_price }}</td>
+            <td>{{ line.total_price }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8">No items found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

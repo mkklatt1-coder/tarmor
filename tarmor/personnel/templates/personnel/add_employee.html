@@ -1,0 +1,161 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Add Employee
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="document.getElementById('EmployeeForm').submit();">Save</a></li>
+        <li><a href="{% url 'personnel:personnel' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Add New Employee</h2>
+    <br>
+    <form id="EmployeeForm" method="POST" action="{% url 'personnel:add_employee' %}">
+        {% csrf_token %}
+        {{ cert_formset.management_form }}
+        {% if new_emp_form.errors or cert_formset.errors %}
+            <div class="errorlist">
+                <strong>Please fix the following:</strong><br>
+                {{ new_emp_form.non_field_errors }}
+                {{ cert_formset.non_form_errors }}
+                {% for field in new_emp_form %}
+                    {% if field.errors %}
+                        <div>{{ field.label }}: {{ field.errors }}</div>
+                    {% endif %}
+                {% endfor %}
+                {% for c_form in cert_formset %}
+                    {% if c_form.errors %}
+                        <div>{{ c_form.errors }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <br>
+        {% endif %}
+        <div class="form-row">
+            <label>First Name:</label> {{ new_emp_form.First_Name }} &nbsp;
+            <label>Middle Name(s):</label> {{ new_emp_form.Middle_Name }} &nbsp;
+            <label>Last Name:</label> {{ new_emp_form.Last_Name }} &nbsp;
+            <label>Status:</label> {{ new_emp_form.Status }}
+            <br><br>
+            <label>Position:</label> {{ new_emp_form.Position }} &nbsp;
+            <label>Compensation:</label> {{ new_emp_form.Compensation }} &nbsp;
+            <label>per</label> {{ new_emp_form.Comp_UoM }}
+            <br><br>
+            <label>Crew:</label> {{ new_emp_form.crew }} &nbsp;
+            <label>Start Date:</label> {{ new_emp_form.Start_Date }} &nbsp;
+            <label>Last Date:</label> {{ new_emp_form.Last_Date }}
+            <br><br>
+            <label>Street Address:</label> {{ new_emp_form.Street_Address }} &nbsp;
+            <label>City:</label> {{ new_emp_form.City }} &nbsp;
+            <label>Prov / State:</label> {{ new_emp_form.Prov_State }} &nbsp;
+            <label>Country:</label> {{ new_emp_form.Country }}
+            <br><br>
+            <label>Postal / Zip Code:</label> {{ new_emp_form.Postal_Zip }} &nbsp;
+            <label>Phone Number:</label> {{ new_emp_form.Phone }} &nbsp;
+            <label>Email:</label> {{ new_emp_form.Email }}
+            <br><br>
+            <p><strong>Emergency Contact Information</strong></p>
+            <br>
+            <label>First Name:</label> {{ new_emp_form.EC_First_Name }} &nbsp;
+            <label>Middle Name(s):</label> {{ new_emp_form.EC_Middle_Name }} &nbsp;
+            <label>Last Name:</label> {{ new_emp_form.EC_Last_Name }}
+            <br><br>
+            <label>Phone Number:</label> {{ new_emp_form.EC_Phone }} &nbsp;
+            <label>Email:</label> {{ new_emp_form.EC_Email }}
+            <br><br>
+            <label>Additional Information:</label><br>
+            {{ new_emp_form.Additional_Information }}
+            <br><br>
+        </div>
+
+        <div id="cert-section">
+            <h4>
+                Employee Certifications
+                <button type="button" id="add-cert-btn">Add Cert</button>
+            </h4>
+            <div id="employee-cert">
+                {% for c_form in cert_formset %}
+                    <div class="cert-item">
+                        {% for hidden in c_form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                        <label>Certification / Diploma:</label> {{ c_form.Certification }} &nbsp;
+                        <label>Institution:</label> {{ c_form.Institution }} &nbsp;
+                        <label>Date Received:</label> {{ c_form.Date_Cert }} &nbsp;
+                        <label>Renewable?</label> {{ c_form.Renewable }} &nbsp;
+                        <label>Renewal Cost:</label> {{ c_form.Renewal_Cost }} &nbsp;
+                        <span style="display:none;">{{ c_form.DELETE }}</span>
+                        <button type="button" class="remove-cert-btn">Remove</button>
+                        {% if c_form.errors %}
+                            <div class="errorlist">{{ c_form.errors }}</div>
+                        {% endif %}
+                        <br><br>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="empty-cert-form" style="display:none;">
+    <div class="cert-item">
+        {% with c_form=cert_formset.empty_form %}
+            {% for hidden in c_form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+            <label>Certification / Diploma:</label> {{ c_form.Certification }} &nbsp;
+            <label>Institution:</label> {{ c_form.Institution }} &nbsp;
+            <label>Date Received:</label> {{ c_form.Date_Cert }} &nbsp;
+            <label>Renewable?</label> {{ c_form.Renewable }} &nbsp;
+            <label>Renewal Cost:</label> {{ c_form.Renewal_Cost }} &nbsp;
+            <span style="display:none;">{{ c_form.DELETE }}</span>
+            <button type="button" class="remove-cert-btn">Remove</button>
+            <br><br>
+        {% endwith %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const addBtn = document.getElementById('add-cert-btn');
+    const certContainer = document.getElementById('employee-cert');
+    const emptyFormTemplate = document.getElementById('empty-cert-form');
+    const totalFormsInput = document.getElementById('id_cert-TOTAL_FORMS');
+    if (addBtn && certContainer && emptyFormTemplate && totalFormsInput) {
+        addBtn.addEventListener('click', function () {
+            const formIndex = parseInt(totalFormsInput.value, 10);
+            const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, formIndex);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newFormHtml.trim();
+            certContainer.appendChild(tempDiv.firstElementChild);
+            totalFormsInput.value = formIndex + 1;
+        });
+        certContainer.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-cert-btn')) {
+                const certItem = e.target.closest('.cert-item');
+                if (!certItem) return;
+                const deleteCheckbox = certItem.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    certItem.style.display = 'none';
+                } else {
+                    certItem.remove();
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

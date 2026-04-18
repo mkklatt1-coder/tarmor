@@ -1,0 +1,90 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+
+{%block title %}
+    Edit Mtr Reading
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="const f = document.getElementById('MeterForm'); if(f) f.requestSubmit();">Save</a>
+            </li>
+            <li>
+                <a href="{% url 'meters:meters' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main"><h2>Edit Meter Reading</h2>
+    <br>
+
+        <div class="form">
+            <h5 class="form">
+                <span> For: &nbsp;</span>
+                <form method="GET" action="{% url 'meters:edit_reading' %}">
+                    <input class="input" type="text" name="unit_search" placeholder="Equipment Number" value="{{ request.GET.MeterForm }}">
+                    <input class="input" type="date" name="date_search" placeholder="Date" value="{{ request.GET.MeterForm }}">
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+                </form>
+            </h5>
+            <br>
+            <p>When replacing a meter, the value of the new meter must be entered in the current reading field to reset the machine meter in the system!</p>
+        </div>
+
+        {% if unit %}
+            <form id="MeterForm" method="POST" action="{% url 'meters:edit_reading' %}?unit_search={{ unit.Equipment_Number }}&date_search={{ request.GET.date_search }}">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                {% if formset.errors %}
+                    <div class="notification is-danger">{{ formset.errors }}</div>
+                {% endif %}
+                <br>
+                <div>
+                    <label>Date</label> {{ form.Date }} &nbsp;
+                    <label>Equipment Number</label> <strong>{{ unit.Equipment_Number }}</strong> <br>
+                    <br>
+                </div>
+
+                <table class="table" style="text-align: left;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Meter Type</th>
+                            <th style="text-align: left;">Current Reading</th>
+                            <th style="text-align: left;">Difference</th>
+                            <th style="text-align: left;">Replaced?</th>
+                            <th style="text-align: left;">Delete?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for form in formset %}
+                            <tr>
+                                <td ><strong>{{ form.meter_label }}</strong></td>
+                                <td >{{ form.Meter_Reading }}</td>
+                                <td >{{ form.reading_diff }}</td>
+                                <td >{{ form.Meter_Replaced }}</td>
+                                <td>{{ form.DELETE }}</td>
+                                <td style="display:none">{{form.id}}{{ form.Date }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>          
+            </form>
+        {% else %}
+            <div class="notification is-info">
+                Please select equipment number and date to begin
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

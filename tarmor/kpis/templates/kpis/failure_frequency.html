@@ -1,0 +1,149 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Failure Frequency
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'kpis:kpis' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Failure Frequency </h2>
+        <br>
+        <div>
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'kpis:failure_frequency_report' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form class="form" id="search-form"  method="GET" action="{% url 'kpis:failure_frequency_report' %}">
+                Start Date: <input type="date" name="start_date" class="input" value="{{ filters.start_date }}"> &nbsp;
+                End Date: <input type="date" name="end_date" class="input" value="{{ filters.end_date }}"> &nbsp;
+
+                Asset Type: 
+                <select name="asset_type" class="input"><option value="">All Asset Types</option>
+                    {% for at in asset_types %}
+                        <option value="{{ at }}" {% if filters.asset_type == at %}selected{% endif %}>{{ at }}</option>
+                    {% endfor %}
+                </select> &nbsp;
+                Eq. Type: 
+                <select name="equipment_type" class="input"><option value="">All Types</option>
+                    {% for et in equipment_types %}
+                        <option value="{{ et }}" {% if filters.equipment_type == et %}selected{% endif %}>{{ et }}</option>
+                    {% endfor %}
+                </select> &nbsp;
+                Eq. Number: <input type="text" name="equipment_number" value="{{ filters.equipment_number }}" placeholder="Contains..." class="input">
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+            </form>
+            <br>
+        </div>
+        <br>
+
+        <h3>Failure FrequencyAnalysis - {{ current_year }}</h3>
+        <div style="width: 80%; margin: auto;">
+            <canvas id="failureChart"></canvas>
+        </div>
+
+        <h3>Failure Count:</h3>
+        <br>
+
+        <div class="container-wrapper">
+            
+            <table class="table-container" id="report-table">
+                <thead>
+                    <tr>
+                        <th class="th"><a href="?sort=equipment_number&{{ filter_url }}" class="sort_header">Equipment #{% if sort_by == 'equipment_number' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=equipment_description&{{ filter_url }}" class="sort_header">Description{% if sort_by == 'equipment_description' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=asset_type&{{ filter_url }}" class="sort_header">Asset Type{% if sort_by == 'asset_type' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=equipment_type&{{ filter_url }}" class="sort_header">Equipment Type{% if sort_by == 'equipment_type' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=equipment_hours&{{ filter_url }}" class="sort_header">Hours{% if sort_by == 'equipment_hours' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=failure_count&{{ filter_url }}" class="sort_header">Failures{% if sort_by == 'failure_count' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=frequency&{{ filter_url }}" class="sort_header">Frequency{% if sort_by == 'frequency' %}▲{% endif %}</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_data %}
+                        <tr>
+                            <td class="td">{{ row.equipment_number }}</td>
+                            <td class="td">{{ row.equipment_description }}</td>
+                            <td class="td">{{ row.asset_type }}</td>
+                            <td class="td">{{ row.equipment_type }}</td>
+                            <td class="td">{{ row.equipment_hours }}</td>
+                            <td class="td">{{ row.failure_count }}</td>
+                            <td class="td">{{ row.frequency }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="td">No data found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="{% static 'js/chart.umd.min.js' %}"></script>
+    <script>
+        const ctx = document.getElementById('failureChart').getContext('2d');
+    
+        console.log("Labels:", {{ labels|safe }});
+        console.log("Data:", {{ bar_data|safe }});
+        
+        new Chart(ctx, {
+            data: {
+                labels: {{ labels|safe }},
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Failure Count',
+                        data: {{ bar_data|safe }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        type: 'line',
+                        label: 'YTD Average',
+                        data: {{ line_data|safe }},
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.1,
+                        yAxisID: 'y',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Failures' }
+                    }
+                }
+            }
+        });
+        function exportExcel() {
+            const form = document.getElementById('search-form');
+            const formData = new URLSearchParams(new FormData(form));
+            window.location.href = "{% url 'kpis:export_failure_frequency_excel' %}?" + formData.toString();
+        }
+    </script>
+{% endblock %}

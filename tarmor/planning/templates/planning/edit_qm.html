@@ -1,0 +1,46 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Edit QM {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <button type="submit" form="qm-form" name="save_continue" value="1" class="button">
+                    Save
+                </button>
+            </li>
+            <li><a href="{% url 'planning:planning' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+    <h2>Edit Quality Maintenance</h2>
+    <br>
+    <form method="post" id="lookup-form">
+        {% csrf_token %}
+        {% if lookup_form.errors %}
+            **Please fix the following:** 
+            {{ lookup_form.non_field_errors }}
+            {% for field in lookup_form %}
+                {% if field.errors %}
+                - {{ field.label }}: {{ field.errors|striptags }}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        <p>Enter a QM Number and click Load.</p><br>
+
+        <label>QM Number:</label> {{ lookup_form.qm_number }}
+        <button type="submit" name="load_qm" value="1" class="button">
+            Load
+        </button>
+    </form>
+
+{% endblock %}

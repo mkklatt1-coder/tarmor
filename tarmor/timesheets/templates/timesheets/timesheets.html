@@ -1,0 +1,32 @@
+
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Timesheets
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'timesheets:add_timesheet' %}">TS Create</a> </li>
+            <li><a href="{% url 'timesheets:search_timesheets' %}">TS Search</a> </li>
+            <li><a href="{% url 'timesheets:edit_timesheet' %}">TS Edit</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Timesheets</h2>
+        <div>
+        <img class="image" src="{% static 'Images/punchclock.jpg' %}">
+        </div>
+
+    </div>
+{% endblock %}

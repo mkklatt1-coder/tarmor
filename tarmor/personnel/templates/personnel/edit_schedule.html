@@ -1,0 +1,152 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Edit Schedule{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'personnel:edit_schedule' %}">Clear</a></li>
+        <li><a href="{% url 'personnel:personnel' %}">Return</a></li>
+        <li><a href="{% url 'core:home' %}">Main</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="main">
+    <h2>Edit Schedule</h2>
+    <br>
+    
+    <div class="container-fluid mt-4">
+        <!-- Facility Selector -->
+        <div class="form">
+            <h5 class="form">Edit Schedule For: &nbsp;
+                <form method="get" style="display: inline-block;">
+                    <select name="facility_id" class="input" style="max-width: 300px;" onchange="this.form.submit()">
+                        <option value="">-- Select Facility --</option>
+                        {% for f in facilities %}
+                        <option value="{{ f.id }}" {% if f.id|stringformat:"s" == selected_facility_id %}selected{% endif %}>
+                            {{ f.Facility_Code }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </h5>
+        </div>
+        <br>
+
+        <div class="schedule-columns">
+            <!-- LEFT COLUMN: Batch List -->
+            <div class="schedule-column" style="flex: 0 0 300px;">
+                <div class="schedule-panel">
+                    <h4>Available Batches</h4>
+                    <p><i>Select Batch</i></p>
+
+                    {% for b in batches %}
+                    <a href="{% url 'personnel:edit_schedule_with_id' b.first_rotation_id %}?facility_id={{ selected_facility_id }}" 
+                       style="display: block; text-decoration: none !important; margin-bottom: 25px; border: none; outline: none;">
+                        <div style="color: {% if b.batch_id == selected_rotation.batch_id %}#00009c{% else %}black{% endif %};">
+                            <div style="font-size: 1.15rem; margin-bottom: 2px;">{{ b.location.Facility_Code }}</div>
+                            <div style="font-size: 0.95rem; margin-bottom: 2px;">{{ b.coverage_type }} | Start: {{ b.start_date|date:"M d" }}</div>
+                            <div style="font-size: 0.8rem; font-family: monospace; opacity: 0.7;">IDs: {{ b.shift_ids|join:", " }}</div>
+                        </div>
+                    </a>
+                    {% empty %}
+                    <p class="text-muted small">No batches found for this facility.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Workspace -->
+            <div class="schedule-column" style="flex: 3; padding-left: 20px;">
+                {% if selected_rotation %}
+                    <!-- Header Info -->
+                    <div class="schedule-panel mb-3" style="padding: 10px; border-bottom: 1px solid #eee;">
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <h4 class="text-danger mb-1" style="font-size: 1.2rem;">Batch: {{ selected_rotation.batch_id|truncatechars:12 }}</h4>
+                                <small class="text-muted">Facility {{ selected_rotation.Location.Facility_Code }} | {{ old_batch|length }} Crews</small>
+                            </div>
+                            <div style="width: 280px;">
+                                <label class="small"><i>Replacement Batch:</i></label>
+                                <form method="get">
+                                    <input type="hidden" name="facility_id" value="{{ selected_facility_id }}">
+                                    <select name="target_batch_id" class="input w-100 py-1" style="font-size: 0.85rem;" onchange="this.form.submit()">
+                                        <option value="">-- Select --</option>
+                                        {% for opt in replacement_options %}
+                                        <option value="{{ opt.batch_id }}" {% if opt.batch_id|stringformat:"s" == target_batch_id %}selected{% endif %}>
+                                            {{ opt.pattern_display }} ({{ opt.date_display|date:"M d" }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="schedule-column">
+                        {% if target_batch_id %}
+                            {% if employee_preview %}
+                                <div class="mt-3">
+                                    <!-- Header with Action Button -->
+                                    <div class="d-flex justify-content-between align-items-center mb-2" style="max-width: 600px;">
+                                        <h5 class="mb-0" style="color: #00009c; font-weight: bold;">Preview & Swap</h5>
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="execute_swap">
+                                            <input type="hidden" name="target_batch_id" value="{{ target_batch_id }}">
+                                            <button type="submit" class="btn btn-danger btn-sm px-4" 
+                                                    {% if not can_remap %}disabled{% endif %}
+                                                    onclick="return confirm('Execute swap?')">
+                                                Swap Now
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <!-- Shrink-wrapped Table -->
+                                    <div class="compact-table-container shadow-sm">
+                                        <table class="table table-sm table-hover compact-table">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="col-emp">Employee</th>
+                                                    <th class="col-id">Current</th>
+                                                    <th class="col-id">Target</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in employee_preview %}
+                                                <tr>
+                                                    <td class="col-emp"><strong>{{ item.employee.Last_Name }}</strong>, {{ item.employee.First_Name }}</td>
+                                                    <td class="col-id text-muted">{{ item.old_crew.full_shift_id }}</td>
+                                                    <td class="col-id">
+                                                        {% if item.new_crew %}
+                                                            <strong style="color: #00009c;">{{ item.new_crew.full_shift_id }}</strong>
+                                                        {% else %}
+                                                            <span class="text-danger">No Match</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Fallback if mapping finds no people -->
+                                <div class="schedule-panel border border-danger bg-white p-3 mt-3" style="max-width: 500px;">
+                                    <h5 class="text-danger">No Employees Found</h5>
+                                    <p class="text-muted small mb-0">No employees are currently assigned to the crews in this batch.</p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

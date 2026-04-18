@@ -1,0 +1,113 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Search Purchases{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<ul>
+    <li><a href="{% url 'purchasing:export_purchases' %}?{{ request.GET.urlencode }}">Export</a></li>
+    <li><a href="{% url 'purchasing:purchasing' %}">Return</a></li>
+    <br>
+    <li><a href="{% url 'core:home' %}">Main</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Search Purchases</h2>
+    <br>
+    
+    <form method="get">
+        <h5> &nbsp; Search Criteria
+            <button type="submit" style="border:none;background:none;padding:0;vertical-align:middle;">
+                <img src="{% static 'images/mag_glass.jpg' %}" alt="Search">
+            </button>
+            <a href="{% url 'purchasing:search_purchases' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h5>
+        <br>
+
+        <div>
+            Purchase Number: <input type="text" name="purchase_number" class="input" value="{{ purchase_number }}" list="purchase-number-list"> &nbsp;
+            WO / CC: <input type="text" name="wo_cc" class="input" value="{{ wo_cc }}" list="wo-cc-list"> &nbsp;
+            Part Number: <input type="text" name="part_number_input" class="input" value="{{ part_number_input }}" list="part-number-list"> &nbsp;
+            Supplier: <input type="text" name="supplier" class="input" value="{{ supplier }}" list="supplier-list"> &nbsp;
+            Row Status: <select name="row_status" class="input">
+                            <option value=""></option>
+                            {% for value, label in row_status_choices %}
+                                <option value="{{ value }}" {% if row_status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+            <br>
+            <datalist id="purchase-number-list">
+                {% for item in purchase_number_options %}
+                    <option value="{{ item }}">
+                {% endfor %}
+            </datalist>
+            <datalist id="wo-cc-list">
+                {% for item in wo_cc_options %}
+                    <option value="{{ item }}">
+                {% endfor %}
+            </datalist>
+            <datalist id="part-number-list">
+                {% for item in part_number_options %}
+                    <option value="{{ item }}">
+                {% endfor %}
+            </datalist>
+            <datalist id="supplier-list">
+                {% for item in supplier_options %}
+                    <option value="{{ item }}">
+                {% endfor %}
+            </datalist>
+        </div>
+    </form>
+    <br>
+
+    <h3>Search Results</h3>
+    <br>
+
+    <table cellpadding="4" cellspacing="0">
+        <thead>
+            <tr>
+                <th class="th"><a href="?sort=purchase_number&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">Purchase Number{% if sort_by == 'purchase_number' %}▲{% endif %}</a></th>
+                <th class="th"><a href="?sort=wo_cc&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">WO / CC{% if sort_by == 'wo_cc' %}▲{% endif %}</a></th>
+                <th class="th"><a href="?sort=part_number_input&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">Part Number{% if sort_by == 'part_number_input' %}▲{% endif %}</a></th>
+                <th class="th"><a href="?sort=manufacturer&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">Manufacturer{% if sort_by == 'manufacturer' %}▲{% endif %}</a></th>
+                <th class="th">Description</th>
+                <th class="th"><a href="?sort=supplier&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">Supplier{% if sort_by == 'supplier' %}▲{% endif %}</a></th>
+                <th class="th"><a href="?sort=qty&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">Qty{% if sort_by == 'qty' %}▲{% endif %}</a></th>
+                <th class="th">UOM</th>
+                <th class="th"><a href="?sort=unit_price&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">Unit Price{% if sort_by == 'unit_price' %}▲{% endif %}</a></th>
+                <th class="th">Total Price</th>
+                <th class="th"><a href="?sort=row_status&purchase_number={{ purchase_number }}&wo_cc={{ wo_cc }}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&row_status={{ row_status }}" class="sort_header">Row Status{% if sort_by == 'row_status' %}▲{% endif %}</a></th>
+                <th class="th">Edit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in purchase_lines %}
+            <tr>
+                <td class="td">{{ line.purchase.purchase_number }}</td>
+                <td class="td" >{{ line.purchase.wo_cc_display }}</td>
+                <td class="td" >{{ line.part_number_input|default:"" }}</td>
+                <td class="td" >{{ line.manufacturer }}</td>
+                <td class="td" >{{ line.part_description }}</td>
+                <td class="td" >{{ line.supplier.supplier_name|default:line.supplier }}</td>
+                <td class="td" >{{ line.qty }}</td>
+                <td class="td" >{{ line.uom }}</td>
+                <td class="td" >{{ line.unit_price }}</td>
+                <td class="td" >{{ line.total_price }}</td>
+                <td class="td" >{{ line.row_status }}</td>
+                <td class="td" ><a href="{% url 'purchasing:edit_purchase_loaded' line.purchase.pk %}">Edit</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10" class="td">No purchase records found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

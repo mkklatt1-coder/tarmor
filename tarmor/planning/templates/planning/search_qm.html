@@ -1,0 +1,78 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Search QM {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <button type="submit" form="qm-form" name="save_continue" value="1" class="button">
+                    Save
+                </button>
+            </li>
+            <li><a href="{% url 'planning:planning' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+        
+    <h2> Search Quality Maintenance Documents</h2>
+    <br>
+    <div class="form">
+        <form method="post" id="qm-form">
+            {% csrf_token %}
+            <label>QM Number:</label> {{ search_form.qm_number }} &nbsp;
+            <label>Equipment Number:</label> {{ search_form.equipment_number }} &nbsp;
+            <label>Description:</label> {{ search_form.description }} &nbsp;
+            <label>QM Type:</label> {{ search_form.qm_type }} &nbsp;
+            <label>QM Step Type:</label> {{ search_form.step_type }} &nbsp;
+            <label>Active:</label> {{ search_form.active }} <br>
+            <br>
+            <h3>Search Results</h3>
+            <br>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="th">QM Number</th>
+                        <th class="th">Equipment</th>
+                        <th class="th">Description</th>
+                        <th class="th">Type</th>
+                        <th class="th">Step Type</th>
+                        <th class="th">Start Date</th>
+                        <th class="th">Next Due Date</th>
+                        <th class="th">Next Due Meter</th>
+                        <th class="th">Edit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td class="td">{{ row.qm.qm_number }}</td>
+                        <td class="td">{{ row.qm.equipment }}</td>
+                        <td class="td">{{ row.qm.description }}</td>
+                        <td class="td">{{ row.qm.get_qm_type_display }}</td>
+                        <td class="td">{{ row.qm.get_step_type_display }}</td>
+                        <td class="td">{{ row.qm.start_date }}</td>
+                        <td class="td">{{ row.next_due_date }}</td>
+                        <td class="td">{{ row.next_due_meter }}</td>
+                        <td class="td"><a href="{% url 'planning:edit_qm_record' row.qm.pk %}">Edit</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10">No records found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+{% endblock %}

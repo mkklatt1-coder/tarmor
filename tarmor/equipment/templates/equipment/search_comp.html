@@ -1,0 +1,105 @@
+{% extends "core/base.html" %}
+{% load static%}
+
+{% block title %}Search Comp History{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+
+        <ul class="leftnavbar">
+            <li><a class="nav-link" href="{% url 'equipment:export' %}?{{ request.GET.urlencode }}">Export</a> </li>
+            <li><a href="{% url 'equipment:equipment' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li>   
+        </ul>
+    </div>
+
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <h2> Search Component History </h2>
+        <br>
+
+        <div>
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                <a href="{% url 'equipment:search_component_history' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+
+            <form id="search-form"  method="GET" action=".">
+                Equipment Number: <input type="text" name="Equipment_Number" class="input" value="{{ request.GET.Equipment_Number }}"> &nbsp;
+                Asset Type: <input type="text" name="Asset_Type" class="input" value="{{ request.GET.Asset_Type }}"> &nbsp;
+                Equipment Type: <input type="text" name="Equipment_Type" class="input" value="{{ request.GET.Equipment_Type }}"> <br>
+                <br>
+                Equipment Status: <input type="text" name="Equipment_Status" class="input" value="{{ request.GET.Equipment_Status }}"> &nbsp;
+                Make: <input type="text" name="Make" class="input" value="{{ request.GET.Make }}"> &nbsp;
+                Model: <input type="text" name="Model" class="input" value="{{ request.GET.Model }}"> <br>
+            </form>
+            <br>
+        </div>
+
+        <div >
+            <h2 > Search Results </h2>
+            <br>
+            <div class="table-container" style="width: 100%; overflow-x: auto;">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=Equipment_Number" class="sort_header">Equipment Number{% if sort_by == 'Equipment_Number' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Component_Number" class="sort_header">Component Number{% if sort_by == 'Component_Number' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Change_Date" class="sort_header">Change Date{% if sort_by == 'Change_Date' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Change_Type" class="sort_header">Change Type{% if sort_by == 'Change_Type' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Meter_Desc" class="sort_header">Meter Desc{% if sort_by == 'Meter_Desc' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Meter_Reading" class="sort_header">Meter Reading{% if sort_by == 'Meter_Reading' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Make" class="sort_header">Updated Make{% if sort_by == 'New_Make' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Model" class="sort_header">Updated Model{% if sort_by == 'New_Model' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Serial" class="sort_header">New SN{% if sort_by == 'New_Serial' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Old_Serial" class="sort_header">Old SN{% if sort_by == 'Old_Serial' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_PO" class="sort_header">PO{% if sort_by == 'New_PO' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Lifespan" class="sort_header">Updated Lifespan{% if sort_by == 'New_Lifespan' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Wty_UoM" class="sort_header">UoM{% if sort_by == 'New_Wty_UoM' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Wty_Dur" class="sort_header">Updated Wty Dur{% if sort_by == 'New_Wty_Dur' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Wty_UoM" class="sort_header">UoM{% if sort_by == 'New_Wty_UoM' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Wty_Start" class="sort_header">New Wty Start{% if sort_by == 'New_Wty_Start' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=New_Wty_End" class="sort_header">New Wty End{% if sort_by == 'New_Wty_End' %}▲{% endif %}</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in equipment_list %}
+                            <tr>
+                                <td class="td">{{item.Equipment.Equipment_Number}}</td>
+                                <td class="td">{{item.Component.Component_Number}}</td>
+                                <td class="td">{{item.Change_Date}}</td>
+                                <td class="td">{{item.Change_Type}}</td>
+                                <td class="td">{{item.Meter_Description}}</td>
+                                <td class="td">{{item.Meter_Reading}}</td>
+                                <td class="td">{{item.New_Make}}</td>
+                                <td class="td">{{item.New_Model}}</td>
+                                <td class="td">{{item.New_Serial}}</td>
+                                <td class="td">{{item.Old_Serial}}</td>
+                                <td class="td">{{item.New_PO}}</td>
+                                <td class="td">{{item.New_Lifespan}}</td>
+                                <td class="td">{{item.New_Uom}}</td>
+                                <td class="td">{{item.New_Wty_Dur}}</td>
+                                <td class="td">{{item.New_Wty_UoM}}</td>
+                                <td class="td">{{item.New_Wty_Start}}</td>
+                                <td class="td">{{item.New_Wty_End}}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10">No records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

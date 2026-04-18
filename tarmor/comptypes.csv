@@ -1,0 +1,102 @@
+﻿name,asset_type,short_code
+Anode,Surface Fixed,ANO
+Cage,Surface Fixed,CAG
+Compressor,Surface Fixed,SCP
+Conveyor Belt,Surface Fixed,SCB
+Crane,Surface Fixed,SCR
+Crusher Hammers,Surface Fixed,SCH
+Crusher Jaws,Surface Fixed,SCJ
+Eye Wash Station,Surface Fixed,SEW
+Fan,Surface Fixed,SFN
+Hose Machine,Surface Fixed,SHM
+Ladle,Surface Fixed,LDL
+Mold,Surface Fixed,MLD
+Motor,Surface Fixed,SMT
+Network Hub,Surface Fixed,SHB
+Nozzle,Surface Fixed,SNZ
+Panel,Surface Fixed,SPL
+PLC,Surface Fixed,SPC
+Pod,Surface Fixed,POD
+Pump,Surface Fixed,SPM
+Raiway Track,Surface Fixed,SRT
+Scale,Surface Fixed,SCA
+Shear,Surface Fixed,SHR
+Shower,Surface Fixed,SSH
+Skip,Surface Fixed,SKP
+Suppressing Agent,Surface Fixed,SSA
+Switch,Surface Fixed,SSW
+Tank,Surface Fixed,TNK
+Valve,Surface Fixed,SVL
+Basket,Surface Mobile,SBA
+Blade,Surface Mobile,SBL
+Boom,Surface Mobile,SBM
+Bucket,Surface Mobile,SBK
+Centre Differential,Surface Mobile,SCD
+Centre Left Final Drive,Surface Mobile,SLC
+Centre Right Final Drive,Surface Mobile,SRC
+Drifter,Surface Mobile,SDR
+Engine,Surface Mobile,SEN
+Front Differential,Surface Mobile,SFD
+Front Left Final Drive,Surface Mobile,SLF
+Front Right Final Drive,Surface Mobile,SRF
+Hammer,Surface Mobile,SHA
+Hydraulic Motor,Surface Mobile,HMS
+Hydraulic Pump,Surface Mobile,SHP
+Mobile Crane,Surface Mobile,SMC
+Moldboard,Surface Mobile,SMB
+Rear Differential,Surface Mobile,SRD
+Rear Left Final Drive,Surface Mobile,SLR
+Rear Right Final Drive,Surface Mobile,SRR
+Stick,Surface Mobile,SST
+Torque Converter,Surface Mobile,STX
+Transmission,Surface Mobile,STR
+Truck Box,Surface Mobile,STB
+Chute,Underground Fixed,CHU
+Compressor,Underground Fixed,UCP
+Conveyor Belt,Underground Fixed,UCB
+Crane,Underground Fixed,UCR
+Crusher Hammers,Underground Fixed,UCH
+Crusher Jaws,Underground Fixed,UCJ
+Eye Wash Station,Underground Fixed,UEW
+Fan,Underground Fixed,UFN
+Hose Machine,Underground Fixed,UHM
+Motor,Underground Fixed,UMT
+Network Hub,Underground Fixed,UNH
+Nozzle,Underground Fixed,UNZ
+Panel,Underground Fixed,UPL
+PLC,Underground Fixed,UPC
+Pressure Washer,Underground Fixed,UPW
+Pressure Washer,Surface Fixed,SPW
+Pump,Underground Fixed,UPM
+Raiway Track,Underground Fixed,URT
+SAT STAT,Underground Fixed,SAT
+Shower,Underground Fixed,USH
+Suppressing Agent,Underground Fixed,USA
+Switch,Underground Fixed,USW
+Tank,Underground Fixed,UTK
+Valve,Underground Fixed,UVL
+Basket,Underground Mobile,UBA
+Blade,Underground Mobile,UBL
+Boom,Underground Mobile,UBM
+Bucket,Underground Mobile,UBK
+Cassette,Underground Mobile,UCS
+Centre Differential,Underground Mobile,UCD
+Centre Left Final Drive,Underground Mobile,ULC
+Centre Right Final Drive,Underground Mobile,URC
+Drifter,Underground Mobile,UDR
+Engine,Underground Mobile,UEN
+Front Differential,Underground Mobile,UFD
+Front Left Final Drive,Underground Mobile,ULF
+Front Right Final Drive,Underground Mobile,URF
+Hammer,Underground Mobile,UHA
+Hydraulic Motor,Underground Mobile,HMU
+Hydraulic Pump,Underground Mobile,UHP
+Mobile Crane,Underground Mobile,UMC
+Moldboard,Underground Mobile,UMB
+Rear Differential,Underground Mobile,URD
+Rear Left Final Drive,Underground Mobile,ULR
+Rear Right Final Drive,Underground Mobile,URR
+Stick,Underground Mobile,UST
+Torque Converter,Underground Mobile,UTX
+Transmission,Underground Mobile,UTR
+Truck Box,Underground Mobile,UTB

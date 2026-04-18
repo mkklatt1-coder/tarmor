@@ -1,0 +1,55 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Shift Report Archive{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul class="leftnavbar">
+            <li><a href="{% url 'equipment:shift_report' %}">New Report</a></li>
+            <li><a href="{% url 'equipment:equipment' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>   
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00009c; margin-bottom: 20px;">
+        <h2>Shift Report Archive</h2>
+    </div>
+
+    <div class="table-container">
+        <table id="status-grid"> <thead>
+                <tr>
+                    <th class="th">Date</th>
+                    <th class="th">Shift</th>
+                    <th class="th">Mining Supervisor</th>
+                    <th class="th">Maint Supervisor</th>
+                    <th class="th">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td class="td">{{ report.date }}</td>
+                    <td class="td">{{ report.get_shift_display }}</td>
+                    <td class="td">{{ report.mining_supervisor }}</td>
+                    <td class="td">{{ report.maint_supervisor }}</td>
+                    <td class="td" style="text-align: center;">
+                        <a href="{% url 'equipment:edit_shift_report' report.id %}" class="btn-edit-link">Open</a>
+                        |
+                        <a href="{% url 'equipment:export_shift_excel' report.id %}" class="btn-excel-link">Excel</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="td" style="text-align: center;">No saved reports found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

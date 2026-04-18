@@ -1,0 +1,352 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Edit Work Order{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        
+        <ul>
+            <li>
+                <a href="javascript:void(0)" id="sidebar-save-btn" 
+                    onclick="document.getElementById('save_cont_trigger').value='false'; document.getElementById('work-order-form').submit();">
+                    Save/Exit</a>
+            </li>
+            <li>
+                <a href="#" class="btn btn-primary" onclick="submitWorkOrder(event)">Save/Rtrn</a>
+            </li>
+            <li><a href="{% url 'work_orders:work_orders' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            {% if work_order_obj %}
+            <li><a href="{% url 'work_orders:print_work_order' work_order_obj.pk %}" target="_blank">Print</a> </li>
+            {% endif %}
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+        
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2> Edit Work Order</h2>
+        <br>
+        <form method="post" id="work-order-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if workorderform.errors %}
+                {% for field in workorderform %}
+                    {% if field.errors %}
+                        {{ field.label }}: {{ field.errors|striptags }}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            <input type="hidden" name="save_cont" id="save_cont_trigger" value="false">
+            <div style="display:none;">
+                    {{ workorderform.equipment }}
+            </div>
+
+            <h3> &nbsp; Work Order
+                <div style="display: inline-block;">
+                    <input class="input" type="text" id="wo-search-input" list="wo_numbers" name="work_order_search" placeholder="Work Order #" autocomplete="off"
+                        value="{% if work_order_obj %}{{ work_order_obj.work_order }}{% else %}{{ preview_work_order }}{% endif %}">
+                        <datalist id="wo_numbers">
+                            {% for number in orders %}
+                                <option value="{{ number }}">
+                            {% endfor %}
+                        </datalist>
+                    <img src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" 
+                        style="vertical-align: middle; cursor: pointer;" 
+                        onclick="lookupWorkOrder()">
+                </div>
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                {% if work_order_obj.barcode_image %}
+                    <img src="{{ work_order_obj.barcode_image.url }}" alt="Barcode" style="vertical-align: middle; height: 40px; width: 250px; image-rendering: pixelated;"> 
+                {% endif %}
+            </h3>
+            <br>
+            
+            <div>
+                Equipment Number: <input type="text" class="input" id="equipment-number-search" value="{{ work_order_obj.equipment_number }}" autocomplete="off"> &nbsp;
+                Equipment Description: <input type="text" class="input" id="equipment-description-search" value="{{ work_order_obj.equipment_description }}" autocomplete="off">
+                <div id="equipment-search-results" style="border: 1px solid #ccc; display: none; position: absolute; background: white; z-index: 100;">
+                        <!-- JS will inject results here -->
+                    </div>
+                    <span id="selected-equipment-number"></span>
+                    <span id="selected-equipment-description"></span>
+                    <input type="hidden" id="equipment-description-search">
+                </div>
+            </div>
+            <br>
+            
+            <div>
+                Date Created: {{ workorderform.date_created }}&nbsp;
+                Date Closed: {{ workorderform.date_closed }}<br>
+                <br>
+                Work Type: {{ workorderform.work_type }}&nbsp;
+                Priority: {{ workorderform.priority }}&nbsp;
+                Machine OOS: {{ workorderform.machine_oos }}<br>
+                <br>
+                Hours: {{ workorderform.hours }}&nbsp;
+                Meter: {{ workorderform.meter }}&nbsp;
+                Job Status: {{ workorderform.job_status }}<br>
+                <br>
+                <br>
+            </div>
+
+            <div>
+                <h3> Troubleshooting </h3>
+                <br>
+                Troubleshoot Description: {{ workorderform.troubleshoot_description }}<br>
+                <br>
+                Extended Description: <br>
+                {{ workorderform.ts_extended_description }}<br>
+                Equipment Location: {{ workorderform.equipment_location }}<br>
+                <br>
+                Service Report: <br>
+                {{ workorderform.ts_service_report }}<br>
+                <br>
+            </div>
+            <br>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button type="button" id="plan-button">Plan</button> &nbsp; &nbsp; 
+                <a class="button" href="{% url 'timesheets:add_timesheet' %}?work_order={{ work_order_obj.pk }}&next={{ request.get_full_path|urlencode }}">
+                    Time</a> &nbsp; &nbsp; 
+                <a class="button" href="{% url 'purchasing:create_purchase' %}?work_order={{ work_order_obj.work_order }}&next={{ request.get_full_path|urlencode }}">
+                    Purchase</a> &nbsp; &nbsp; 
+                {% if work_order_obj.attached_checklist %}
+                    <div style="display: flex; align-items: center;">
+                        <a href="{{ work_order_obj.attached_checklist.url }}" target="_blank" class="button">
+                            Checklist
+                        </a>
+                        
+                        <label for="id_attached_checklist" 
+                            style="margin-left: 8px; font-size: 0.75rem; color: #666; text-decoration: underline; cursor: pointer;">
+                            (Change)
+                        </label>
+                        
+                        <span style="display: none;">
+                            {{ workorderform.attached_checklist }}
+                        </span>
+                    </div>
+                {% else %}
+                    <div style="display: flex; align-items: center;">
+                        <span style="font-size: 0.85rem; color: #999; margin-right: 8px;">No Checklist:</span>
+                        {{ workorderform.attached_checklist }}
+                    </div>
+                {% endif %}
+                <br>
+            </div>
+            <div id="planning-section" style="display:none; margin-top:20px;">
+                <h3> Planning  &nbsp; &nbsp;&nbsp; &nbsp; Plan Start Date: {{ workorderform.plan_start_date }}</h3> 
+                
+                Safety Instructions: 
+                {{ workorderform.safety_instructions }}
+                <br>
+                Spec Requirements: 
+                {{ workorderform.spec_requirements }}
+                <br>
+                Legislative: {{ workorderform.legislative }}&nbsp;
+                License Req: {{ workorderform.license_req }}&nbsp;
+                Tools Req: {{ workorderform.tools_req }}&nbsp;
+                Conf Space: {{ workorderform.conf_space }}<br>
+                <br>
+                JHA: {{ workorderform.jha }}&nbsp;
+                Hot Work: {{ workorderform.hot_work }}&nbsp;
+                Parts WTY: {{ workorderform.parts_wty }}&nbsp;
+                Work WTY: {{ workorderform.work_wty }}<br>
+                <br>
+                <br>
+
+                <div id="warranty-table-container">
+                    {% if components %}
+                        {% include 'work_orders/component_warranty_table.html' with components=components %}
+                    {% else %}
+                        <p>No components found for this equipment.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <br>
+
+            <div>
+                <h3 style="display: flex; align-items: center; gap: 15px; margin: 0; padding: 10px;"> Repair &nbsp;
+                    <div id="repair-icons" style="display: flex; flex-direction: row; align-items: center; gap: 10px; margin: 10px 0;">
+                        <span id="icon-legislative" style="display:none;" title="Legislative"><img class="image" src="{% static 'Images/legislation2.ico' %}"></span>
+                        <span id="icon-license_req" style="display:none;" title="License Required"><img class="image" src="{% static 'Images/license.ico' %}"></span>
+                        <span id="icon-tools_req" style="display:none;" title="Tools Required"><img class="image" src="{% static 'Images/tools.ico' %}"></span>
+                        <span id="icon-conf_space" style="display:none;" title="Confined Space"><img class="image" src="{% static 'Images/confinedspace.ico' %}"></span>
+                        <span id="icon-jha" style="display:none;" title="JHA"><img class="image" src="{% static 'Images/jha.ico' %}"></span>
+                        <span id="icon-hot_work" style="display:none;" title="Hot Work"><img class="image" src="{% static 'Images/torch.ico' %}"></span>
+                        <span id="icon-parts_wty" style="display:none;" title="Parts Warranty"><img class="image" src="{% static 'Images/warranty.ico' %}"></span>
+                        <span id="icon-work_wty" style="display:none;" title="Work Warranty"><img class="image" src="{% static 'Images/warranty.ico' %}"></span>
+                    </div>
+                </h3>
+                <br>
+
+                Repair Description: {{ workorderform.repair_description }} &nbsp; &nbsp;
+                Estimated Hours: {{ workorderform.est_work_hours }}<br>
+                <br>
+                Repair Extended Description: 
+                {{ workorderform.repair_extended_description }}<br>
+                <br>
+                Job Instructions: 
+                {{ workorderform.job_instructions }}<br>
+                <br>
+                Failure System: {{ workorderform.fc_system }}&nbsp;
+                Failure Component: {{ workorderform.fc_component }}<br>
+                <br>
+                Failure Mode: {{ workorderform.fc_failure_mode }}&nbsp;
+                Action: {{ workorderform.fc_action }}<br>
+                <br>
+                Repair Service Report: 
+                {{ workorderform.repair_service_report }}
+            </div>
+        </form>
+        <br>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const equipmentField = document.getElementById('id_equipment');
+                const numberSearch = document.getElementById('equipment-number-search');
+                const descriptionSearch = document.getElementById('equipment-description-search');
+                const resultsBox = document.getElementById('equipment-search-results');
+                const selectedNumber = document.getElementById('selected-equipment-number');
+                const selectedDescription = document.getElementById('selected-equipment-description');
+                const planningSection = document.getElementById('planning-section');
+
+                // This function handles the selection, auto-fills both fields, and updates the table
+                function setEquipment(item) {
+                    // 1. Update Hidden Form Field
+                    equipmentField.innerHTML = `<option value="${item.id}" selected>${item.equipment_number}</option>`;
+                    equipmentField.value = item.id;
+
+                    // 2. Auto-fill Search Inputs (Cross-population)
+                    numberSearch.value = item.equipment_number;
+                    descriptionSearch.value = item.equipment_description;
+
+                    // 3. Update Display Labels
+                    selectedNumber.textContent = item.equipment_number;
+                    selectedDescription.textContent = item.equipment_description;
+                    
+                    // 4. Hide results box
+                    resultsBox.style.display = 'none';
+
+                    // 5. FETCH WARRANTY TABLE (Standard JS Replacement for HTMX)
+                    fetch(`{% url 'work_orders:load_components' %}?equipment=${item.id}`)
+                        .then(response => response.text())
+                        .then(html => {
+                            const container = document.getElementById('warranty-table-container');
+                            if (container) {
+                                container.innerHTML = html;
+                            }
+                        })
+                        .catch(err => console.error('Error loading warranty table:', err));
+                }
+
+                function runSearch(query, field) {
+                    if (!query.trim()) {
+                        resultsBox.style.display = 'none';
+                        resultsBox.innerHTML = '';
+                        return;
+                    }
+                    fetch(`{% url 'work_orders:equipment_lookup' %}?q=${encodeURIComponent(query)}&field=${encodeURIComponent(field)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            resultsBox.innerHTML = '';
+                            if (!data.results || !data.results.length) {
+                                resultsBox.style.display = 'none';
+                                return;
+                            }
+                            data.results.forEach(item => {
+                                const row = document.createElement('div');
+                                // Show both Number and Description in the dropdown for clarity
+                                row.textContent = `${item.equipment_number} - ${item.equipment_description}`;
+                                row.style.padding = '8px';
+                                row.style.cursor = 'pointer';
+                                row.style.borderBottom = '1px solid #eee';
+                                
+                                row.addEventListener('click', function () {
+                                    setEquipment(item);
+                                });
+                                resultsBox.appendChild(row);
+                            });
+                            resultsBox.style.display = 'block';
+                        });
+                }
+
+                // Search listeners for both Number and Description fields
+                numberSearch.addEventListener('input', function () {
+                    runSearch(this.value, 'number');
+                });
+
+                descriptionSearch.addEventListener('input', function () {
+                    runSearch(this.value, 'description');
+                });
+
+                // Toggle Planning Section
+                const planButton = document.getElementById('plan-button');
+                if (planButton) {
+                    planButton.addEventListener('click', function () {
+                        planningSection.style.display = planningSection.style.display === 'none' ? 'block' : 'none';
+                    });
+                }
+
+                // Status Icon Logic
+                function bindYesNoIcon(fieldId, iconId) {
+                    const field = document.getElementById(fieldId);
+                    const icon = document.getElementById(iconId);
+                    if (!field || !icon) return;
+                    function updateIcon() {
+                        icon.style.display = field.value === 'Yes' ? 'inline' : 'none';
+                    }
+                    field.addEventListener('change', updateIcon);
+                    updateIcon();
+                }
+
+                const iconMappings = [
+                    ['id_legislative', 'icon-legislative'],
+                    ['id_license_req', 'icon-license_req'],
+                    ['id_tools_req', 'icon-tools_req'],
+                    ['id_conf_space', 'icon-conf_space'],
+                    ['id_jha', 'icon-jha'],
+                    ['id_hot_work', 'icon-hot_work'],
+                    ['id_parts_wty', 'icon-parts_wty'],
+                    ['id_work_wty', 'icon-work_wty']
+                ];
+
+                iconMappings.forEach(mapping => bindYesNoIcon(mapping[0], mapping[1]));
+
+                if (equipmentField && equipmentField.value) {
+                    // Fetch the table immediately for the existing equipment
+                    fetch(`{% url 'work_orders:load_components' %}?equipment=${equipmentField.value}`)
+                        .then(response => response.text())
+                        .then(html => {
+                            const container = document.getElementById('warranty-table-container');
+                            if (container) {
+                                container.innerHTML = html;
+                            }
+                        });
+                }
+            });
+
+            // Global function for the Work Order lookup input
+            function lookupWorkOrder() {
+                const woSearchInput = document.getElementById('wo-search-input');
+                if (woSearchInput && woSearchInput.value) {
+                    window.location.href = "{% url 'work_orders:edit_work_order' %}?q=" + encodeURIComponent(woSearchInput.value);
+                }
+            }
+
+            function submitWorkOrder(event) {
+                event.preventDefault();
+                const form = document.getElementById('work-order-form');
+                document.getElementById('save_cont_trigger').value = 'true';
+                form.submit();
+            }
+        </script>
+    </div>
+{% endblock %}

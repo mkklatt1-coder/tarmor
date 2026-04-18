@@ -1,0 +1,26 @@
+<table class="table" id="warranty-table">
+    <thead>
+        <tr>
+            <th class="th">Component #</th>
+            <th class="th">Description</th>
+            <th class="th">Wty Duration</th>
+            <th class="th">UoM</th>
+            <th class="th">Wty Start</th>
+            <th class="th">Wty End</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for component in components %}
+        <tr>
+            <td class="td">{{ component.Component_Number }}</td>
+            <td class="td">{{ component.Component_Description }}</td>
+            <td class="td">{{ component.Warranty_Duration|default:"N/A" }}</td>
+            <td class="td">{{ component.Wty_UoM }}</td>
+            <td class="td">{{ component.Warranty_Start_Date|date:"Y-m-d"|default:"--" }}</td>
+            <td class="td">{{ component.Warranty_End_Date|date:"Y-m-d"|default:"--" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td class="td" colspan="6">No components available.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>

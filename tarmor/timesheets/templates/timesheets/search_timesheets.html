@@ -1,0 +1,85 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Search Timesheet{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li>
+            <a >Export</a>
+        </li>
+        <li><a href="{% url 'timesheets:timesheets' %}">Cancel
+            </a>
+        </li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+    
+
+    <div class="main">
+        
+        <h2> Search Timesheet</h2>
+        <br>
+
+        <h5 style="align-items: center;"> 
+            <form method="GET" action="{% url 'timesheets:search_timesheets' %}" style="display:inline;">
+                &nbsp; Time Entries &nbsp;
+                WO: <input class="input" type="text" name="work_order" value="{{ work_order_query }}">
+                Tech: <input class="input" type="text" name="technician" value="{{ technician_query }}">
+                <button type="submit" style="background:none; border:none; cursor:pointer; padding:0;">
+                    <img src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+                </button>
+                <a href="{% url 'timesheets:search_timesheets' %}"><img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;"></a>
+            </form>
+        </h5>
+        <br>
+        
+        <div class="form">
+              
+            <table class="table" id="timesheet-table">
+                 
+                <thead>
+                    <tr>
+                        <th class="th"><a href="?sort=work_order&{{ filter_url }}" class="sort_header"> WO Number {% if sort_by == 'work_order' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=technician&{{ filter_url }}" class="sort_header"> Technician {% if sort_by == 'technician' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=start_date&{{ filter_url }}" class="sort_header"> Start Date/Time {% if sort_by == 'start_date' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=finish_date&{{ filter_url }}" class="sort_header"> Finish Date/Time {% if sort_by == 'finish_date' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=total_time&{{ filter_url }}" class="sort_header"> Total Time {% if sort_by == 'total_time' %}▲{% endif %}</a></th>
+                        <th class="th"><a href="?sort=time_type&{{ filter_url }}" class="sort_header"> Work Type {% if sort_by == 'time_type' %}▲{% endif %}</a></th>
+                    </tr>
+                </thead>
+                
+                <tbody>
+                    {% for timesheet in timesheets %}
+                        <tr class="timesheet-row">
+                            <td class="td"> {{ timesheet.work_order }} </td>
+                            <td class="td"> {{ timesheet.technician }}</td>
+                            <td class="td"> {{ timesheet.start_date }} </td>
+                            <td class="td"> {{ timesheet.finish_date }} </td>
+                            <td class="td"> {{ timesheet.total_time }} </td>
+                            <td class="td"> {{ timesheet.time_type }} </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6">No matching timesheets found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <br>
+
+        <script>
+            
+        </script>
+            
+    </div>
+
+{% endblock %}

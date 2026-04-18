@@ -1,0 +1,91 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+	Search Eq
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+
+        <ul class="leftnavbar">
+            <li><a class="nav-link" href="{% url 'equipment:export' %}?{{ request.GET.urlencode }}">Export</a> </li>
+            <li><a href="{% url 'equipment:equipment' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li>   
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <h2> Search Equipment </h2>
+        <br>
+
+        <div >
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'equipment:search_eq' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form id="search-form"  method="GET" action=".">
+                Equipment Number: <input type="text" name="Equipment_Number" class="input"> &nbsp;
+                Asset Type: <input type="text" name="Asset_Type" class="input"> &nbsp;
+                Equipment Type: <input type="text" name="Equipment_Type" class="input"> <br>
+                <br>
+                Equipment Status: <input type="text" name="Equipment_Status" class="input"> &nbsp;
+                Make: <input type="text" name="Make" class="input"> &nbsp;
+                Model: <input type="text" name="Model" class="input"> <br>
+            </form>
+            <br>
+        </div>
+
+        <div >
+            <h2 > Search Results </h2>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=Equipment_Number" class="sort_header">Equipment Number{% if sort_by == 'Equipment_Number' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Asset_Type__name" class="sort_header">Asset Type{% if sort_by == 'Asset_Type__name' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Equipment_Type__Equipment_Type" class="sort_header">Equipment Type{% if sort_by == 'Equipment_Type__Equipment_Type' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Equipment_Status" class="sort_header">Equipment Status{% if sort_by == 'Equipment_Status' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Equipment_Description" class="sort_header">Equipment Description{% if sort_by == 'Equipment_Description' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Commissioning_Date" class="sort_header">Commission Date{% if sort_by == 'Commissioning_Date' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Decommissioning_Date" class="sort_header">Decommission Date{% if sort_by == 'Decommissioning_Date' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Make" class="sort_header">Make{% if sort_by == 'Make' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Model" class="sort_header">Model{% if sort_by == 'Model' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=Serial_Number" class="sort_header">Serial Number{% if sort_by == 'Serial_Number' %}▲{% endif %}</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in equipment_list %}
+                            <tr>
+                                <td class="td">{{item.Equipment_Number}}</td>
+                                <td class="td">{{item.Asset_Type}}</td>
+                                <td class="td">{{item.Equipment_Type}}</td>
+                                <td class="td">{{item.Equipment_Status}}</td>
+                                <td class="td">{{item.Equipment_Description}}</td>
+                                <td class="td">{{item.Commissioning_Date}}</td>
+                                <td class="td">{{item.Decommissioning_Date}}</td>
+                                <td class="td">{{item.Make}}</td>
+                                <td class="td">{{item.Model}}</td>
+                                <td class="td">{{item.Serial_Number}}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10">No records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

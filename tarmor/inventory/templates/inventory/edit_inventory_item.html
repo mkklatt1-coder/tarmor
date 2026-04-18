@@ -1,0 +1,157 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Edit Inv Item
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="document.getElementById('InventoryItemForm').submit();">Save</a></li>
+        <li><a href="{% url 'inventory:inventory' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        {% if instance %}
+            <li>
+                <form id="DeleteGroupForm" action="{% url 'inventory:delete_inventory_group' instance.pk %}" method="POST" style="display:none;">
+                    {% csrf_token %}
+                </form>
+                <a href="javascript:void(0)" 
+                   style="color: red;" 
+                   onclick="if(confirm('WARNING: This will delete this part and ALL its data. Proceed?')) { document.getElementById('DeleteGroupForm').submit(); }">
+                   Delete
+                </a>
+            </li>
+        {% endif %}
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2> Edit Inventory Item </h2>
+    <br>
+    <div>
+        <h5 class="form">Part Number &nbsp; &nbsp;
+        <form method="GET" action="{% url 'inventory:edit_inventory_item' %}">
+            <input class="input" type="text" name="part_number" value="{{ part_number }}" class="input" placeholder="Part Number">
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+        </form>
+        &nbsp; &nbsp; <button type="button" id="add-inv-item-btn">Add Alt</button></h5>
+        <br>
+    </div>
+
+    <form id="InventoryItemForm" method="POST" action="{% url 'inventory:edit_inventory_item' %}">
+        
+        {% csrf_token %}
+        {{ inv_formset.management_form }}
+        {% if new_inv_form.errors %}
+            <div class="errorlist">
+                <strong>Please fix the following:</strong><br>
+                {{ new_inv_form.non_field_errors }}
+                {% for field in new_inv_form %}
+                    {% if field.errors %}
+                        <div>{{ field.label }}: {{ field.errors }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <br>
+        {% endif %}
+        
+        <div class="form">
+            <p> Ensure part numbers are put in the system <strong><i>without</i></strong> dashes, hypens, hashtags, etc.</p>
+            <br>
+            <label>Part Number:</label> {{ new_inv_form.part_number }} &nbsp;
+            <label>Part Desc:</label> {{ new_inv_form.part_description }} &nbsp;
+            <label>Supplier:</label> {{ new_inv_form.supplier }} &nbsp;
+            <label>Manufacturer (Mfg):</label> {{ new_inv_form.manufacturer }}<br>
+            <br>
+            <label>Qty:</label> {{ new_inv_form.qty }} &nbsp;
+            <label>/ UoM:</label> {{ new_inv_form.uom }} &nbsp;
+            <label>Unit Price:</label> {{ new_inv_form.unit_price }} &nbsp;
+            <label>Stock / Non-stock:</label> {{ new_inv_form.stock }} &nbsp;
+            <label>Controlled Product:</label> {{ new_inv_form.controlled_product }}<br>
+            <br>
+            <label>Bin Location:</label> {{ new_inv_form.bin_location }} &nbsp;
+            <label>Qty On Hand:</label> {{ new_inv_form.qty_onhand }} &nbsp;
+            <label>Min Qty:</label> {{ new_inv_form.min_qty }} &nbsp;
+            <label>Max Qty:</label> {{ new_inv_form.max_qty }} <br>
+            <br>
+            <label>Last Transaction Date:</label> {{ new_inv_form.last_transaction_date }} <small>use today's date</small> &nbsp;
+            <label>Last Transaction Number:</label> {{ new_inv_form.last_transaction_number }}<small>use "M" + today's date (M20260401)</small><br>
+            <br>
+        </div>
+    
+        <div class="form" id="alternatives-container" style="{% if not instance.alternatives.exists %}display:none;{% endif %}">
+            {% for alt_form in inv_formset %}
+                <h4> Alternative Part </h4>
+                <div class="inv-item">
+                    {{ alt_form.id }}
+                    <label>Part Number:</label> {{ alt_form.part_number }} &nbsp;
+                    <label>Part Desc:</label> {{ alt_form.part_description }} &nbsp;
+                    <label>Supplier:</label> {{ alt_form.supplier }} &nbsp;
+                    <label>Manufacturer (Mfg):</label> {{ alt_form.manufacturer }}<br>
+                    <br>
+                    <label>Qty:</label> {{ alt_form.qty }} &nbsp;
+                    <label>/ UoM:</label> {{ alt_form.uom }} &nbsp;
+                    <label>Unit Price:</label> {{ alt_form.unit_price }} &nbsp;
+                    <label>Stock / Non-stock:</label> {{ alt_form.stock }} &nbsp;
+                    <label>Controlled Product:</label> {{ alt_form.controlled_product }}<br>
+                    <br>
+                    <label>Bin Location:</label> {{ alt_form.bin_location }} &nbsp;
+                    <label>Qty On Hand:</label> {{ alt_form.qty_onhand }} &nbsp;
+                    <label>Min Qty:</label> {{ alt_form.min_qty }} &nbsp;
+                    <label>Max Qty:</label> {{ alt_form.max_qty }} <br>
+                    <br>
+                    <label>Last Transaction Date:</label> {{ alt_form.last_transaction_date }} &nbsp;
+                    <label>Last Transaction Number:</label> {{ alt_form.last_transaction_number }}<br>
+                    <br>
+                    <label style="color: red;">Remove Alt?</label> {{ alt_form.DELETE }}
+                </div>
+            {% endfor %}
+        </div>
+    </form>
+    <div id="empty-inv-item-form" style="display:none;">
+        <div class="inv-item">
+            {% with c_form=inv_formset.empty_form %}
+                <h4>Alternative Part</h4>
+                <label>Part Number:</label> {{ c_form.part_number }} &nbsp;
+                <label>Part Desc:</label> {{ c_form.part_description }} &nbsp;
+                <label>Supplier:</label> {{ c_form.supplier }} &nbsp;
+                <label>Manufacturer (Mfg):</label> {{ c_form.manufacturer }}<br><br>
+                <label>Qty:</label> {{ c_form.qty }} &nbsp;
+                <label>/ UoM:</label> {{ c_form.uom }} &nbsp;
+                <label>Unit Price:</label> {{ c_form.unit_price }} &nbsp;
+                <label>Stock / Non-stock:</label> {{ c_form.stock }} &nbsp;
+                <label>Controlled Product:</label> {{ c_form.controlled_product }}<br><br>
+                <label>Bin Location:</label> {{ c_form.bin_location }} &nbsp;
+                <label>Qty On Hand:</label> {{ c_form.qty_onhand }} &nbsp;
+                <label>Min Qty:</label> {{ c_form.min_qty }} &nbsp;
+                <label>Max Qty:</label> {{ c_form.max_qty }} <br><br>
+                <label>Last Transaction Date:</label> {{ c_form.last_transaction_date }} &nbsp;
+                <label>Last Transaction Number:</label> {{ c_form.last_transaction_number }}<br><br>
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('add-inv-item-btn').addEventListener('click', function() {
+        const container = document.getElementById('alternatives-container');
+        container.style.display = 'block';
+        const totalForms = document.querySelector('[id$="-TOTAL_FORMS"]'); 
+        const currentCount = parseInt(totalForms.value);
+        const templateHtml = document.getElementById('empty-inv-item-form').innerHTML;
+        const newFormHtml = templateHtml.replace(/__prefix__/g, currentCount);
+        container.insertAdjacentHTML('beforeend', newFormHtml);
+        totalForms.value = currentCount + 1;
+    });
+
+    function submitInventoryForm() {
+        document.getElementById('InventoryItemForm').submit();
+    }
+</script>
+{% endblock %}

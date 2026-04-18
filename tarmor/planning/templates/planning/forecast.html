@@ -1,0 +1,77 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} QM Forecast {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li><a href="{% url 'planning:planning' %}"> Exit </a></li>
+            <li><a href="{% url 'planning:planning' %}"
+                onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2>QM Forecast (Next 7 Days)</h2>
+    <br>
+
+    <!-- Bulk Action Button -->
+    <div style="margin-bottom: 20px;">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="run_forecast" class="btn btn-primary">
+                🚀 Forecast
+            </button>
+        </form>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th class="th">QM #</th>
+                <th class="th">Equipment</th>
+                <th class="th">Due Date</th>
+                <th class="th">Status</th>
+                <th class="th">Work Order</th>
+                <th class="th">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in forecast_items %}
+            <tr>
+                <td class="td">{{ item.qm.qm_number }}</td>
+                <td class="td">{{ item.qm.equipment }}</td>
+                <td class="td">{{ item.due_date }}</td>
+                <td class="td"><span class="badge">{{ item.status }}</span></td>
+                <td class="td">
+                    {% if item.work_order %}
+                        <strong>{{ item.work_order.work_order}}</strong>
+                    {% else %}
+                        <em class="text-muted">Pending</em>
+                    {% endif %}
+                </td>
+                <td class="td">
+                    {% if item.work_order %}
+                        <a href="{% url 'work_orders:edit_work_order' item.work_order.id %}?next={{ request.path }}" class="btn btn-sm btn-info">
+                            View WO
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No maintenance due in the next 7 days.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

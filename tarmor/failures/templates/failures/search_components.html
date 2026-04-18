@@ -1,0 +1,82 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Search Components
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'failures:components' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Search Components </h2>
+        <br>
+        <div>
+            <h5 > 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'failures:search_components' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h5>
+            <br>
+            <form id="search-form"  method="GET" action="{% url 'failures:search_components' %}">
+                Comb Comp Key: <input type="text" name="combined_comp_key" value="{{ combined_comp_key }}" placeholder="Combined Component Key" class="input"> &nbsp;
+                Component Name: <input type="text" name="component_name" value="{{ component_name }}" placeholder="Component Name" class="input"> &nbsp;
+                Component Key: <input type="text" name="component_key" value="{{ component_key }}" placeholder="Component Key" class="input"> &nbsp;
+                Comb Sys Key: <input type="text" name="combined_sys_key" value="{{ combined_sys_key }}" placeholder="Combined System Key" class="input"> <br>
+                <input type="hidden" name="sort" value="{{ sort_by }}">
+            </form>
+            <br>
+        </div>
+
+        <div class="form">
+            <form class="form" id="sesarch_component_form" method="POST">
+                <h2> Search Results </h2>
+                <br>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="th"><a href="?sort=combined_comp_key&{{ filter_url }}" class="sort_header">Comb Comp Key:{% if sort_by == 'combined_comp_key' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=component_name&{{ filter_url }}" class="sort_header">Component Name:{% if sort_by == 'component_name' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=component_key&{{ filter_url }}" class="sort_header">Component Key:{% if sort_by == 'component_key' %}▲{% endif %}</a></th>
+                            <th class="th"><a href="?sort=combined_sys_key&{{ filter_url }}" class="sort_header">Comb Sys Key:{% if sort_by == 'combined_sys_key' %}▲{% endif %}</a></th>
+                        </tr>
+                    <thead>
+                    <tbody>
+                        {% for comp in component %}
+                            <tr>
+                                <td class="td">{{ comp.combined_comp_key }}</td>
+                                <td class="td">{{ comp.component_name }}</td>
+                                <td class="td">{{ comp.component_key }}</td>
+                                <td class="td">{{ comp.combined_sys_key }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No components found matching those criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+    <script>
+        function exportExcel() {
+            const currentParams = window.location.search;
+            window.location.href = "{% url 'failures:export_components_excel' %}" + currentParams;
+        }
+        </script>
+{% endblock %}

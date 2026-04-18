@@ -1,0 +1,65 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Search Cost Centres {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="{% url 'facilities:export_costcentre_excel' %}?Cost_Centre={{ request.GET.Cost_Centre }}&
+                    Cost_Centre_Description={{ request.GET.Cost_Centre_Description }}&Status={{ request.GET.Status }}"class="btn btn-success btn-sm">Export</a> </li>
+            <li> <a href="{% url 'facilities:facilities' %}">Return</a> </li>
+            <li> <a href="{% url 'core:home' %}">Main</a> </li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2> Search Cost Centre </h2>
+    <br>
+    <h5 > 
+        &nbsp; Search Criteria &nbsp;
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+            <a href="{% url 'facilities:search_costcentre' %}">
+            <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+        </a>
+    </h5>
+    <br>
+    <form id="search-form"  method="GET" action=".">
+        Cost Centre Description: <input type="text" name="Equipment_Number" class="input"> &nbsp;
+        Status: <input type="text" name="Status" class="input">
+    </form>
+    <br>
+
+    <h2> Search Results </h2>
+    <br>
+
+    <div class="table">
+        <table method="get" id="search-form">
+            {% csrf_token %}
+            <thead>
+                <tr>
+                    <th class="th"><a href="?sort=Cost_Centre" class="sort_header">Cost Centre{% if sort_by == 'Cost_Centre' %}▲{% endif %}</a></th>
+
+                    <th class="th"><a href="?sort=Cost_Centre_Description" class="sort_header">Cost Centre Description{% if sort_by == 'Cost_Centre_Description' %}▲{% endif %}</a></th>
+
+                    <th class="th"><a href="?sort=Status" class="sort_header">Status{% if sort_by == 'Status' %}▲{% endif %}</a></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in costcentre_list %}
+                <tr>
+                    <td class=td>{{item.Cost_Centre}}</td>
+                    <td class=td>{{item.Cost_Centre_Description}}</td>
+                    <td class=td>{{item.Status}}</td>
+                </tr>
+                {% empty %}
+                    <tr><td colspan="10">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

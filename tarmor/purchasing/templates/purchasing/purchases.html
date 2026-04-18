@@ -1,0 +1,33 @@
+
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Purchases
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'purchasing:create_purchase' %}">New Purch</a> </li>
+            <li><a href="{% url 'purchasing:search_purchases' %}">Search Purch</a> </li>
+            <li><a href="{% url 'purchasing:edit_purchase' %}">Edit Purch</a> </li>
+            <br>
+            <li><a href="{% url 'purchasing:purchasing' %}">Return</a> </li> 
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Purchases</h2>
+        <div>
+        <img class="image" src="{% static 'Images/scoop.jpg' %}">
+        </div>
+
+    </div>
+{% endblock %}
