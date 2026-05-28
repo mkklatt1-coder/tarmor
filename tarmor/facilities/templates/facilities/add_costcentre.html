@@ -36,14 +36,18 @@
             {% endif %}
             <br>
             <p> All cost centres must start with "G" with 8 charachters (9 charachters total)</p> <br>
-            <br>
-            <label> Cost Center: </label> {{ costcentreuploadform.Cost_Centre }} <br>
-            <br>
-            <label> Description: </label> {{ costcentreuploadform.Cost_Centre_Description }} <br>
-            <br>
-            <label> Status: </label> {{ costcentreuploadform.Status }}
+            
+            <table class="table-bare-container">
+                <tr>
+                    <td>Cost Centre</td>
+                    <td><input class="locked" type="text" value="{{ preview_cc }}" readonly></td>
+                    <td>Description</td>
+                    <td>{{ costcentreuploadform.Cost_Centre_Description }}</td>
+                    <td>Status</td>
+                    <td>{{ costcentreuploadform.Status }}</td>
+                </tr>
+            </table>
         </form>
     </div>
 </div>
-
 {% endblock %}

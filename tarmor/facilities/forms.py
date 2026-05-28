@@ -19,6 +19,11 @@ class CostCentreUploadForm(forms.ModelForm):
             "Cost_Centre_Description": "Description",
             "Status":"Status"
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'Cost_Centre' in self.fields:
+            self.fields['Cost_Centre'].required = False
         
 class FacilityUploadForm(forms.ModelForm):
     class Meta:
@@ -26,6 +31,7 @@ class FacilityUploadForm(forms.ModelForm):
         fields = [
             "Facility_Code",
             "Facility_Name",
+            "Shop_Rate",
             "Cost_Centre",
             "Status",
             "Street_Address",
@@ -41,6 +47,7 @@ class FacilityUploadForm(forms.ModelForm):
         widgets = {
             "Facility_Code": forms.TextInput(attrs={"class": "input", "size": "10"}),
             "Facility_Name": forms.TextInput(attrs={"class": "input", "size": "60"}),
+            "Shop_Rate": forms.NumberInput(attrs={"class": "input", 'step': '0.01', 'placeholder': '0.00'}),
             "Cost_Centre": forms.Select(attrs={"class": "input"}),
             "Status": forms.Select(attrs={"class": "input"}),
             "Street_Address": forms.TextInput(attrs={"class": "input", "size": "20"}),
@@ -56,6 +63,7 @@ class FacilityUploadForm(forms.ModelForm):
         labels = {
             "Facility_Code": "Facility Code",
             "Facility_Name": "Facility Name",
+            "Shop_Rate": "Shop Rate",
             "Cost_Centre": "Cost Center",
             "Status": "Status",
             "Street_Address": "Street Address",

@@ -22,8 +22,8 @@ class TimesheetAddForm(forms.ModelForm):
             'time_type',
         ]
         widgets = {
-            'start_date': DateTimeLocalInput(),
-            'finish_date': DateTimeLocalInput(),
+            'start_date': DateTimeLocalInput(attrs={'step': '900'}),
+            'finish_date': DateTimeLocalInput(attrs={'step': '900'}),
             'total_time': forms.NumberInput(attrs={'readonly': 'readonly', 'class': 'locked input'}),
         }
         
@@ -50,9 +50,11 @@ class TimesheetAddForm(forms.ModelForm):
             
         for name, field in self.fields.items():
             existing_classes = field.widget.attrs.get('class', '')
-            field.widget.attrs.update({'class': f'{existing_classes} input'.strip()})
+            if 'input' not in existing_classes.split():
+                field.widget.attrs['class'] = f'{existing_classes} input'.strip()
                 
         for field_name in ['start_date', 'finish_date']:
+            self.fields[field_name].widget.attrs['step'] = '900'
             self.fields[field_name].input_formats = [
                 '%Y-%m-%dT%H:%M',
                 '%Y-%m-%d %H:%M',
@@ -75,8 +77,8 @@ class TimesheetEditForm(forms.ModelForm):
             'time_type',
         ]
         widgets = {
-            'start_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'input'}),
-            'finish_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'input'}),
+            'start_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'input', 'step': '900'}),
+            'finish_date': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'input', 'step': '900'}),
             'total_time': forms.NumberInput(attrs={'readonly': 'readonly', 'class': 'locked input'}),
         }
         

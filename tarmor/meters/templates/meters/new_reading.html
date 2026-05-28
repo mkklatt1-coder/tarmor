@@ -35,13 +35,20 @@
         {% endif %}
 
         <div class="form">
-            <h5 class="form">
-                <span> New Reading For Equipment: &nbsp;</span>
-                <form method="GET" action="{% url 'meters:new_reading' %}">
-                    <input class="input" type="text" name="new_reading" placeholder="Equipment Number" value="{{ request.GET.ReadingUploadForm }}">
+            <form method="GET" action="{% url 'meters:new_reading' %}">
+                <h3>New Reading For Equipment: &nbsp;
+                    <input class="input" type="text" name="new_reading" list="eq-num-list" placeholder="Equipment Number" value="{{ query_val }}" autocomplete="off">
+                    <datalist id="eq-num-list">
+                        {% for eq in all_equipment_suggestions %}
+                            <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                            </option>
+                        {% endfor %}
+                    </datalist>
+
                     <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
-                </form>
-            </h5>
+                </h3>
+            </form>
             <br>
             <p>When replacing a meter, the value of the new meter must be entered in the current reading field to reset the machine meter in the system!</p>
         </div>

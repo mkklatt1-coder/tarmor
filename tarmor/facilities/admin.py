@@ -19,7 +19,7 @@ class FacilityAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ("Basic Information", {
-            "fields": ("Facility_Code", "Facility_Name", "Cost_Centre", "Status")
+            "fields": ("Facility_Code", "Facility_Name", "Shop_Rate", "Cost_Centre", "Status")
         }),
         ("Location Details", {
             "fields": ("Street_Address", "City", "Province_State", "Country", "Postal_Zip_Code")

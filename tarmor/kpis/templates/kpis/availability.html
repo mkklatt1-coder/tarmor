@@ -24,43 +24,67 @@
         <h2> Availability / Utilisation </h2>
         <br>
         <div>
-            <h5 > 
-                &nbsp; Search Criteria &nbsp;
+            <h3> 
+                &nbsp; Filters &nbsp;
                     <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
                     <a href="{% url 'kpis:availability_utilisation_report' %}">
                     <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
                 </a>
-            </h5>
-            <br>
+            </h3>
+            
             <form class="form" id="search-form"  method="GET" action="{% url 'kpis:availability_utilisation_report' %}">
-                Start Date: <input type="date" name="start_date" class="input" value="{{ filters.start_date }}"> &nbsp;
-                End Date: <input type="date" name="end_date" class="input" value="{{ filters.end_date }}"> &nbsp;
-
-                Asset Type: 
-                <select name="asset_type" class="input"><option value="">All Asset Types</option>
-                    {% for at in asset_types %}
-                        <option value="{{ at }}" {% if filters.asset_type == at %}selected{% endif %}>{{ at }}</option>
-                    {% endfor %}
-                </select> &nbsp;
-                Eq. Type: 
-                <select name="equipment_type" class="input"><option value="">All Types</option>
-                    {% for et in equipment_types %}
-                        <option value="{{ et }}" {% if filters.equipment_type == et %}selected{% endif %}>{{ et }}</option>
-                    {% endfor %}
-                </select> &nbsp;
-                Eq. Number: <input type="text" name="equipment_number" value="{{ filters.equipment_number }}" placeholder="Contains..." class="input">
-                <input type="hidden" name="sort" value="{{ sort_by }}">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Start Date</td>
+                        <td><input type="date" name="start_date" class="input" value="{{ filters.start_date }}"></td>
+                        <td>End Date</td>
+                        <td><input type="date" name="end_date" class="input" value="{{ filters.end_date }}"></td>
+                        <td>Asset Type</td>
+                        <td>
+                            <input type="text" name="asset_type" value="{{ asset_type_val }}" list="asset-type-list" placeholder="All Assets..." class="input" autocomplete="off"
+                                hx-get="/kpis/get-kpi-linked-eq-types/" hx-trigger="input changed delay:200ms, change" hx-target="#eq-type-datalist-wrapper">
+                            <datalist id="asset-type-list">
+                                {% for at in asset_types %}
+                                    <option value="{{ at.name }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Eq. Type</td>
+                        <td>
+                            <input type="text" name="equipment_type" value="{{ eq_type_val }}" list="eq-type-list" placeholder="Select Asset First..." class="input" autocomplete="off">
+                            <div id="eq-type-datalist-wrapper">
+                                <datalist id="eq-type-list">
+                                    {% for et in equipment_types %}
+                                        <option value="{{ et.Equipment_Type }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </td>
+                        <td>Eq. Number</td>
+                        <td>
+                            <input type="text" name="equipment_number" value="{{ eq_num_val }}" list="eq-num-list" placeholder="Number or Desc..." class="input" autocomplete="off">
+                            <datalist id="eq-num-list">
+                                {% for eq in all_equipment_suggestions %}
+                                    <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                        {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
             </form>
-            <br>
         </div>
-        <br>
 
         <h3>A&U Analysis - {{ current_year }}</h3>
-        <div style="width: 80%; margin: auto;">
+        <br>
+        <div style="width: 90%; height:500px; margin: auto;">
             <canvas id="auChart"></canvas>
         </div>
-
-        <h3>MTBF</h3>
+        <br>
+        
+        <h3>A&U</h3>
         <br>
 
         <div class="container-wrapper">
@@ -68,29 +92,57 @@
             <table class="table-container" id="report-table">
                 <thead>
                     <tr>
-                        <th class="th"><a href="?sort=equipment_number&{{ filter_url }}" class="sort_header">Equipment #{% if sort_by == 'equipment_number' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=equipment_description&{{ filter_url }}" class="sort_header">Description{% if sort_by == 'equipment_description' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=asset_type&{{ filter_url }}" class="sort_header">Asset Type{% if sort_by == 'asset_type' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=equipment_type&{{ filter_url }}" class="sort_header">Equipment Type{% if sort_by == 'equipment_type' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=total_down&{{ filter_url }}" class="sort_header">Downtime{% if sort_by == 'total_down' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=available&{{ filter_url }}" class="sort_header">Availability{% if sort_by == 'available' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=total_worked&{{ filter_url }}" class="sort_header">Utilisation{% if sort_by == 'total_worked' %}▲{% endif %}</a></th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_number' %}-equipment_number{% else %}equipment_number{% endif %}" class="sort_header">
+                                Equipment # {% if sort == 'equipment_number' %} ▲ {% elif sort == '-equipment_number' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_description' %}-equipment_description{% else %}equipment_description{% endif %}" class="sort_header">
+                                Description {% if sort == 'equipment_description' %} ▲ {% elif sort == '-equipment_description' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'asset_type' %}-asset_type{% else %}asset_type{% endif %}" class="sort_header">
+                                Asset Type {% if sort == 'asset_type' %} ▲ {% elif sort == '-asset_type' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_type' %}-equipment_type{% else %}equipment_type{% endif %}" class="sort_header">
+                                Equipment Type {% if sort == 'equipment_type' %} ▲ {% elif sort == '-equipment_type' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'total_down' %}-total_down{% else %}total_down{% endif %}" class="sort_header">
+                                Downtime {% if sort == 'total_down' %} ▲ {% elif sort == '-total_down' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'available' %}-available{% else %}available{% endif %}" class="sort_header">
+                                Availability {% if sort == 'available' %} ▲ {% elif sort == '-available' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'total_worked' %}-total_worked{% else %}total_worked{% endif %}" class="sort_header">
+                                Utilisation {% if sort == 'total_worked' %} ▲ {% elif sort == '-total_worked' %} ▼ {% endif %}
+                            </a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for row in report_data %}
+                    {% for item in report_data %}
                         <tr>
-                            <td class="td">{{ row.equipment_number }}</td>
-                            <td class="td">{{ row.equipment_description }}</td>
-                            <td class="td">{{ row.asset_type }}</td>
-                            <td class="td">{{ row.equipment_type }}</td>
-                            <td class="td">{{ row.total_down }}</td>
-                            <td class="td">{{ row.available }}</td>
-                            <td class="td">{{ row.total_worked }}</td>
+                            <td class="td">{{ item.equipment_number }}</td>
+                            <td class="td">{{ item.equipment_description }}</td>
+                            <td class="td">{{ item.asset_type }}</td>
+                            <td class="td">{{ item.equipment_type }}</td>
+                            <td class="td">{{ item.total_down }}</td>
+                            <td class="td">{{ item.available }}</td>
+                            <td class="td">{{ item.total_worked }}</td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6" class="td">No data found.</td>
+                            <td colspan="7" class="td">No data found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -100,11 +152,8 @@
 
     <script src="{% static 'js/chart.umd.min.js' %}"></script>
     <script>
-        const ctx = document.getElementById('auChart').getContext('2d');
+        const ctx = document.getElementById('auChart');
     
-        console.log("Labels:", {{ labels|safe }});
-        console.log("Data:", {{ bar_data|safe }});
-        
         new Chart(ctx, {
             data: {
                 labels: {{ labels|safe }},
@@ -132,14 +181,22 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
+                        max: 100,
                         title: { display: true, text: 'Percentage (%)' }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false
+                        }
                     }
                 }
             }
         });
+
         function exportExcel() {
             const form = document.getElementById('search-form');
             const formData = new URLSearchParams(new FormData(form));

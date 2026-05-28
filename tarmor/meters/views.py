@@ -3,7 +3,7 @@ from .forms import MeterUploadForm
 from django.forms import inlineformset_factory
 from django.http import HttpResponse
 from .models import MeterReading, cascade_meter_update, Meter
-from equipment.models import Equipment
+from equipment.models import Equipment, AssetType, EQ_Type
 from equipment.models import Equipment, Meter
 from .forms import MeterUploadForm
 from django.db import IntegrityError
@@ -14,7 +14,9 @@ def meters(request):
     return render(request, 'meters/meters.html', {'content_type': 'text/html'})
 
 def new_reading(request):
-    query = request.GET.get('new_reading')
+    all_equipment_suggestions = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description').order_by('Equipment_Number')
+
+    query = request.GET.get('new_reading', '').strip()
     unit = None
     formset = None
 
@@ -68,12 +70,15 @@ def new_reading(request):
                                 reading.Meter_Reading = current_val
                             
                             reading.save()
+                            messages.success(request, 'Meter reading(s) saved successfully.')
                         return redirect('meters:meters')
                     
                     except IntegrityError:
                         return render(request, 'meters/new_reading.html', {
                             'formset': formset, 
                             'unit': unit,
+                            'all_equipment_suggestions': all_equipment_suggestions,
+                            'query_val': query,
                             'error_message': f"Error: A reading for {unit} on {master_date} already exists."
                         })
             else:
@@ -83,9 +88,17 @@ def new_reading(request):
         else:
             "Please select equipment number to begin"
             pass
-    return render(request, 'meters/new_reading.html', {'formset': formset, 'unit': unit})
+        
+    return render(request, 'meters/new_reading.html', {
+        'formset': formset, 
+        'unit': unit,
+        'all_equipment_suggestions': all_equipment_suggestions,
+        'query_val': query,
+    })
 
 def edit_reading(request):
+    all_equipment = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description')
+    
     query_unit = request.GET.get('unit_search')
     query_date = request.GET.get('date_search')
     unit = Equipment.objects.filter(Equipment_Number=query_unit).first() if query_unit else None
@@ -138,6 +151,7 @@ def edit_reading(request):
                             reading.Meter_Reading = curr
 
                         reading.save()
+                        messages.success(request, 'Timesheet updated successfully.')
                         affected.append((reading.Meter_Type, reading.Date))
                         
                 for mtr_type, mtr_date in set(affected):
@@ -152,22 +166,24 @@ def edit_reading(request):
                 if form.instance.pk:
                     form.meter_label = form.instance.Meter_Type.meter_type
 
-    return render(request, 'meters/edit_reading.html', {'formset': formset, 'unit': unit})
+    return render(request, 'meters/edit_reading.html', {
+        'formset': formset, 
+        'unit': unit,
+        'all_equipment': all_equipment,
+        'query_unit': query_unit,
+        'query_date': query_date,
+    })
 
 def search_readings(request):
-    # Start with all records
     readings = MeterReading.objects.all().select_related('Equipment', 'Meter_Type')
 
-    # Get Filter Parameters
     eq_num = request.GET.get('Equipment_Number')
     asset_type = request.GET.get('Asset_Type')
     eq_type = request.GET.get('Equipment_Type')
     status = request.GET.get('Equipment_Status')
     make = request.GET.get('Make')
     model = request.GET.get('Model')
-    sort_by = request.GET.get('sort', '-Date') # Default to newest first
 
-    # Apply Filters (icontains makes it case-insensitive)
     if eq_num:
         readings = readings.filter(Equipment__Equipment_Number__icontains=eq_num)
     if asset_type:
@@ -181,12 +197,49 @@ def search_readings(request):
     if model:
         readings = readings.filter(Equipment__Model__icontains=model)
 
-    # Sorting Logic
-    readings = readings.order_by(sort_by)
+    sort_by = request.GET.get('sort', '-Date')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
+
+    sort_mapping = {
+        'Date': 'Date',
+        'Equipment_Number': 'Equipment__Equipment_Number',
+        'Meter_Type': 'Meter_Type__meter_type',
+        'Meter_Reading': 'Meter_Reading',
+        'Total_Meter_Value': 'Total_Meter_Value',
+        'Reading_Difference': 'Reading_Difference',
+    }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        readings = readings.order_by(order_field)
+    else:
+        readings = readings.order_by('-Date')
+
+    all_equipment = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description')
+    all_asset_types = AssetType.objects.all()
+    all_eq_types = EQ_Type.objects.all()
+    
+    all_statuses = Equipment.objects.exclude(Equipment_Status__isnull=True).values_list('Equipment_Status', flat=True).distinct().order_by('Equipment_Status')
+    all_makes = Equipment.objects.exclude(Make__isnull=True).values_list('Make', flat=True).distinct().order_by('Make')
+    all_models = Equipment.objects.exclude(Model__isnull=True).values_list('Model', flat=True).distinct().order_by('Model')
 
     return render(request, 'meters/search_readings.html', {
         'equipment_list': readings,
-        'sort_by': sort_by,
+        'sort': sort_by,
+        'all_equipment': all_equipment,
+        'all_asset_types': all_asset_types,
+        'all_eq_types': all_eq_types,
+        'all_statuses': all_statuses,
+        'all_makes': all_makes,
+        'all_models': all_models,
+        'eq_num': eq_num,
+        'asset_type': asset_type,
+        'eq_type': eq_type,
+        'status': status,
+        'make': make,
+        'model': model,
     })
     
 def export_readings_excel(request):

@@ -21,26 +21,46 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Edit Quality Maintenance</h2>
+<div class="main">
+    <h2>Load Quality Maintenance Document</h2>
     <br>
-    <form method="post" id="lookup-form">
+
+    <form method="post" id="lookup-form" action=".">
         {% csrf_token %}
+        
         {% if lookup_form.errors %}
-            **Please fix the following:** 
-            {{ lookup_form.non_field_errors }}
-            {% for field in lookup_form %}
-                {% if field.errors %}
-                - {{ field.label }}: {{ field.errors|striptags }}
-                {% endif %}
-            {% endfor %}
+            <div class="error-messages" style="color: red; margin-bottom: 15px;">
+                <strong>Please fix the following:</strong>
+                <ul style="padding-left: 20px; margin-top: 5px;">
+                    {% if lookup_form.non_field_errors %}
+                        <li>{{ lookup_form.non_field_errors }}</li>
+                    {% endif %}
+                    {% for field in lookup_form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error|striptags }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
         {% endif %}
 
         <p>Enter a QM Number and click Load.</p><br>
 
-        <label>QM Number:</label> {{ lookup_form.qm_number }}
+        <label>QM Number:</label> 
+        {{ lookup_form.qm_number }}
+        
+        <!-- Native datalist displays both the document code and descriptive keywords side-by-side -->
+        <datalist id="qm-lookup-list">
+            {% for doc in all_qm_suggestions %}
+                <option value="{{ doc.qm_number }}" label="{{ doc.description|default:'' }}">
+                    {{ doc.qm_number }} - {{ doc.description|default:'No Description' }}
+                </option>
+            {% endfor %}
+        </datalist>
+
         <button type="submit" name="load_qm" value="1" class="button">
             Load
         </button>
     </form>
-
+</div>
 {% endblock %}

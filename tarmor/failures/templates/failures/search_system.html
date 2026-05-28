@@ -24,37 +24,90 @@
         <h2>Search System </h2>
         <br>
         <div>
-            <h5 > 
+            <h3> 
                 &nbsp; Search Criteria &nbsp;
                     <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
                     <a href="{% url 'failures:search_system_name' %}">
                     <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
                 </a>
-            </h5>
-            <br>
+            </h3>
+            
             <form id="search-form"  method="GET" action="{% url 'failures:search_system' %}">
-                Asset Key: <input type="text" name="asset_key" value="{{ asset_key }}" placeholder="Asset Key" class="input"> &nbsp;
-                System Name: <input type="text" name="system_name" value="{{ system_name }}" placeholder="System Name" class="input"> &nbsp;
-                System Key: <input type="text" name="system_key" value="{{ system_key }}" placeholder="System Key" class="input"> &nbsp;
-                Comb Sys Key: <input type="text" name="combined_sys_key" value="{{ combined_sys_key }}" placeholder="Combined System Key" class="input"> <br>
-                <input type="hidden" name="sort" value="{{ sort_by }}">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Asset Key</td>
+                        <td>
+                            <input type="text" name="asset_key" value="{{ asset_key_val }}" list="asset-key-list" placeholder="All Keys..." class="input" autocomplete="off">
+                            <datalist id="asset-key-list">
+                                {% for ak in all_asset_keys %}
+                                    <option value="{{ ak }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>System Name</td>
+                        <td>
+                            <input type="text" name="system_name" value="{{ system_name_val }}" list="system-name-list" placeholder="System Name or Key..." class="input" autocomplete="off">
+                            <datalist id="system-name-list">
+                                {% for sys in all_system_suggestions %}
+                                    <option value="{{ sys.system_name }}" label="{{ sys.combined_sys_key }}">
+                                        {{ sys.system_name }} - {{ sys.combined_sys_key }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>System Key</td>
+                        <td>
+                            <input type="text" name="system_key" value="{{ system_key_val }}" list="system-key-list" placeholder="All System Keys..." class="input" autocomplete="off">
+                            <datalist id="system-key-list">
+                                {% for sk in all_system_keys %}
+                                    <option value="{{ sk }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Comb Sys Key</td>
+                        <td>
+                            <input type="text" name="combined_sys_key" value="{{ combined_sys_key_val }}" list="combined-key-list" placeholder="All Combo Keys..." class="input" autocomplete="off">
+                            <datalist id="combined-key-list">
+                                {% for ck in all_combined_keys %}
+                                    <option value="{{ ck }}"></option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
             </form>
-            <br>
         </div>
 
         <div class="form">
             <form class="form" id="sesarch_system_form" method="POST">
-                <h2> Search Results </h2>
+                <h3> Search Results </h3>
                 <br>
-                <table class="table">
+                <table class="table-container">
                     <thead>
                         <tr>
-                            <th class="th"><a href="?sort=asset_key&{{ filter_url }}" class="sort_header">Asset Key:{% if sort_by == 'asset_key' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=system_name&{{ filter_url }}" class="sort_header">System Name:{% if sort_by == 'system_name' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=system_key&{{ filter_url }}" class="sort_header">System Key:{% if sort_by == 'system_key' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=combined_sys_key&{{ filter_url }}" class="sort_header">Comb Sys Key:{% if sort_by == 'combined_sys_key' %}▲{% endif %}</a></th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'asset_key' %}-asset_key{% else %}asset_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Asset Key {% if sort == 'asset_key' %} ▲ {% elif sort == '-asset_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'system_name' %}-system_name{% else %}system_name{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    System Name {% if sort == 'system_name' %} ▲ {% elif sort == '-system_name' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'system_key' %}-system_key{% else %}system_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    System Key {% if sort == 'system_key' %} ▲ {% elif sort == '-system_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'combined_sys_key' %}-combined_sys_key{% else %}combined_sys_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Comb Sys Key {% if sort == 'combined_sys_key' %} ▲ {% elif sort == '-combined_sys_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
                         </tr>
-                    <thead>
+                    </thead>
                     <tbody>
                         {% for sys in system %}
                             <tr>

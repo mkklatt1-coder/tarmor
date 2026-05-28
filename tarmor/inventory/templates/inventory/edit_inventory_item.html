@@ -35,12 +35,13 @@
     <h2> Edit Inventory Item </h2>
     <br>
     <div>
-        <h5 class="form">Part Number &nbsp; &nbsp;
         <form method="GET" action="{% url 'inventory:edit_inventory_item' %}">
-            <input class="input" type="text" name="part_number" value="{{ part_number }}" class="input" placeholder="Part Number">
-            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+            <h3 class="form">Part Number &nbsp; &nbsp;
+                <input class="input" type="text" name="part_number" value="{{ part_number }}" class="input" placeholder="Part Number">
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+                &nbsp; &nbsp; <button type="button" id="add-inv-item-btn">Add Alt</button>
+            </h3>
         </form>
-        &nbsp; &nbsp; <button type="button" id="add-inv-item-btn">Add Alt</button></h5>
         <br>
     </div>
 
@@ -63,26 +64,51 @@
         
         <div class="form">
             <p> Ensure part numbers are put in the system <strong><i>without</i></strong> dashes, hypens, hashtags, etc.</p>
-            <br>
-            <label>Part Number:</label> {{ new_inv_form.part_number }} &nbsp;
-            <label>Part Desc:</label> {{ new_inv_form.part_description }} &nbsp;
-            <label>Supplier:</label> {{ new_inv_form.supplier }} &nbsp;
-            <label>Manufacturer (Mfg):</label> {{ new_inv_form.manufacturer }}<br>
-            <br>
-            <label>Qty:</label> {{ new_inv_form.qty }} &nbsp;
-            <label>/ UoM:</label> {{ new_inv_form.uom }} &nbsp;
-            <label>Unit Price:</label> {{ new_inv_form.unit_price }} &nbsp;
-            <label>Stock / Non-stock:</label> {{ new_inv_form.stock }} &nbsp;
-            <label>Controlled Product:</label> {{ new_inv_form.controlled_product }}<br>
-            <br>
-            <label>Bin Location:</label> {{ new_inv_form.bin_location }} &nbsp;
-            <label>Qty On Hand:</label> {{ new_inv_form.qty_onhand }} &nbsp;
-            <label>Min Qty:</label> {{ new_inv_form.min_qty }} &nbsp;
-            <label>Max Qty:</label> {{ new_inv_form.max_qty }} <br>
-            <br>
-            <label>Last Transaction Date:</label> {{ new_inv_form.last_transaction_date }} <small>use today's date</small> &nbsp;
-            <label>Last Transaction Number:</label> {{ new_inv_form.last_transaction_number }}<small>use "M" + today's date (M20260401)</small><br>
-            <br>
+            <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Part Number</td>
+                        <td>{{ new_inv_form.part_number }}</td>
+                        <td>Part Desc</td>
+                        <td>{{ new_inv_form.part_description }}</td>
+                        <td>Supplier</td>
+                        <td>{{ new_inv_form.supplier }}</td>
+                        <td>Manufacturer (Mfg)</td>
+                        <td>{{ new_inv_form.manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td>Qty</td>
+                        <td>{{ new_inv_form.qty }}</td>
+                        <td>/ UoM</td>
+                        <td>{{ new_inv_form.uom }}</td>
+                        <td>Unit Price</td>
+                        <td>{{ new_inv_form.unit_price }}</td>
+                        <td>Stock / Non-stock</td>
+                        <td>{{ new_inv_form.stock }}</td>
+                    </tr>
+                    <tr>
+                        <td>Bin Location</td>
+                        <td>{{ new_inv_form.bin_location }}</td>
+                        <td>Qty On Hand</td>
+                        <td>{{ new_inv_form.qty_onhand }}</td>
+                        <td>Min Qty</td>
+                        <td>{{ new_inv_form.min_qty }}</td>
+                        <td>Max Qty</td>
+                        <td>{{ new_inv_form.max_qty }}</td>
+                    </tr>
+                    <tr>
+                        <td>Controlled Product</td>
+                        <td>{{ new_inv_form.controlled_product }}</td>
+                        <td>Transaction Date</td>
+                        <td>{{ new_inv_form.last_transaction_date }}</td>
+                        <td><small>use today's date</small></td>
+                        <td>Last Transaction</td>
+                        <td><small>use "M" + today's date (M20260401)</small></td>
+                        <td>{{ new_inv_form.last_transaction_number }}</td>
+                    </tr>
+                </table>
+                <br>
+            </div>
         </div>
     
         <div class="form" id="alternatives-container" style="{% if not instance.alternatives.exists %}display:none;{% endif %}">
@@ -90,49 +116,105 @@
                 <h4> Alternative Part </h4>
                 <div class="inv-item">
                     {{ alt_form.id }}
-                    <label>Part Number:</label> {{ alt_form.part_number }} &nbsp;
-                    <label>Part Desc:</label> {{ alt_form.part_description }} &nbsp;
-                    <label>Supplier:</label> {{ alt_form.supplier }} &nbsp;
-                    <label>Manufacturer (Mfg):</label> {{ alt_form.manufacturer }}<br>
+                    <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                        <table class="table-bare-container">
+                            <tr>
+                                <td>Part Number</td>
+                                <td>{{ alt_form.part_number }}</td>
+                                <td>Part Desc</td>
+                                <td>{{ alt_form.part_description }}</td>
+                                <td>Supplier</td>
+                                <td>{{ alt_form.supplier }}</td>
+                                <td>Manufacturer (Mfg)</td>
+                                <td>{{ alt_form.manufacturer }}</td>
+                            </tr>
+                            <tr>
+                                <td>Qty</td>
+                                <td>{{ alt_form.qty }}</td>
+                                <td>/ UoM</td>
+                                <td>{{ alt_form.uom }}</td>
+                                <td>Unit Price</td>
+                                <td>{{ alt_form.unit_price }}</td>
+                                <td>Stock / Non-stock</td>
+                                <td>{{ alt_form.stock }}</td>
+                            </tr>
+                            <tr>
+                                <td>Bin Location</td>
+                                <td>{{ alt_form.bin_location }}</td>
+                                <td>Qty On Hand</td>
+                                <td>{{ alt_form.qty_onhand }}</td>
+                                <td>Min Qty</td>
+                                <td>{{ alt_form.min_qty }}</td>
+                                <td>Max Qty</td>
+                                <td>{{ alt_form.max_qty }}</td>
+                            </tr>
+                            <tr>
+                                <td>Controlled Product</td>
+                                <td>{{ alt_form.controlled_product }}</td>
+                                <td>Transaction Date</td>
+                                <td>{{ alt_form.last_transaction_date }}</td>
+                                <td><small>use today's date</small></td>
+                                <td>Last Transaction</td>
+                                <td><small>use "M" + today's date (M20260401)</small></td>
+                                <td>{{ alt_form.last_transaction_number }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <label style="color: red;">Remove Alt?</label> {{ alt_form.DELETE }}<br>
                     <br>
-                    <label>Qty:</label> {{ alt_form.qty }} &nbsp;
-                    <label>/ UoM:</label> {{ alt_form.uom }} &nbsp;
-                    <label>Unit Price:</label> {{ alt_form.unit_price }} &nbsp;
-                    <label>Stock / Non-stock:</label> {{ alt_form.stock }} &nbsp;
-                    <label>Controlled Product:</label> {{ alt_form.controlled_product }}<br>
-                    <br>
-                    <label>Bin Location:</label> {{ alt_form.bin_location }} &nbsp;
-                    <label>Qty On Hand:</label> {{ alt_form.qty_onhand }} &nbsp;
-                    <label>Min Qty:</label> {{ alt_form.min_qty }} &nbsp;
-                    <label>Max Qty:</label> {{ alt_form.max_qty }} <br>
-                    <br>
-                    <label>Last Transaction Date:</label> {{ alt_form.last_transaction_date }} &nbsp;
-                    <label>Last Transaction Number:</label> {{ alt_form.last_transaction_number }}<br>
-                    <br>
-                    <label style="color: red;">Remove Alt?</label> {{ alt_form.DELETE }}
                 </div>
             {% endfor %}
         </div>
     </form>
     <div id="empty-inv-item-form" style="display:none;">
+        <h4>Alternative Part</h4>
         <div class="inv-item">
             {% with c_form=inv_formset.empty_form %}
-                <h4>Alternative Part</h4>
-                <label>Part Number:</label> {{ c_form.part_number }} &nbsp;
-                <label>Part Desc:</label> {{ c_form.part_description }} &nbsp;
-                <label>Supplier:</label> {{ c_form.supplier }} &nbsp;
-                <label>Manufacturer (Mfg):</label> {{ c_form.manufacturer }}<br><br>
-                <label>Qty:</label> {{ c_form.qty }} &nbsp;
-                <label>/ UoM:</label> {{ c_form.uom }} &nbsp;
-                <label>Unit Price:</label> {{ c_form.unit_price }} &nbsp;
-                <label>Stock / Non-stock:</label> {{ c_form.stock }} &nbsp;
-                <label>Controlled Product:</label> {{ c_form.controlled_product }}<br><br>
-                <label>Bin Location:</label> {{ c_form.bin_location }} &nbsp;
-                <label>Qty On Hand:</label> {{ c_form.qty_onhand }} &nbsp;
-                <label>Min Qty:</label> {{ c_form.min_qty }} &nbsp;
-                <label>Max Qty:</label> {{ c_form.max_qty }} <br><br>
-                <label>Last Transaction Date:</label> {{ c_form.last_transaction_date }} &nbsp;
-                <label>Last Transaction Number:</label> {{ c_form.last_transaction_number }}<br><br>
+            <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Part Number</td>
+                        <td>{{ c_form.part_number }}</td>
+                        <td>Part Desc</td>
+                        <td>{{ c_form.part_description }}</td>
+                        <td>Supplier</td>
+                        <td>{{ c_form.supplier }}</td>
+                        <td>Manufacturer (Mfg)</td>
+                        <td>{{ c_form.manufacturer }}</td>
+                    </tr>
+                    <tr>
+                        <td>Qty</td>
+                        <td>{{ c_form.qty }}</td>
+                        <td>/ UoM</td>
+                        <td>{{ c_form.uom }}</td>
+                        <td>Unit Price</td>
+                        <td>{{ c_form.unit_price }}</td>
+                        <td>Stock / Non-stock</td>
+                        <td>{{ c_form.stock }}</td>
+                    </tr>
+                    <tr>
+                        <td>Bin Location</td>
+                        <td>{{ c_form.bin_location }}</td>
+                        <td>Qty On Hand</td>
+                        <td>{{ c_form.qty_onhand }}</td>
+                        <td>Min Qty</td>
+                        <td>{{ c_form.min_qty }}</td>
+                        <td>Max Qty</td>
+                        <td>{{ c_form.max_qty }}</td>
+                    </tr>
+                    <tr>
+                        <td>Controlled Product</td>
+                        <td>{{ c_form.controlled_product }}</td>
+                        <td>Transaction Date</td>
+                        <td>{{ c_form.last_transaction_date }}</td>
+                        <td><small>use today's date</small></td>
+                        <td>Last Transaction</td>
+                        <td><small>use "M" + today's date (M20260401)</small></td>
+                        <td>{{ c_form.last_transaction_number }}</td>
+                    </tr>
+                </table>
+                <br>
+            </div>
             {% endwith %}
         </div>
     </div>

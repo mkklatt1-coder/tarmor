@@ -26,14 +26,12 @@ class MeterReading(models.Model):
         ]
         
 def cascade_meter_update(meter_type_obj, start_date):
-    """Recalculates all readings for a specific meter from a start date forward."""
     readings = MeterReading.objects.filter(
         Meter_Type=meter_type_obj, 
         Date__gt=start_date
     ).order_by('Date', 'id')
 
     for reading in readings:
-        # Look for the log immediately BEFORE this one
         last_log = MeterReading.objects.filter(
             Meter_Type=reading.Meter_Type,
             Date__lt=reading.Date
@@ -46,9 +44,6 @@ def cascade_meter_update(meter_type_obj, start_date):
             reading.Reading_Difference = 0
             reading.Total_Meter_Value = last_total
         else:
-            # Re-calculate based on what the user originally entered
-            # Priority 1: User entered a manual Reading_Difference
-            # Priority 2: User entered a physical Meter_Reading
             if reading.Reading_Difference:
                 reading.Total_Meter_Value = last_total + reading.Reading_Difference
                 reading.Meter_Reading = last_physical + reading.Reading_Difference

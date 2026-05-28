@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 app_name = 'personnel'
 
@@ -17,4 +19,5 @@ urlpatterns = [
     path('shiftrotation_upload/',views.shiftrotation_upload,name="shiftrotation_upload"),
     path('edit_schedule/', views.edit_schedule, name='edit_schedule'),
     path('edit_schedule/<int:rotation_id>/', views.edit_schedule, name='edit_schedule_with_id'),
-]
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

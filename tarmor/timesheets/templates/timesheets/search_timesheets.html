@@ -9,7 +9,7 @@
 <div class="leftnavbar">
     <ul>
         <li>
-            <a >Export</a>
+            <a class="nav-link" href="{% url 'timesheets:export_timesheets_excel' %}?{{ request.GET.urlencode }}">Export</a>
         </li>
         <li><a href="{% url 'timesheets:timesheets' %}">Cancel
             </a>
@@ -28,17 +28,31 @@
         <h2> Search Timesheet</h2>
         <br>
 
-        <h5 style="align-items: center;"> 
+        <h3 style="align-items: center;"> 
             <form method="GET" action="{% url 'timesheets:search_timesheets' %}" style="display:inline;">
                 &nbsp; Time Entries &nbsp;
-                WO: <input class="input" type="text" name="work_order" value="{{ work_order_query }}">
-                Tech: <input class="input" type="text" name="technician" value="{{ technician_query }}">
+                WO: <input type="text" name="work_order" list="wo-list" class="input" value="{{ work_order_query }}" autocomplete="off" placeholder="Code or Desc...">
+                    <datalist id="wo-list">
+                        {% for wo in all_work_orders %}
+                            <option value="{{ wo.work_order }}" label="{{ wo.troubleshoot_description|default:'' }}">
+                                {{ wo.work_order }} - {{ wo.troubleshoot_description|default:'No Description' }}
+                            </option>
+                        {% endfor %}
+                    </datalist> &nbsp;
+                Tech: <input type="text" name="technician" list="tech-list" class="input" value="{{ technician_query }}" autocomplete="off" placeholder="Search Name...">
+                <datalist id="tech-list">
+                    {% for tech in all_technicians %}
+                        <option value="{{ tech.First_Name }} {{ tech.Last_Name }}">
+                            {{ tech.First_Name }} {{ tech.Last_Name }}
+                        </option>
+                    {% endfor %}
+                </datalist> &nbsp;
                 <button type="submit" style="background:none; border:none; cursor:pointer; padding:0;">
                     <img src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
                 </button>
                 <a href="{% url 'timesheets:search_timesheets' %}"><img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;"></a>
             </form>
-        </h5>
+        </h3>
         <br>
         
         <div class="form">
@@ -47,12 +61,36 @@
                  
                 <thead>
                     <tr>
-                        <th class="th"><a href="?sort=work_order&{{ filter_url }}" class="sort_header"> WO Number {% if sort_by == 'work_order' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=technician&{{ filter_url }}" class="sort_header"> Technician {% if sort_by == 'technician' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=start_date&{{ filter_url }}" class="sort_header"> Start Date/Time {% if sort_by == 'start_date' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=finish_date&{{ filter_url }}" class="sort_header"> Finish Date/Time {% if sort_by == 'finish_date' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=total_time&{{ filter_url }}" class="sort_header"> Total Time {% if sort_by == 'total_time' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=time_type&{{ filter_url }}" class="sort_header"> Work Type {% if sort_by == 'time_type' %}▲{% endif %}</a></th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'work_order' %}-work_order{% else %}work_order{% endif %}" class="sort_header">
+                                WO Number {% if sort == 'work_order' %} ▲ {% elif sort == '-work_order' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'technician' %}-technician{% else %}technician{% endif %}" class="sort_header">
+                                Technician {% if sort == 'technician' %} ▲ {% elif sort == '-technician' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'start_date' %}-start_date{% else %}start_date{% endif %}" class="sort_header">
+                                Start Date/Time {% if sort == 'start_date' %} ▲ {% elif sort == '-start_date' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'finish_date' %}-finish_date{% else %}finish_date{% endif %}" class="sort_header">
+                                Finish Date/Time {% if sort == 'finish_date' %} ▲ {% elif sort == '-finish_date' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'total_time' %}-total_time{% else %}total_time{% endif %}" class="sort_header">
+                                Total Time {% if sort == 'total_time' %} ▲ {% elif sort == '-total_time' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'time_type' %}-time_type{% else %}time_type{% endif %}" class="sort_header">
+                                Work Type {% if sort == 'time_type' %} ▲ {% elif sort == '-time_type' %} ▼ {% endif %}
+                            </a>
+                        </th>
                     </tr>
                 </thead>
                 

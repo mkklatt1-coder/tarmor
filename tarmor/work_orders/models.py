@@ -4,6 +4,9 @@ from barcode.writer import ImageWriter
 from django.core.files import File
 from django.db import models, transaction
 from django.utils import timezone
+from smart_selects.db_fields import ChainedForeignKey
+from django.core.exceptions import ValidationError
+from projects.models import Project
 
 priority_choices = [
     ("1", "1"),
@@ -27,6 +30,11 @@ meter_choices = [
     ("Operating Hours", "Operating Hours"),
 ]
 
+SHIFT_CHOICES = [
+        ('DS', 'Day Shift'),
+        ('NS', 'Night Shift'),
+]
+
 class StatusChoices(models.Model):
     status_choice = models.CharField(max_length=20)
     def __str__(self):
@@ -41,6 +49,13 @@ class WorkType(models.Model):
 class WorkOrder(models.Model):
     work_order = models.CharField(max_length=9, unique=True, editable=False)
     barcode_image = models.ImageField(upload_to='barcodes/', blank=True)
+    project = models.ForeignKey(
+        Project, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='work_orders'
+    )
     equipment = models.ForeignKey(
         'equipment.Equipment',
         on_delete=models.PROTECT,
@@ -56,11 +71,7 @@ class WorkOrder(models.Model):
     machine_oos = models.CharField(max_length=3, choices=yesno_choices, null=True, blank=True)
     hours = models.IntegerField(null=True, blank=True)
     meter = models.CharField(max_length=30, choices=meter_choices, null=True, blank=True)
-    job_status = models.ForeignKey(
-        'StatusChoices', 
-        on_delete=models.PROTECT,
-        related_name='work_orders'
-    )
+    job_status = models.ForeignKey('StatusChoices', on_delete=models.PROTECT, related_name='work_orders')
     date_created = models.DateTimeField(default=timezone.now)
     date_closed = models.DateTimeField(null=True, blank=True)
     # Troubleshooting
@@ -70,6 +81,7 @@ class WorkOrder(models.Model):
     ts_service_report = models.TextField(null=True, blank=True)
     # Planning
     plan_start_date = models.DateTimeField(null=True, blank=True)
+    plan_shift = models.CharField(max_length=2,  choices=SHIFT_CHOICES, default='DS')
     safety_instructions = models.TextField(null=True, blank=True)
     spec_requirements = models.TextField(null=True, blank=True)
     legislative = models.CharField(max_length=3, choices=yesno_choices, null=True, blank=True)
@@ -86,6 +98,8 @@ class WorkOrder(models.Model):
     repair_extended_description = models.TextField(null=True, blank=True)
     job_instructions = models.TextField(null=True, blank=True)
     attached_checklist = models.FileField(upload_to='wo_attachments/', null=True, blank=True)
+    attached_parts_list = models.FileField(upload_to='wo_attachments/', null=True, blank=True)
+
     fc_system = models.ForeignKey(
         'failures.System',
         on_delete=models.PROTECT,
@@ -93,12 +107,16 @@ class WorkOrder(models.Model):
         null=True,
         blank=True
     )
-    fc_component = models.ForeignKey(
+    fc_component = ChainedForeignKey(
         'failures.Component',
-        on_delete=models.PROTECT,
-        db_column='component_name',
+        chained_field="fc_system",
+        chained_model_field="combined_system_key",
+        show_all=False,
+        auto_choose=True,
+        sort=True,
         null=True,
-        blank=True
+        blank=True,
+        on_delete=models.SET_NULL
     )
     fc_failure_mode = models.ForeignKey(
         'failures.FailureType',
@@ -107,6 +125,7 @@ class WorkOrder(models.Model):
         null=True,
         blank=True
     )
+
     fc_action = models.ForeignKey(
         'failures.Action',
         on_delete=models.PROTECT,
@@ -117,14 +136,18 @@ class WorkOrder(models.Model):
     repair_service_report = models.TextField(null=True, blank=True)
     class Meta:
         ordering = ['-date_created']
+
     def __str__(self):
         return self.work_order
+    
     @property
     def equipment_number(self):
         return getattr(self.equipment, 'Equipment_Number', '')
+    
     @property
     def equipment_description(self):
         return getattr(self.equipment, 'Equipment_Description', '')
+    
     @classmethod
     @transaction.atomic
     
@@ -163,3 +186,12 @@ class WorkOrder(models.Model):
             filename = f'barcode-{self.work_order}.png'
             self.barcode_image.save(filename, File(buffer), save=False)
         super().save(*args, **kwargs)
+
+class WorkOrderAttachment(models.Model):
+    work_order = models.ForeignKey(WorkOrder, related_name='attachments_rel', on_delete=models.CASCADE)
+    description = models.CharField(max_length=255, blank=True, null=True)
+    file = models.FileField(upload_to='wo_attachments/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.description} ({self.work_order.work_order_number})"

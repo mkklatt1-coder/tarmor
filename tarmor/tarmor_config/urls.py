@@ -20,6 +20,10 @@ urlpatterns = [
     path("kpis/", include("kpis.urls")),
     path("planning/", include("planning.urls")),
     path("scheduling/", include("scheduling.urls")),
+    path("condition_monitoring/", include("condition_monitoring.urls")),
+    path('chaining/', include('smart_selects.urls')),
+    path('moc/', include('moc.urls')),
+    path('projects/', include('projects.urls')),
 ]
 
 if settings.DEBUG:

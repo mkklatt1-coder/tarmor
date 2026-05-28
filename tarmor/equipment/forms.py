@@ -14,6 +14,7 @@ class MeterForm(forms.ModelForm):
     class Meta:
         model = Meter
         fields = ['meter_type']
+
 MeterFormSet = inlineformset_factory(
     Equipment,
     Meter,
@@ -21,6 +22,7 @@ MeterFormSet = inlineformset_factory(
     extra=0,
     can_delete=True
 )
+
 # ---------------------------------------
 # Equipment Upload Form
 # ---------------------------------------
@@ -75,12 +77,17 @@ class EqUploadForm(ModelForm):
         required=False
     )
     
+    Equipment_Image = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'input'})
+    )
+
     class Meta:
         model = Equipment
         exclude = ['Asset_Type', 'Equipment_Type']
         widgets = {
             'Equipment_Number': forms.TextInput(attrs={'class': 'locked', 'readonly': 'readonly'}),
-            'Equipment_Description': forms.TextInput(attrs={'class': 'input'}),
+            'Equipment_Description': forms.TextInput(attrs={'class': 'input', 'style': 'width: 100%; box-sizing: border-box;'}),
             'Commissioning_Date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
             'Decommissioning_Date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
             'Make': forms.TextInput(attrs={'class': 'input'}),
@@ -97,7 +104,10 @@ class EqUploadForm(ModelForm):
             'Overhaul_Period': forms.NumberInput(attrs={'class': 'input'}),
             'Overhaul_Value': forms.NumberInput(attrs={'class': 'input'}),
             'End_of_Life': forms.NumberInput(attrs={'class': 'input'}),
-            'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'cols': 160}),
+            'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
+            'Equipment_Number': forms.TextInput(attrs={'class': 'locked', 'readonly': 'readonly'}),
+            'oh_uom': forms.Select(attrs={'class': 'input'}),
+            'eol_uom': forms.Select(attrs={'class': 'input'}),
         }
         
     def __init__(self, *args, **kwargs):
@@ -165,6 +175,11 @@ class EqEditForm(ModelForm):
         choices=EQUIPMENT_STATUS_CHOICES,
         widget=forms.Select(attrs={'class': 'input'})
     )
+    Equipment_Image = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'input'})
+    )
+    
     class Meta:
         model = Equipment
         fields = '__all__'
@@ -185,6 +200,8 @@ class EqEditForm(ModelForm):
             'Overhaul_Period': forms.NumberInput(attrs={'class': 'input'}),
             'Overhaul_Value': forms.NumberInput(attrs={'class': 'input'}),
             'End_of_Life': forms.NumberInput(attrs={'class': 'input'}),
+            'oh_uom': forms.Select(attrs={'class': 'input'}),
+            'eol_uom': forms.Select(attrs={'class': 'input'}),
             'Engine_HP_Rating': forms.NumberInput(attrs={'class': 'input'}),
             'CANMET_Number': forms.TextInput(attrs={'class': 'input'}),
             'Ventilation_Rating': forms.TextInput(attrs={'class': 'input'}),
@@ -192,11 +209,13 @@ class EqEditForm(ModelForm):
             'Cab_Style': forms.Select(attrs={'class': 'input'}),
             'Eng_Tier': forms.Select(attrs={'class': 'input'}),
             'Box_Type': forms.Select(attrs={'class': 'input'}),
-            'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'cols': 160}),
+            'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['Asset_Type'].disabled = True
+        self.fields['Asset_Type'].widget.attrs['style'] = 'pointer-events: none;'
+        self.fields['Asset_Type'].widget.attrs['class'] = 'locked'
+        self.fields['Asset_Type'].widget.attrs['tabindex'] = '-1'
         if self.instance and self.instance.pk:
             self.fields['Equipment_Type'].queryset = EQ_Type.objects.filter(
                 Asset_Type=self.instance.Asset_Type
@@ -220,6 +239,7 @@ class CompUploadForm(ModelForm):
     ('Kilometers', 'Kilometers'),
     ('Cycles', 'Cycles'),
     ('Years', 'Years'),
+    ('Months', 'Months'),
     ]
     
     Component_Type = forms.ModelChoiceField(
@@ -255,7 +275,12 @@ class CompUploadForm(ModelForm):
         initial='Active',
         widget=forms.Select(attrs={'class': 'input'})
     )
-        
+
+    Component_Image = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'input'})
+    )
+
     class Meta:
         model = Component
         fields = '__all__'
@@ -272,7 +297,7 @@ class CompUploadForm(ModelForm):
             'Warranty_Duration': forms.NumberInput(attrs={'class': 'input'}),
             'Warranty_Start_Date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
             'Warranty_End_Date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
-            'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'cols': 160}),
+            'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -307,6 +332,11 @@ class CompChangeForm(forms.ModelForm):
         choices=New_WTY_UoM_CHOICES,
         widget=forms.Select(attrs={'class': 'input', 'id': 'id_Wty_UoM'})
     )
+
+    Component_Image = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'input'})
+    )
     
     Equipment = forms.ModelChoiceField(queryset=Equipment.objects.all(), widget=forms.HiddenInput())
     Component = forms.ModelChoiceField(queryset=Component.objects.all(), widget=forms.HiddenInput())
@@ -332,14 +362,13 @@ class CompChangeForm(forms.ModelForm):
                 'New_Lifespan', 'New_UoM', 'New_Wty_Dur', 'New_Wty_UoM', 
                 'New_Wty_Start', 'New_Wty_End', 'Additional_Information'
             ]
-        # Only assign the WIDGET here, not the Field type
             widgets = {
                 'Work_Order_Number': forms.TextInput(attrs={'class': 'input'}),
                 'Meter_Description': forms.Select(attrs={'class': 'input'}),
                 'Meter_Reading': forms.NumberInput(attrs={'class': 'input'}),
                 'Change_Type': forms.Select(attrs={'class': 'input'}),
                 'Change_Date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
-                'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 3}),
+                'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
             }
   
             

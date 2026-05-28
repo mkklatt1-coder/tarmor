@@ -8,7 +8,6 @@ from import_export.widgets import ForeignKeyWidget
 from import_export.admin import ImportExportModelAdmin
 
 class EqAdmin(admin.ModelAdmin):
-    # This shows these columns in the main Admin list view
     list_display = ('Equipment_Number', 'Asset_Type', 'Equipment_Type', 'Equipment_Status')
     readonly_fields = ('id',)
 
@@ -23,10 +22,12 @@ class AssetTypeAdmin(admin.ModelAdmin):
 @admin.register(Equipment)
 class EquipmentAdmin(ImportExportModelAdmin):
     list_display = ['Equipment_Number', 'Equipment_Description']
-    
+    search_fields = ['equipment_number', 'description']
+
 @admin.register(Meter)
 class MeterAdmin(admin.ModelAdmin):
     list_display = ['meter_type', 'equipment']
+    search_fields = ['meter_type', 'meter_name'] 
 
 @admin.register(EQ_Type)
 class EQTypeAdmin(admin.ModelAdmin):

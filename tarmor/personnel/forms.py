@@ -5,22 +5,27 @@ from datetime import date
 from facilities.models import Facility
 
 class NewEmployeeForm(forms.ModelForm):
+
+    Employee_Image = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'class': 'input'})
+    )
     class Meta:
         model = Employee
         fields = [
             'First_Name', 'Middle_Name', 'Last_Name', 'Status',
-            'Position', 'Compensation', 'Comp_UoM',
-            'crew', 'Start_Date', 'Last_Date',
+            'Position', 'crew', 'Start_Date', 'Last_Date',
             'Street_Address', 'City', 'Prov_State', 'Country', 'Postal_Zip',
             'Phone', 'Email',
             'EC_First_Name', 'EC_Middle_Name', 'EC_Last_Name',
             'EC_Phone', 'EC_Email',
             'Additional_Information',
+            'Employee_Image',
         ]
         widgets = {
             'Start_Date': forms.DateInput(attrs={'type': 'date'}),
             'Last_Date': forms.DateInput(attrs={'type': 'date'}),
-            'Additional_Information': forms.Textarea(attrs={'rows': 4}),
+            'Additional_Information': forms.Textarea(attrs={'rows': 4, 'style': 'width: 90%'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -65,7 +70,7 @@ CertificationFormSet = inlineformset_factory(
 class CrewShiftRotationUploadForm(forms.ModelForm):
     class Meta:
         model = CrewShiftRotation
-        fields = ["Location", "Coverage_Type", "Calendar_Month", "Start_Date", "province"]
+        fields = ["Location", "Coverage_Type", "hrs_per_shift", "shift_start", "Calendar_Month", "Start_Date", "province"]
         widgets = {"Start_Date": forms.DateInput(attrs={"type": "date"}), "pattern": forms.HiddenInput(),}
         labels = {
             "Coverage_Type": "Coverage Type",

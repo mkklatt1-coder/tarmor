@@ -1,0 +1,123 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Search QM Plans {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <a class="nav-link" href="{% url 'planning:export_plans_excel' %}?{{ request.GET.urlencode }}">Export</a>
+            </li>
+            <li><a href="{% url 'planning:planning' %}" >Return</a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Search Maintenance Plans</h2>
+    <br>
+
+    <h3 style="display: flex; align-items: center;"> Filter Criteria &nbsp;
+        <form method="GET" class="form" id="search-form">
+            <input type="text" name="unit_number" list="eq_list" placeholder="Unit #" value="{{ unit_query_val }}" class="input" autocomplete="off">
+            <datalist id="eq_list">
+                {% for eq in all_equipment %}
+                    <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                        {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                    </option>
+                {% endfor %}
+            </datalist>
+            &nbsp;
+            <input type="text" name="qm_number" list="qm_list" placeholder="QM #" value="{{ qm_query_val }}" class="input" autocomplete="off">
+            <datalist id="qm_list">
+                {% for doc in all_documents %}
+                    <option value="{{ doc.qm_number }}" label="{{ doc.description|default:'' }}">
+                        {{ doc.qm_number }} - {{ doc.description|default:'No Description' }}
+                    </option>
+                {% endfor %}
+            </datalist>
+            &nbsp;
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo"> &nbsp;
+            <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;" 
+                onclick="window.location.href='{% url 'planning:search_plans' %}'">
+        </form>
+    </h3>
+    <br>
+
+    <table class="table-container">
+        <thead>
+            <tr>
+                <th class="th">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_number' %}-equipment_number{% else %}equipment_number{% endif %}" class="sort_header">
+                        Equipment {% if sort == 'equipment_number' %} ▲ {% elif sort == '-equipment_number' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'eq_desc' %}-eq_desc{% else %}eq_desc{% endif %}" class="sort_header">
+                        Equipment Description {% if sort == 'eq_desc' %} ▲ {% elif sort == '-eq_desc' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'qm_number' %}-qm_number{% else %}qm_number{% endif %}" class="sort_header">
+                        QM Document {% if sort == 'qm_number' %} ▲ {% elif sort == '-qm_number' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'doc_desc' %}-doc_desc{% else %}doc_desc{% endif %}" class="sort_header">
+                        Doc Description {% if sort == 'doc_desc' %} ▲ {% elif sort == '-doc_desc' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'next_due_date' %}-next_due_date{% else %}next_due_date{% endif %}" class="sort_header">
+                        Next Due Date {% if sort == 'next_due_date' %} ▲ {% elif sort == '-next_due_date' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'next_due_meter' %}-next_due_meter{% else %}next_due_meter{% endif %}" class="sort_header">
+                        Next Due Meter {% if sort == 'next_due_meter' %} ▲ {% elif sort == '-next_due_meter' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'active_status' %}-active_status{% else %}active_status{% endif %}" class="sort_header">
+                        Status {% if sort == 'active_status' %} ▲ {% elif sort == '-active_status' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in results %}
+            <tr>
+                <td class="td">{{ item.plan.equipment.Equipment_Number }}</td>
+                <td class="td">{{ item.eq_desc }}</td>
+                <td class="td">{{ item.plan.document.qm_number }}</td>
+                <td class="td">{{ item.doc_desc }}</td>
+                <td class="td">{{ item.next_due_date|default:"---" }}</td>
+                <td class="td">{{ item.next_due_meter|default:"---" }}</td>
+                <td class="td">
+                    {% if item.plan.active %}
+                        <span style="color: green;">● Active</span>
+                    {% else %}
+                        <span style="color: red;">○ Paused</span>
+                    {% endif %}
+                </td>
+                <td class="td">
+                    <a href="{% url 'planning:edit_plan' item.plan.pk %}" class="button-small">Edit</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td class="td" colspan="8">No maintenance plans found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -11,6 +11,7 @@ class PurchaseForm(forms.ModelForm):
             'date',
             'bill_location',
             'wo_cc',
+            'project',
             'status',
             'additional_information',
         ]
@@ -21,8 +22,17 @@ class PurchaseForm(forms.ModelForm):
             'wo_cc': forms.TextInput(attrs={'class': 'input', 'id': 'id_wo_cc'}),
             'barcode': forms.TextInput(attrs={'class': 'input'}),
             'status': forms.Select(attrs={'class': 'input'}),
-            'additional_information': forms.Textarea(attrs={'rows': 4, 'class': 'input'}),
+            'additional_information': forms.Textarea(attrs={'rows': 4, 'class': 'input', 'style': 'width: 90%'}),
         }
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+        
+            for field in self.fields.values():
+                field.widget.attrs['class'] = 'input'
+
+            if self.initial.get('project') or (self.instance and self.instance.project):
+                self.fields['project'].widget.attrs['class'] = 'locked'
         
 class PurchaseLineForm(forms.ModelForm):
     inventory_item = forms.ModelChoiceField(
@@ -30,6 +40,13 @@ class PurchaseLineForm(forms.ModelForm):
         required=False, 
         widget=forms.HiddenInput()
     )
+
+    row_status = forms.ChoiceField(
+        choices=status_choices,
+        initial='Pending',
+        widget=forms.Select(attrs={'class': 'input row-status'})
+    )
+
     class Meta:
         model = PurchaseLine
         fields = [
@@ -51,10 +68,10 @@ class PurchaseLineForm(forms.ModelForm):
             'supplier': forms.Select(attrs={'class': 'input supplier'}),
             'qty': forms.NumberInput(attrs={'class': 'input qty', 'step': '0.01'}),
             'unit_price': forms.NumberInput(attrs={'class': 'input unit-price', 'step': '0.01'}),
-            'row_status': forms.Select(attrs={'class': 'input row-status'}),
 
         }
-            
+
+
 PurchaseLineFormSet = inlineformset_factory(
     Purchase,
     PurchaseLine,

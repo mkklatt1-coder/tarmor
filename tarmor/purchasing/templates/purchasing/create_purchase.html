@@ -27,14 +27,15 @@
     <br>
     
     <div class="form" >
-        <form id="purchase-form" method="post" action="?{% if next %}next={{ next|urlencode }}{% endif %}">
+        <form id="purchase-form" method="post" action="?proj_id={{ project_id }}{% if next %}&next={{ next }}{% endif %}" , enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="action_destination" id="action_destination" value="save">
+            <input type="hidden" name="project_id_hidden" value="{{ project_id }}">
     
-            <h2>
+            <h3>
                 Purchase {{ purchase.purchase_number }} &nbsp; &nbsp; 
                 <img src="{{ purchase.barcode_image.url }}" alt="Barcode" style="vertical-align: middle; height: 30px;">
-            </h2>
+            </h3>
         
         
             {% if form.errors or formset.errors %}
@@ -57,17 +58,36 @@
             {% endif %}
 
             <div >
-                <br>
-                <label for="id_purchase_type">Purchase Type</label> {{ form.purchase_type }} &nbsp;
-                <label>Purchase Number Preview</label> <input type="text" id="purchase-number-preview" class="input" readonly>&nbsp;
-                <label>Barcode Preview:</label> <input type="text" id="barcode-preview" class="input" readonly><br>
-                <br>
-                <label for="id_date">Date</label> {{ form.date }}&nbsp;
-                <label for="id_status">Status</label> {{ form.status }}<br>
-                <br>
-                <label for="id_bill_location">Bill Location</label> {{ form.bill_location }}&nbsp;
-                <label for="id_wo_cc">WO / Cost Centre</label> {{ form.wo_cc }}&nbsp;
-                <label>Grand Total</label> <input type="text" id="grand-total-display" class="input" readonly value="0.00"><br>
+                <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                    <table class="table-bare-container">
+                        <tr>
+                            <td for="id_purchase_type">Purchase Type</td>
+                            <td>{{ form.purchase_type }}</td>
+                            <td>Purchase Number</td>
+                            <td><input type="text" id="purchase-number-preview" class="input" readonly></td>
+                            <td>Barcode</td>
+                            <td><input type="text" id="barcode-preview" class="input" readonly></td>
+                            <td for="id_date">Date</td>
+                            <td>{{ form.date }}</td>
+                        </tr>
+                        <tr>
+                            <td for="id_bill_location">Bill Location</td>
+                            <td>{{ form.bill_location }}</td>
+                            <td for="id_wo_cc">WO / Cost Centre</td>
+                            <td>{{ form.wo_cc }}</td>
+                            <td>Grand Total</td>
+                            <td><input type="text" id="grand-total-display" class="input" readonly value="0.00"></td>
+                            <td for="id_status">Status</td>
+                            <td>{{ form.status }}</td>
+                        </tr>
+                        {% for po in proj.purchase_orders.all %}
+                        <tr>
+                            <td>{{ po.purchase_number }}</td>
+                            <td>{{ proj.project_number }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
                 <br>
                 <label for="id_additional_information">Additional Information</label><br>
                 {{ form.additional_information }}
@@ -92,6 +112,7 @@
                         <th style="text-align: center;">Delete</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for line_form in formset %}
                         <tr class="item-row">
@@ -155,7 +176,6 @@
         const tableBody = document.querySelector('#items-table tbody');
         const emptyRow = document.getElementById('empty-form-row');
 
-        // 1. Purchase Number Preview Logic
         function fetchPurchasePreview() {
             const purchaseType = purchaseTypeField.value;
             if (!purchaseType) {
@@ -171,7 +191,6 @@
                 });
         }
 
-        // 2. WO/CC Options Logic
         function fetchWoCcOptions() {
             const billLocation = billLocationField.value;
             woCcField.innerHTML = '<option value="">---------</option>';
@@ -188,7 +207,6 @@
                 });
         }
 
-        // 3. Calculation Logic
         function calculateRowTotal(row) {
             const qty = parseFloat(row.querySelector('.qty')?.value || 0);
             const unitPrice = parseFloat(row.querySelector('.unit-price')?.value || 0);
@@ -210,7 +228,6 @@
             document.getElementById('grand-total-display').value = grandTotal.toFixed(2);
         }
 
-        // 4. Inventory Lookup & Alternatives Menu
         function attachLookup(row) {
             const partInput = row.querySelector('.part-number-input');
             const inventoryIdField = row.querySelector('input[type="hidden"][name$="-inventory_item"]');
@@ -232,13 +249,11 @@
                         return;
                     }
 
-                    // Call the API to find the part + its alternatives
                     fetch("{% url 'purchasing:get_part_options' %}?part_number=" + encodeURIComponent(partNumber))
                         .then(response => response.json())
                         .then(data => {
                             if (data.options && data.options.length > 0) {
                                 showAltMenu(this, data.options, (choice) => {
-                                    // Update all row fields based on user selection
                                     inventoryIdField.value = choice.id;
                                     partInput.value = choice.part_number;
                                     if (manufField) manufField.value = choice.manufacturer;
@@ -249,14 +264,12 @@
                                     calculateRowTotal(row);
                                 });
                             } else {
-                                // No inventory match found
                                 inventoryIdField.value = '';
                             }
                         });
                 });
             }
 
-            // Standard Listeners
             [qtyField, unitPriceField].forEach(field => {
                 if (field) field.addEventListener('input', () => calculateRowTotal(row));
             });
@@ -281,14 +294,20 @@
                 item.className = 'alt-option';
                 const badgeClass = opt.is_alt ? 'alt-badge-alt' : 'alt-badge-oem';
                 const badgeText = opt.is_alt ? 'ALT' : 'OEM';
-                
+                const stockColor = opt.qty_onhand <= 0 ? 'red' : 'inherit';
+                const stockWeight = opt.qty_onhand <= 0 ? 'bold' : 'normal';
+
                 item.innerHTML = `
                     <div>
                         <strong>${opt.manufacturer}</strong> - ${opt.part_number}<br>
                         <small>${opt.description}</small>
                     </div>
                     <div style="text-align:right">
-                        $${opt.unit_price}<br><span class="${badgeClass}">${badgeText}</span>
+                        <strong>$${opt.unit_price}</strong><br>
+                        <span style="color: ${stockColor}; font-weight: ${stockWeight}; font-size: 0.85em;">
+                            Stock: ${opt.qty_onhand}
+                        </span><br>
+                        <span class="${badgeClass}">${badgeText}</span>
                     </div>
                 `;
                 
@@ -307,7 +326,6 @@
 
             document.body.appendChild(menu);
 
-            // Close menu if user clicks elsewhere
             setTimeout(() => {
                 document.addEventListener('click', function closeMenu(e) {
                     if (!menu.contains(e.target) && e.target !== anchor) {
@@ -332,6 +350,8 @@
                     el.checked = false;
                 } else if (el.classList.contains('total-price-display')) {
                     el.value = '0.00';
+                } else if (el.classList.contains('row-status')) { 
+                    el.value = 'Pending';
                 } else if (el.type !== 'hidden') {
                     el.value = '';
                 }

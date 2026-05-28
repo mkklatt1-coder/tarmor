@@ -22,61 +22,137 @@
     <br>
 
         <div class="form">
-            <h5 class="form">
-                <span> Edit Equipment &nbsp;</span>
-                <form method="GET" action="{% url 'equipment:edit_eq' %}">
-                    <input class="input" list="eq_numbers" type="text" name="eqedit" placeholder="Equipment Number" value="{{ request.GET.eqedit }}">
-                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
-                    <datalist id="eq_numbers">
-                        {% for number in all_equipment %}
-                            <option value="{{ number }}">
+            <form method="GET" action="{% url 'equipment:edit_eq' %}">
+                <h3>
+                    <span> Edit Equipment &nbsp;</span>
+                    <input type="text" name="eqedit" list="eq-search-suggestions" class="input" value="{{ eq_number|default:'' }}" 
+                        autocomplete="off" placeholder="Type Number or Description...">
+                    <datalist id="eq-search-suggestions">
+                        {% for eq in all_equipment %}
+                            <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                            </option>
                         {% endfor %}
-                    </datalist>
-                </form>
-            </h5>
+                    </datalist> &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
+                </h3>
+            </form>
         </div>
         <br>
         <div >
             <form id="EqEditForm" method="POST" action="." enctype="multipart/form-data">
                 {% csrf_token %}
-                {% if eqeditform %}
-                    <!-- Equipment core fields -->
-                    <div>
-                        Eq Number: {{ eqeditform.Equipment_Number }} &nbsp;
-                        Asset Type: {{ eqeditform.Asset_Type }} &nbsp;
-                        Eq Type: {{ eqeditform.Equipment_Type }} &nbsp;
-                        Status: {{ eqeditform.Equipment_Status }} <br>
-                        <br><br>
-                        Description: {{ eqeditform.Equipment_Description }} &nbsp;
-                        Commissioned: {{ eqeditform.Commissioning_Date }} &nbsp;
-                        Decommissioned: {{ eqeditform.Decommissioning_Date }} <br>
-                        <br><br>
-                        Make: {{ eqeditform.Make }} &nbsp;
-                        Model: {{ eqeditform.Model }} &nbsp;
-                        Serial Number: {{ eqeditform.Serial_Number }} &nbsp;
-                        Garage: {{ eqeditform.Garage }} <br>
-                        <br><br>
-                        PO Number: {{ eqeditform.PO_Number }} &nbsp;
-                        Value: {{ eqeditform.Equipment_Value }} &nbsp;
-                        Warranty Start: {{ eqeditform.Warranty_Start_Date }} &nbsp;
-                        Warranty End: {{ eqeditform.Warranty_End_Date }} <br>
-                        <br><br>
-                        Overhaul Period: {{eqeditform.Overhaul_Period}} &nbsp;
-                        Overhaul Value: {{eqeditform.Overhaul_Value}} &nbsp;
-                        End Of Life:{{eqeditform.End_of_Life}} <br>
-                        <br><br>
-                        Engine HP: {{ eqeditform.Engine_HP_Rating }} &nbsp;
-                        CANMET: {{ eqeditform.CANMET_Number }} &nbsp;
-                        Ventilation: {{ eqeditform.Ventilation_Rating }} CFM  <br>
-                        <br><br>
-                        Eng_Tier: {{ eqeditform.Eng_Tier }} &nbsp;
-                        Cab Style: {{ eqeditform.Cab_Style }} &nbsp;
-                        Box Style: {{ eqeditform.Box_Type }} <br>
+                {% if equploadform %}
+                    <div class="form-row" id="form-container">
+
+                        <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+
+                            <div class="container-wrapper" style="width: 100%;">
+                                <table class="table-bare-container">
+                                    <tr>
+                                        <td>Eq Number</td>
+                                        <td colspan="2" id="eq-number-field">{{ equploadform.Equipment_Number }}</td>
+                                        <td>Asset Type</td>
+                                        <td colspan="2">{{ equploadform.Asset_Type }}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Eq Type</td>
+                                        <td>{{ equploadform.Equipment_Type }}</td>
+                                        <td>Purchase Order</td>
+                                        <td>{{equploadform.PO_Number}}</td>
+                                        <td>Eq Status</td>
+                                        <td>{{equploadform.Equipment_Status}}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Eq Description</td>
+                                        <td colspan="5">{{equploadform.Equipment_Description}}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Make</td>
+                                        <td>{{equploadform.Make}}</td>
+                                        <td>Model</td>
+                                        <td>{{equploadform.Model}}</td>
+                                        <td>Serial Number</td>
+                                        <td>{{equploadform.Serial_Number}}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Resp Garage</td>
+                                        <td>{{equploadform.Garage}}</td>
+                                        <td>Warranty Start</td>
+                                        <td>{{equploadform.Warranty_Start_Date}}</td>
+                                        <td>Warranty End</td>
+                                        <td>{{equploadform.Warranty_End_Date}}</td>
+                                    </tr>
+
+                                    <tr>
+                                        
+                                        <td>Eq Value</td>
+                                        <td>{{equploadform.Equipment_Value}}</td>
+                                        <td>Commission Date</td>
+                                        <td>{{equploadform.Commissioning_Date}}</td>
+                                        <td>Decommission Date</td>
+                                        <td>{{equploadform.Decommissioning_Date}}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Overhaul Period</td>
+                                        <td>{{equploadform.Overhaul_Period}} {{equploadform.oh_uom}}</td>
+                                        <td>Overhaul Value</td>
+                                        <td>{{equploadform.Overhaul_Value}}</td>
+                                        <td>End Of Life</td>
+                                        <td>{{equploadform.End_of_Life}} {{equploadform.eol_uom}}</td>
+                                    </tr>
+
+                                    {% if item.Asset_Type.name == "Underground Mobile" %}
+                                    <tr>
+                                        <td>Engine HP</td>
+                                        <td>{{equploadform.Engine_HP_Rating}}</td>
+                                        <td>CANMET Number</td>
+                                        <td>{{equploadform.CANMET_Number}}</td>
+                                        <td>Ventilation Rating</td>
+                                        <td>{{equploadform.Ventilation_Rating}}</td>
+                                    </tr>
+                                    {% endif %}
+
+                                    {% if item.Asset_Type.name == "Surface Mobile" or item.Asset_Type.name == "Underground Mobile" %}
+                                    <tr>
+                                        <td>Eng_Tier</td>
+                                        <td>{{ equploadform.Eng_Tier }}</td>
+                                        <td>Cab Style</td>
+                                        <td>{{ equploadform.Cab_Style }}</td>
+                                        <td>Box Style</td>
+                                        <td>{{ equploadform.Box_Type }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </div>
+
+                            
+                            <div class="container-wrapper" style="flex: 0 0 350px; margin: 0;">
+                                <div id="image-preview-zone" onclick="triggerImageClick();">
+                                    <div id="placeholder-text" style="{% if item.Equipment_Image %}display: none;{% endif %}">
+                                        <p style="font-size: 50px; margin: 0;">+</p>
+                                        <p>Click to Change Image</p>
+                                    </div>
+                                    <img id="preview-img" 
+                                        src="{% if item.Equipment_Image %}{{ item.Equipment_Image.url }}{% endif %}" 
+                                        style="{% if item.Equipment_Image %}display: block;{% else %}display: none;{% endif %} max-width: 100%;">
+                                </div>
+                                <div style="display: none;">
+                                    {{ equploadform.Equipment_Image }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <label>Additional Information:</label><br>
+                        {{equploadform.Additional_Information}}<br>
                         <br>
-                        Additional Information: <br>
-                        {{ eqeditform.Additional_Information }}
-                        <br><br>
                     </div>
+                    <br>
 
                     <div id="meter-section">
                         <h4>
@@ -99,6 +175,7 @@
                                     {% endfor %}
                                 </div>
                             {% endfor %}
+                        </div>
                     </div>
 
                     <div id="empty-form" style="display: none;">
@@ -112,42 +189,63 @@
                             <button type="button" class="button delete-row-btn" style="background:#ff4444; color:#ffd300; margin-left:10px;">Remove</button>
                         </div>
                     </div>
-                </div>
                 {% else %}
                     <p style="color:red; padding:20px;">
                         Enter an Equipment Number above and click the magnifying glass to load data.
                     </p>
                 {% endif %}
-             </form>
+            </form>
         </div>
     </div>
 
-<!-- Meter JavaScript -->
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const addButton = document.getElementById("add-meter-btn");
-        const formList = document.getElementById("meter-form-list");
-        const totalForms = document.getElementById("id_meters-TOTAL_FORMS");
-        const emptyFormTemplate = document.getElementById("empty-form").innerHTML;
-        if (!addButton || !totalForms) return;
-        addButton.addEventListener("click", function() {
-            const formIndex = parseInt(totalForms.value);
-            let html = emptyFormTemplate.replace(/__prefix__/g, formIndex);
-            formList.insertAdjacentHTML("beforeend", html);
-            totalForms.value = formIndex + 1;
+        document.addEventListener("DOMContentLoaded", function() {
+            const addButton = document.getElementById("add-meter-btn");
+            const formList = document.getElementById("meter-form-list");
+            const totalForms = document.getElementById("id_meters-TOTAL_FORMS");
+            const emptyFormTemplate = document.getElementById("empty-form").innerHTML;
+            if (!addButton || !totalForms) return;
+            addButton.addEventListener("click", function() {
+                const formIndex = parseInt(totalForms.value);
+                let html = emptyFormTemplate.replace(/__prefix__/g, formIndex);
+                formList.insertAdjacentHTML("beforeend", html);
+                totalForms.value = formIndex + 1;
+            });
+            formList.addEventListener("click", function(e) {
+                if (e.target.classList.contains("delete-row-btn")) {
+                    const row = e.target.closest(".meter-item");
+                    const deleteBox = row.querySelector("input[type='checkbox'][name$='DELETE']");
+                    if (deleteBox) {
+                        deleteBox.checked = true;
+                        row.style.display = "none";
+                    } else {
+                        row.remove();
+                    }
+                }
+            });
         });
-        formList.addEventListener("click", function(e) {
-            if (e.target.classList.contains("delete-row-btn")) {
-                const row = e.target.closest(".meter-item");
-                const deleteBox = row.querySelector("input[type='checkbox'][name$='DELETE']");
-                if (deleteBox) {
-                    deleteBox.checked = true;
-                    row.style.display = "none";
-                } else {
-                    row.remove();
+
+        function triggerImageClick() {
+            const input = document.getElementById('id_Equipment_Image');
+            if (input) input.click();
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'id_Equipment_Image') {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const previewImg = document.getElementById('preview-img');
+                        const placeholder = document.getElementById('placeholder-text');
+                        
+                        previewImg.src = event.target.result;
+                        previewImg.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
                 }
             }
         });
-    });
     </script>
 {% endblock %}

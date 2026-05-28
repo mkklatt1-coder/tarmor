@@ -36,9 +36,14 @@
         <h2> Create Work Order</h2>
         <br>
         <div class="form">
-            <form method="post" id="work-order-form">
-                
+            <form method="post" id="work-order-form", enctype="multipart/form-data">
                 {% csrf_token %}
+
+                    <input type="hidden" name="project_id_hidden" value="{{ project_id|default:'' }}">
+
+                {{ workorderform.project.as_hidden }}
+                {{ workorderform.barcode_image.as_hidden }}
+
                 {% if workorderform.errors %}
                     {{ workorderform.non_field_errors }}
                     {% for field in workorderform %}
@@ -47,6 +52,7 @@
                         {% endif %}
                     {% endfor %}
                 {% endif %}
+                
                 <div style="display:none;">
                         {{ workorderform.equipment }}
                 </div>
@@ -62,109 +68,134 @@
                 </h3>
                 <br>
 
-                <div>
-                    Equipment Number Search: <input class="input" type="text" id="equipment-number-search" autocomplete="off"> &nbsp;
-                    Equipment Description: <input type="text" class="input" id="equipment-description-search" value="{{ work_order_obj.equipment_description }}" autocomplete="off"><br>
-                    <br>
-                    <div id="equipment-search-results" style="border: 1px solid #ccc; display: none; position: absolute; background: white; z-index: 100;">
-                        <!-- JS will inject results here -->
-                    </div>
-                    <span id="selected-equipment-number"></span>
-                    <span id="selected-equipment-description"></span>
-                    <input type="hidden" id="equipment-description-search">
-                </div>
-                <br>
-                <div>
-                    Date Created: {{ workorderform.date_created }} &nbsp;
-                    Date Closed: {{ workorderform.date_closed }} <br>
-                    <br>
-                    Work Type: {{ workorderform.work_type }} &nbsp;
-                    Priority: {{ workorderform.priority }} &nbsp;
-                    Machine OOS: {{ workorderform.machine_oos }}<br>
-                    <br>
-                    Hours: {{ workorderform.hours }} &nbsp;
-                    Meter: {{ workorderform.meter }} &nbsp;
-                    Job Status: {{ workorderform.job_status }}<br>
-                    <br>
-                    <br>
+                <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                    
+                    <table class="table-bare-container">
+                        <tr>
+                            <td>Equipment Number Search</td>
+                            <td><input class="input" type="text" id="equipment-number-search" autocomplete="off">
+                                <div id="equipment-search-results" style="border: 1px solid #ccc; display: none; position: absolute; background: white; z-index: 100;">
+                                    <!-- JS will inject results here -->
+                                </div>
+                            </td>
+                            <td>Equipment Description</td>
+                            <td colspan="3">
+                                <span id="selected-equipment-number"></span>&nbsp;<span id="selected-equipment-description"></span>
+                                <input type="hidden" id="equipment-description-search">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Date Created</td>
+                            <td>{{ workorderform.date_created }}</td>
+                            <td>Date Closed</td>
+                            <td>{{ workorderform.date_closed }}</td>
+                            <td>Job Status</td>
+                            <td>{{ workorderform.job_status }}</td>
+                        </tr>
+                        <tr>
+                            <td>Work Type</td>
+                            <td>{{ workorderform.work_type }}</td>
+                            <td>Priority</td>
+                            <td>{{ workorderform.priority }}</td>
+                            <td>Machine Out Of Service</td>
+                            <td>{{ workorderform.machine_oos }}</td>
+                        </tr>
+                        <tr>
+                            <td>Hours</td>
+                            <td>{{ workorderform.hours }}</td>
+                            <td>Meter</td>
+                            <td>{{ workorderform.meter }}</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {% for wo in proj.work_orders.all %}
+                        <tr>
+                            <td>{{ wo.wo_number }}</td>
+                            <td>{{ proj.project_number }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
                 </div>
 
-                <div>
-                    <h3> Troubleshooting </h3>
-                    <br>
-                    Failure Description: {{ workorderform.troubleshoot_description }}<br>
-                    <br>
-                    Extended Description:<br>
-                    {{ workorderform.ts_extended_description }}<br>
-                    <br>
-                    Equipment Location: {{ workorderform.equipment_location }}<br>
-                    <br>
-                    Service Report:<br>
-                    {{ workorderform.ts_service_report }}
-                    <br>
-                </div>
-                <br>
-                <button type="button" id="plan-button">Plan</button> &nbsp; &nbsp; 
-                <p>Save the work order before adding time entries or parts purchases.</p>
-                <br>
-                <div id="planning-section" style="display:none; margin-top:20px;">
-                    <h3> Planning  &nbsp; &nbsp;&nbsp; &nbsp; Plan Start Date: {{ workorderform.plan_start_date }}</h3>
-                    <br>
-                    Safety Instructions:
-                    {{ workorderform.safety_instructions }}
-                    <br>
-                    Spec Requirements:
-                    {{ workorderform.spec_requirements }}
-                    <br>
-                    Legislative: {{ workorderform.legislative }}&nbsp;
-                    License Req: {{ workorderform.license_req }}&nbsp;
-                    Tools Req: {{ workorderform.tools_req }} &nbsp;
-                    Conf Space: {{ workorderform.conf_space }}<br>
-                    <br>
-                    JHA: {{ workorderform.jha }}&nbsp;
-                    Hot Work: {{ workorderform.hot_work }} &nbsp;
-                    Parts WTY: {{ workorderform.parts_wty }}&nbsp;
-                    Work WTY: {{ workorderform.work_wty }}<br>
-                    <br>
-                    <br>
-                    <div id="warranty-table-container">
-                        {% include 'work_orders/component_warranty_table.html' %}
-                    </div>
-                    <br>
+                <h3> Troubleshooting </h3>
 
+                <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+                    <div id="equipment-table-wrapper" style="width: 45%; margin-right: 10px;">
+                        <table class="table-bare-container">
+                            <tr>
+                                <td>Failure Description</td>
+                                <td>{{ workorderform.troubleshoot_description }}</td>
+                            </tr>
+                        </table>
+                        <br>
+                        Extended Description:<br>
+                        {{ workorderform.ts_extended_description }}<br>
+                    </div>
+                    <div id="equipment-table-wrapper" style="width: 45%; margin-left: 10px;">
+                        <table class="table-bare-container">
+                            <tr>
+                                <td>Equipment Location</td>
+                                <td>{{ workorderform.equipment_location }}</td>
+                            </tr>
+                        </table>
+                        <br>
+                        Service Report:<br>
+                        {{ workorderform.ts_service_report }}
+                    </div>
+                </div>
+                <br>
                 </div>
                 <div>
-                    <h3> Repair
-                        <div id="repair-icons" style="margin:10px 0;">
-                            <span id="icon-legislative" style="display:none;" title="Legislative"><img class="image" src="{% static 'Images/legislation.ico' %}"></span>
-                            <span id="icon-license_req" style="display:none;" title="License Required"><img class="image" src="{% static 'Images/license.ico' %}"></span>
-                            <span id="icon-tools_req" style="display:none;" title="Tools Required"><img class="image" src="{% static 'Images/tools.ico' %}"></span>
-                            <span id="icon-conf_space" style="display:none;" title="Confined Space"><img class="image" src="{% static 'Images/confined_space.ico' %}"></span>
-                            <span id="icon-jha" style="display:none;" title="JHA"><img class="image" src="{% static 'Images/jha.ico' %}"></span>
-                            <span id="icon-hot_work" style="display:none;" title="Hot Work"><img class="image" src="{% static 'Images/torch.ico' %}"></span>
-                            <span id="icon-parts_wty" style="display:none;" title="Parts Warranty"><img class="image" src="{% static 'Images/warranty.ico' %}"></span>
-                            <span id="icon-work_wty" style="display:none;" title="Work Warranty"><img class="image" src="{% static 'Images/warranty.ico' %}"></span>
+                    <h3> Repair</h3>
+                    <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+                        <div id="equipment-table-wrapper" style="width: 45%; margin-right: 10px;">
+                            <table class="table-bare-container">
+                                <tr>
+                                    <td>Repair Description</td>
+                                    <td>{{ workorderform.repair_description }} </td>
+                                </tr>
+                            </table>
+                            <br>
+                            Repair Extended Description:<br>
+                            {{ workorderform.repair_extended_description }}<br>
                         </div>
-                    </h3>
-                    <br>
-                    Repair Description: {{ workorderform.repair_description }} &nbsp;&nbsp;
-                    Estimated Hours: {{ workorderform.est_work_hours }}<br>
-                    <br>
-                    Repair Extended Description:
-                    {{ workorderform.repair_extended_description }}
-                    <br>
-                    Job Instructions:
-                    {{ workorderform.job_instructions }}
-                    <br>
-                    Failure System: {{ workorderform.fc_system }}&nbsp;
-                    Failure Component: {{ workorderform.fc_component }}<br>
-                    <br>
-                    Failure Mode: {{ workorderform.fc_failure_mode }}&nbsp;
-                    Action: {{ workorderform.fc_action }}<br>
-                    <br>
-                    Repair Service Report:
-                    {{ workorderform.repair_service_report }}
-                    <br>
+                        <div id="equipment-table-wrapper" style="width: 45%; margin-left: 10px;">
+                            <table class="table-bare-container">
+                                <tr>
+                                    <td>Estimated Hours</td>
+                                    <td>{{ workorderform.est_work_hours }}</td>
+                                </tr>
+                            </table>
+                            <br>
+                            Job Instructions:<br>
+                            {{ workorderform.job_instructions }}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+                        <div id="equipment-table-wrapper" style="width: 46%; margin-right: 10px;">
+                            <table class="table-bare-container">
+                                <tr>
+                                    <td>Failure System</td>
+                                    <td>{{ workorderform.fc_system }}</td>
+                                    <td>Failure Component</td>
+                                    <td>{{ workorderform.fc_component }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Failure Mode</td>
+                                    <td>{{ workorderform.fc_failure_mode }}</td>
+                                    <td>Action</td>
+                                    <td>{{ workorderform.fc_action }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4"><strong>The work order must be saved before any pictures or attachments can be included.</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div id="equipment-table-wrapper" style="width: 49%; margin-left: 10px;">
+                        Repair Service Report<br>
+                        {{ workorderform.repair_service_report }}<br>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
@@ -180,24 +211,18 @@
                 const selectedDescription = document.getElementById('selected-equipment-description');
                 const planningSection = document.getElementById('planning-section');
 
-                // This function handles the selection, auto-fills both fields, and updates the table
                 function setEquipment(item) {
-                    // 1. Update Hidden Form Field
                     equipmentField.innerHTML = `<option value="${item.id}" selected>${item.equipment_number}</option>`;
                     equipmentField.value = item.id;
 
-                    // 2. Auto-fill Search Inputs (Cross-population)
                     numberSearch.value = item.equipment_number;
                     descriptionSearch.value = item.equipment_description;
 
-                    // 3. Update Display Labels
                     selectedNumber.textContent = item.equipment_number;
                     selectedDescription.textContent = item.equipment_description;
                     
-                    // 4. Hide results box
                     resultsBox.style.display = 'none';
 
-                    // 5. FETCH WARRANTY TABLE (Standard JS Replacement for HTMX)
                     fetch(`{% url 'work_orders:load_components' %}?equipment=${item.id}`)
                         .then(response => response.text())
                         .then(html => {
@@ -225,7 +250,6 @@
                             }
                             data.results.forEach(item => {
                                 const row = document.createElement('div');
-                                // Show both Number and Description in the dropdown for clarity
                                 row.textContent = `${item.equipment_number} - ${item.equipment_description}`;
                                 row.style.padding = '8px';
                                 row.style.cursor = 'pointer';
@@ -240,7 +264,6 @@
                         });
                 }
 
-                // Search listeners for both Number and Description fields
                 numberSearch.addEventListener('input', function () {
                     runSearch(this.value, 'number');
                 });
@@ -249,7 +272,6 @@
                     runSearch(this.value, 'description');
                 });
 
-                // Toggle Planning Section
                 const planButton = document.getElementById('plan-button');
                 if (planButton) {
                     planButton.addEventListener('click', function () {
@@ -257,7 +279,6 @@
                     });
                 }
 
-                // Status Icon Logic
                 function bindYesNoIcon(fieldId, iconId) {
                     const field = document.getElementById(fieldId);
                     const icon = document.getElementById(iconId);
@@ -282,6 +303,7 @@
 
                 iconMappings.forEach(mapping => bindYesNoIcon(mapping[0], mapping[1]));
             });
+
         </script>
     </div>
 

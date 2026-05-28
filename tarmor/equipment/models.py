@@ -49,6 +49,20 @@ BOX_CHOICES = [
     ('Ejector', 'Ejector')
 ]
 
+METER_CHOICES = [
+        ('','Select'),
+        ('Engine Hours', 'Engine Hours'),
+        ('Odometer', 'Odometer'),
+        ('Power Pack Hours', 'Power Pack Hours'),
+        ('Power Pack Left', 'Power Pack Left'),
+        ('Power Pack Right', 'Power Pack Right'),
+        ('Impact Hours', 'Impact Hours'),
+        ('Impact Left', 'Impact Left'),
+        ('Impact Right', 'Impact Right'),
+        ('Operating Hours', 'Operating Hours'),
+        ('Calendar Years', 'Calendar Years')
+    ]
+
 class Equipment(models.Model):
     Equipment_Number = models.CharField(max_length=20, unique=True)
     Asset_Type = models.ForeignKey('AssetType', on_delete=models.PROTECT)
@@ -69,34 +83,32 @@ class Equipment(models.Model):
     Ventilation_Rating = models.CharField(max_length=50, blank=True)
     Garage = models.ForeignKey('facilities.Facility', to_field='Facility_Name', on_delete=models.PROTECT, blank=True, null=True)
     Overhaul_Period = models.IntegerField(null=True, blank=True)
+    oh_uom = models.CharField(choices=METER_CHOICES, null=True, blank=True)
     Overhaul_Value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     End_of_Life = models.IntegerField(null=True, blank=True)
     Cab_Style = models.CharField(choices=CAB_CHOICES, null=True, blank=True)
+    eol_uom = models.CharField(choices=METER_CHOICES, null=True, blank=True)
     Eng_Tier = models.CharField(choices=TIER_CHOICES, null=True, blank=True)
     Box_Type = models.CharField(choices=BOX_CHOICES, null=True, blank=True)
     
     Additional_Information = models.TextField(blank=True)
+    Equipment_Image = models.ImageField(upload_to='equipment_pics/', null=True, blank=True)
     
     class Meta:
         managed = True
         db_table = 'tarmor_equipment'
     
+    @property
+    def asset_key(self):
+        if "Fixed" in self.Asset_Type:
+            return "F"
+        elif "Mobile" in self.Asset_Type:
+            return "M"
+        return None
+    
     def __str__(self):
         return self.Equipment_Number
     
-METER_CHOICES = [
-        ('','Select'),
-        ('Engine Hours', 'Engine Hours'),
-        ('Odometer', 'Odometer'),
-        ('Power Pack Hours', 'Power Pack Hours'),
-        ('Power Pack Left', 'Power Pack Left'),
-        ('Power Pack Right', 'Power Pack Right'),
-        ('Impact Hours', 'Impact Hours'),
-        ('Impact Left', 'Impact Left'),
-        ('Impact Right', 'Impact Right'),
-        ('Operating Hours', 'Operating Hours'),
-    ]
-
 class Meter(models.Model):
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='meters')
     meter_type = models.CharField(max_length=50, choices=METER_CHOICES)
@@ -116,7 +128,7 @@ class Component(models.Model):
     ]
         
     Equipment = models.ForeignKey('Equipment', db_column='Equipment_Number', on_delete=models.CASCADE, related_name='components')
-    Status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active')
+    Status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Installed')
     Installation_Date = models.DateField(null=True, blank=True)
     Removal_Date = models.DateField(null=True, blank=True)
     Component_Number = models.CharField(max_length=50, unique=True)
@@ -129,10 +141,11 @@ class Component(models.Model):
     UoM = models.CharField(max_length=10, choices=[('Hours', 'Hours'), ('Kms', 'Kms'), ('Cycles', 'Cycles'), ('Years', 'Years')], default='Hours')
     PO_Number = models.CharField(max_length=50, blank=True)
     Warranty_Duration = models.IntegerField(null=True, blank=True)
-    Wty_UoM = models.CharField(max_length=10, choices=[('Hours', 'Hours'), ('Kms', 'Kms'), ('Cycles', 'Cycles'), ('Years', 'Years')], default='Hours')
+    Wty_UoM = models.CharField(max_length=10, choices=[('Hours', 'Hours'), ('Kms', 'Kms'), ('Cycles', 'Cycles'), ('Years', 'Years'), ('Months', 'Months')], default='Hours')
     Warranty_Start_Date = models.DateField(null=True, blank=True)
     Warranty_End_Date = models.DateField(null=True, blank=True)
     Additional_Information = models.TextField(blank=True)
+    Component_Image = models.ImageField(upload_to='equipment_pics/', null=True, blank=True)
         
     class Meta:
         db_table = 'tarmor_component'

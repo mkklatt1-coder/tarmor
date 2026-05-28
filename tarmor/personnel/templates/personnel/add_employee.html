@@ -22,7 +22,7 @@
 <div class="main">
     <h2>Add New Employee</h2>
     <br>
-    <form id="EmployeeForm" method="POST" action="{% url 'personnel:add_employee' %}">
+    <form id="EmployeeForm" method="POST" action="{% url 'personnel:add_employee' %}" enctype="multipart/form-data">
         {% csrf_token %}
         {{ cert_formset.management_form }}
         {% if new_emp_form.errors or cert_formset.errors %}
@@ -43,38 +43,89 @@
             </div>
             <br>
         {% endif %}
+        <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+
+            <div id="equipment-table-wrapper" style="width: 80%;">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>First Name</td>
+                        <td>{{ new_emp_form.First_Name }}</td>
+                        <td>Middle Name(s)</td>
+                        <td>{{ new_emp_form.Middle_Name }} </td>
+                        <td>Last Name</td>
+                        <td>{{ new_emp_form.Last_Name }}</td>
+                        <td>Status</td>
+                        <td>{{ new_emp_form.Status }}</td>
+                    </tr>
+                    <tr>
+                        <td>Position</td>
+                        <td>{{ new_emp_form.Position }}</td>
+                        <td>Crew</td>
+                        <td>{{ new_emp_form.crew }}</td>
+                        <td>Start Date</td>
+                        <td>{{ new_emp_form.Start_Date }}</td>
+                        <td>Last Date</td>
+                        <td>{{ new_emp_form.Last_Date }}</td>
+                    </tr>
+                    <tr>
+                        <td>Street Address</td>
+                        <td>{{ new_emp_form.Street_Address }}</td>
+                        <td>City</td>
+                        <td>{{ new_emp_form.City }}</td>
+                        <td>Prov / State</td>
+                        <td>{{ new_emp_form.Prov_State }}</td>
+                        <td>Country</td>
+                        <td>{{ new_emp_form.Country }}</td>
+                    </tr>
+                    <tr>
+                        <td>Postal / Zip Code</td>
+                        <td>{{ new_emp_form.Postal_Zip }}</td>
+                        <td>Phone Number</td>
+                        <td>{{ new_emp_form.Phone }}</td>
+                        <td>Email</td>
+                        <td>{{ new_emp_form.Email }}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan="8"><p><strong>Emergency Contact Information</strong></p></td>
+                    </tr>
+                    <tr>
+                        <td>First Name</td>
+                        <td>{{ new_emp_form.EC_First_Name }}</td>
+                        <td>Middle Name(s)</td>
+                        <td>{{ new_emp_form.EC_Middle_Name }}</td>
+                        <td>Last Name</td>
+                        <td>{{ new_emp_form.EC_Last_Name }}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Phone Number</td>
+                        <td>{{ new_emp_form.EC_Phone }}</td>
+                        <td>Email</td>
+                        <td>{{ new_emp_form.EC_Email }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="container-wrapper" style="flex: 0 0 350px; margin: 0;">
+                <div id="image-preview-zone" onclick="document.getElementById('id_Employee_Image').click();">
+                    <div id="placeholder-text">
+                        <p style="font-size: 50px; margin: 0;">+</p>
+                        <p>Click to Add Equipment Image</p>
+                    </div>
+                    <img id="preview-img" src="" alt="Employee Preview" style="display: none;">
+                </div>
+                <div style="display: none;">
+                    {{ new_emp_form.Employee_Image }}
+                </div>
+            </div>
+        </div>
         <div class="form-row">
-            <label>First Name:</label> {{ new_emp_form.First_Name }} &nbsp;
-            <label>Middle Name(s):</label> {{ new_emp_form.Middle_Name }} &nbsp;
-            <label>Last Name:</label> {{ new_emp_form.Last_Name }} &nbsp;
-            <label>Status:</label> {{ new_emp_form.Status }}
-            <br><br>
-            <label>Position:</label> {{ new_emp_form.Position }} &nbsp;
-            <label>Compensation:</label> {{ new_emp_form.Compensation }} &nbsp;
-            <label>per</label> {{ new_emp_form.Comp_UoM }}
-            <br><br>
-            <label>Crew:</label> {{ new_emp_form.crew }} &nbsp;
-            <label>Start Date:</label> {{ new_emp_form.Start_Date }} &nbsp;
-            <label>Last Date:</label> {{ new_emp_form.Last_Date }}
-            <br><br>
-            <label>Street Address:</label> {{ new_emp_form.Street_Address }} &nbsp;
-            <label>City:</label> {{ new_emp_form.City }} &nbsp;
-            <label>Prov / State:</label> {{ new_emp_form.Prov_State }} &nbsp;
-            <label>Country:</label> {{ new_emp_form.Country }}
-            <br><br>
-            <label>Postal / Zip Code:</label> {{ new_emp_form.Postal_Zip }} &nbsp;
-            <label>Phone Number:</label> {{ new_emp_form.Phone }} &nbsp;
-            <label>Email:</label> {{ new_emp_form.Email }}
-            <br><br>
-            <p><strong>Emergency Contact Information</strong></p>
-            <br>
-            <label>First Name:</label> {{ new_emp_form.EC_First_Name }} &nbsp;
-            <label>Middle Name(s):</label> {{ new_emp_form.EC_Middle_Name }} &nbsp;
-            <label>Last Name:</label> {{ new_emp_form.EC_Last_Name }}
-            <br><br>
-            <label>Phone Number:</label> {{ new_emp_form.EC_Phone }} &nbsp;
-            <label>Email:</label> {{ new_emp_form.EC_Email }}
-            <br><br>
             <label>Additional Information:</label><br>
             {{ new_emp_form.Additional_Information }}
             <br><br>
@@ -91,7 +142,7 @@
                         {% for hidden in c_form.hidden_fields %}
                             {{ hidden }}
                         {% endfor %}
-                        <label>Certification / Diploma:</label> {{ c_form.Certification }} &nbsp;
+                        <label>Cert / Diploma:</label> {{ c_form.Certification }} &nbsp;
                         <label>Institution:</label> {{ c_form.Institution }} &nbsp;
                         <label>Date Received:</label> {{ c_form.Date_Cert }} &nbsp;
                         <label>Renewable?</label> {{ c_form.Renewable }} &nbsp;
@@ -128,34 +179,54 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const addBtn = document.getElementById('add-cert-btn');
-    const certContainer = document.getElementById('employee-cert');
-    const emptyFormTemplate = document.getElementById('empty-cert-form');
-    const totalFormsInput = document.getElementById('id_cert-TOTAL_FORMS');
-    if (addBtn && certContainer && emptyFormTemplate && totalFormsInput) {
-        addBtn.addEventListener('click', function () {
-            const formIndex = parseInt(totalFormsInput.value, 10);
-            const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, formIndex);
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = newFormHtml.trim();
-            certContainer.appendChild(tempDiv.firstElementChild);
-            totalFormsInput.value = formIndex + 1;
-        });
-        certContainer.addEventListener('click', function (e) {
-            if (e.target.classList.contains('remove-cert-btn')) {
-                const certItem = e.target.closest('.cert-item');
-                if (!certItem) return;
-                const deleteCheckbox = certItem.querySelector('input[type="checkbox"][name$="-DELETE"]');
-                if (deleteCheckbox) {
-                    deleteCheckbox.checked = true;
-                    certItem.style.display = 'none';
-                } else {
-                    certItem.remove();
+    document.addEventListener('DOMContentLoaded', function () {
+        const addBtn = document.getElementById('add-cert-btn');
+        const certContainer = document.getElementById('employee-cert');
+        const emptyFormTemplate = document.getElementById('empty-cert-form');
+        const totalFormsInput = document.getElementById('id_cert-TOTAL_FORMS');
+        if (addBtn && certContainer && emptyFormTemplate && totalFormsInput) {
+            addBtn.addEventListener('click', function () {
+                const formIndex = parseInt(totalFormsInput.value, 10);
+                const newFormHtml = emptyFormTemplate.innerHTML.replace(/__prefix__/g, formIndex);
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = newFormHtml.trim();
+                certContainer.appendChild(tempDiv.firstElementChild);
+                totalFormsInput.value = formIndex + 1;
+            });
+            certContainer.addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-cert-btn')) {
+                    const certItem = e.target.closest('.cert-item');
+                    if (!certItem) return;
+                    const deleteCheckbox = certItem.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                    if (deleteCheckbox) {
+                        deleteCheckbox.checked = true;
+                        certItem.style.display = 'none';
+                    } else {
+                        certItem.remove();
+                    }
                 }
-            }
-        });
+            });
+        }
+    });
+
+    function previewImage(input) {
+        const previewImg = document.getElementById('preview-img');
+        const placeholder = document.getElementById('placeholder-text');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
     }
-});
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'id_Employee_Image') {
+            previewImage(e.target);
+        }
+    });
 </script>
 {% endblock %}

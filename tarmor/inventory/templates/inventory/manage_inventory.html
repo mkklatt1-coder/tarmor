@@ -17,46 +17,91 @@
     </ul>
 </div>
 {% endblock %}
-
+    
 {% block content %}
 <div class="main">
     <h2>Manage Inventory </h2>
     <br>
 
     <div >
-            <h2 > 
+            <h3> 
                 &nbsp; Edit Inventory Information &nbsp; <button type="submit" form="edit-form" class="button">Update</button>
                 </a>
-            </h2>
-            <br>
+            </h3>
             <form id="edit-form"  method="POST" action=".">
                 {% csrf_token %}
                 <input type="hidden" name="item_id" value="{{ edit_item.id }}">
-                Bin Location: <input type="text" name="bin_location" value="{{ edit_item.bin_location|default:'' }}" placeholder="Bin Location" class="input"> &nbsp;
-                Qty On Hand: <input type="text" name="qty_onhand" value="{{ edit_item.qty_onhand|default:'' }}" placeholder="Qty On Hand" class="input"> &nbsp;
-                Min: <input type="text" name="min_qty" value="{{ edit_item.min_qty|default:'' }}" placeholder="Min Qty" class="input"> &nbsp;
-                Max: <input type="text" name="max_qty" value="{{ edit_item.max_qty|default:'' }}" placeholder="Max Qty" class="input"> &nbsp;
-                UoM: <input type="text" name="uom" value="{{ edit_item.uom|default:'' }}" placeholder="UoM" class="input">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Bin Location</td>
+                        <td><input type="text" name="bin_location" value="{{ edit_item.bin_location|default:'' }}" placeholder="Bin Location" class="input"></td>
+                        <td>Qty On Hand</td>
+                        <td><input type="text" name="qty_onhand" value="{{ edit_item.qty_onhand|default:'' }}" placeholder="Qty On Hand" class="input"></td>
+                        <td>Min</td>
+                        <td><input type="text" name="min_qty" value="{{ edit_item.min_qty|default:'' }}" placeholder="Min Qty" class="input"></td>
+                        <td>Max</td>
+                        <td><input type="text" name="max_qty" value="{{ edit_item.max_qty|default:'' }}" placeholder="Max Qty" class="input"></td>
+                        <td>UoM</td>
+                        <td><input type="text" name="uom" value="{{ edit_item.uom|default:'' }}" placeholder="UoM" class="input"></td>
+                    </tr>
+                </table>
             </form>
-            <br>
         </div>
+
         <div >
-            <h2 > Inventory </h2>
+            <h3> Inventory </h3>
             <br>
             <div class="table-container">
                 <table  class="table">
                     <thead>
                         <tr>
-                            <th class="th"><a href="?sort=InventoryItem__part_number" class="sort_header">Part Number{% if sort_by == 'part_number' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=InventoryItem__part_description" class="sort_header">Part Description{% if sort_by == 'part_description' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=bin_location" class="sort_header">Bin Location{% if sort_by == 'bin_location' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=qty_onhand" class="sort_header">Qty On Hand{% if sort_by == 'qty_onhand' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=min_qty" class="sort_header">Min Qty{% if sort_by == 'min_qty' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=max_qty" class="sort_header">Max Qty{% if sort_by == 'max_qty' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=InventoryItem__uom" class="sort_header">UoM{% if sort_by == 'uom' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=last_transaction_date" class="sort_header">Last Transaction Date{% if sort_by == 'last_transaction_date' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=last_transaction_number" class="sort_header">Last Transaction Number{% if sort_by == 'last_transaction_number' %}▲{% endif %}</a></th>
-                            </tr>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'part_number' %}-part_number{% else %}part_number{% endif %}" class="sort_header">
+                                    Part Number {% if sort == 'part_number' %} ▲ {% elif sort == '-part_number' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'part_description' %}-part_description{% else %}part_description{% endif %}" class="sort_header">
+                                    Part Description {% if sort == 'part_description' %} ▲ {% elif sort == '-part_description' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'bin_location' %}-bin_location{% else %}bin_location{% endif %}" class="sort_header">
+                                    Bin Location {% if sort == 'bin_location' %} ▲ {% elif sort == '-bin_location' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'qty_onhand' %}-qty_onhand{% else %}qty_onhand{% endif %}" class="sort_header">
+                                    Qty On Hand {% if sort == 'qty_onhand' %} ▲ {% elif sort == '-qty_onhand' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'min_qty' %}-min_qty{% else %}min_qty{% endif %}" class="sort_header">
+                                    Min Qty {% if sort == 'min_qty' %} ▲ {% elif sort == '-min_qty' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'max_qty' %}-max_qty{% else %}max_qty{% endif %}" class="sort_header">
+                                    Max Qty {% if sort == 'max_qty' %} ▲ {% elif sort == '-max_qty' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'uom' %}-uom{% else %}uom{% endif %}" class="sort_header">
+                                    UoM {% if sort == 'uom' %} ▲ {% elif sort == '-uom' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'last_transaction_date' %}-last_transaction_date{% else %}last_transaction_date{% endif %}" class="sort_header">
+                                    Last Transaction Date {% if sort == 'last_transaction_date' %} ▲ {% elif sort == '-last_transaction_date' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'last_transaction_number' %}-last_transaction_number{% else %}last_transaction_number{% endif %}" class="sort_header">
+                                    Last Transaction Number {% if sort == 'last_transaction_number' %} ▲ {% elif sort == '-last_transaction_number' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">Action</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {% for manage in manage_inventory %}
@@ -64,7 +109,9 @@
                                 <td class="td">{{manage.part_number}}</td>
                                 <td class="td">{{manage.part_description}}</td>
                                 <td class="td">{{manage.bin_location}}</td>
-                                <td class="td">{{manage.qty_onhand}}</td>
+                                <td class="td" {% if manage.qty_onhand <= manage.min_qty %}style="color: #9b1c1c; font-weight: bold; background-color: #fde8e8 !important;"{% endif %}>
+                                    {{ manage.qty_onhand }}
+                                </td>
                                 <td class="td">{{manage.min_qty}}</td>
                                 <td class="td">{{manage.max_qty}}</td>
                                 <td class="td">{{manage.uom}}</td>

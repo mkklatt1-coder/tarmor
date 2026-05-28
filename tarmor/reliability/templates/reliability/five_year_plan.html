@@ -1,0 +1,346 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{%block title %}
+    5 Yr Plan
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'reliability:reliability' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>5 Year Plan </h2>
+        <br>
+        <div>
+            <h3> 
+                &nbsp; Filter Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'reliability:rebuild_plan' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h3>
+            
+            <form class="form" id="search-form" method="GET" action="{% url 'reliability:rebuild_plan' %}">
+                <table class="table-bare-container">
+                    <tr>                        
+                        <td>Asset Type</td>
+                        <td>
+                            <select name="asset_type" id="id_asset_type" class="input"
+                                    hx-get="{% url 'reliability:filter_eq_types' %}" hx-trigger="change" hx-target="#id_eq_type">
+                                <option value="">All Assets...</option>
+                                {% for at in asset_types %}
+                                    <option value="{{ at.name }}" {% if asset_type_val == at.name %}selected{% endif %}>{{ at.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        
+                        <td>Eq. Type</td>
+                        <td>
+                            <select name="eq_type" id="id_eq_type" class="input"
+                                    hx-get="{% url 'reliability:filter_eq_numbers' %}" hx-trigger="change" hx-target="#id_equipment_number">
+                                <option value="">All EQ Types...</option>
+                                {% for eqt in eq_type_choices %}
+                                    <option value="{{ eqt.Equipment_Type }}" {% if eq_type_val == eqt.Equipment_Type %}selected{% endif %}>{{ eqt.Equipment_Type }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        
+                        <td>Eq. Number</td>
+                        <td>
+                            <select name="equipment_number" id="id_equipment_number" class="input" onchange="this.form.submit()">
+                                <option value="">Search ID...</option>
+                                {% for eq_sug in all_equipment_suggestions %}
+                                    <option value="{{ eq_sug.Equipment_Number }}" {% if eq_num_val == eq_sug.Equipment_Number %}selected{% endif %}>
+                                        {{ eq_sug.Equipment_Number }} - {{ eq_sug.Equipment_Description }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        
+        <h3>5 Year Breakdown</h3>
+        <br>
+        <div style="width: 90%; height:500px; margin: auto;">
+            <canvas id="lifecycleBarChart"></canvas>
+        </div>
+        <br>
+            <h3>Summary Capital Budget Forecast</h3>
+            <br>
+        <div class="container-wrapper">
+            <table class="table-container" id="summary-budget-table" style="margin-bottom: 25px;">
+                <thead>
+                    <tr>
+                        {% for column in summary_table %}
+                            <th class="th" style="text-align: center;">Year: {{ column.year }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for column in summary_table %}
+                            <td class="td" style="font-weight: bold; background: #f0f4f8;">${{ column.total|floatformat:2|intcomma }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <br>
+        <h3>5 Year Plan &nbsp; &nbsp; &nbsp; &nbsp; <button type="submit" form="MasterPlanForm" class="button" style="cursor: pointer; width: 25px;">Update</button></h3>
+        <br>
+
+        <div class="container-wrapper">
+            <form id="MasterPlanForm" method="POST" action="{% url 'reliability:rebuild_plan' %}">
+            {% csrf_token %}
+                <table class="table-container" id="report-table">
+                    <thead>
+                        <tr>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_number' %}-equipment_number{% else %}equipment_number{% endif %}" class="sort_header">
+                                Equipment # {% if sort == 'equipment_number' %} ▲ {% elif sort == '-equipment_number' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_description' %}-equipment_description{% else %}equipment_description{% endif %}" class="sort_header">
+                                Description {% if sort == 'equipment_description' %} ▲ {% elif sort == '-equipment_description' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment.Commissioning_Date' %}-equipment.Commissioning_Date{% else %}equipment.Commissioning_Date{% endif %}" class="sort_header">
+                                Commissioning Date {% if sort == 'equipment.Commissioning_Date' %} ▲ {% elif sort == '-equipment.Commissioning_Date' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment.current_meter_value_display' %}-equipment.current_meter_value_display{% else %}equipment.current_meter_value_display{% endif %}" class="sort_header">
+                                Meter Reading {% if sort == 'equipment.current_meter_value_display' %} ▲ {% elif sort == '-equipment.current_meter_value_display' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'intervention_type' %}-intervention_type{% else %}intervention_type{% endif %}" class="sort_header">
+                                Rebuild/Replace {% if sort == 'intervention_type' %} ▲ {% elif sort == '-intervention_type' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'intervention_cost' %}-intervention_cost{% else %}intervention_cost{% endif %}" class="sort_header">
+                                Cost {% if sort == 'intervention_cost' %} ▲ {% elif sort == '-intervention_cost' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'priority_score' %}-priority_score{% else %}priority_score{% endif %}" class="sort_header">
+                                Priority Risk {% if sort == 'priority_score' %} ▲ {% elif sort == '-priority_score' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'calculated_year' %}-calculated_year{% else %}calculated_year{% endif %}" class="sort_header">
+                                Plan Year {% if sort == 'calculated_year' %} ▲ {% elif sort == '-calculated_year' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'modified_year' %}-modified_year{% else %}modified_year{% endif %}" class="sort_header">
+                                Execute Year {% if sort == 'modified_year' %} ▲ {% elif sort == '-modified_year' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">Project Number</th>
+                        <th class="th">Approved</th>
+                        <th class="th">Complete</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in plan_rows %}
+                        <tr>
+                            <input type="hidden" name="plan_row_id" value="{{ row.id }}">
+                            <td class="td">{{ row.equipment.Equipment_Number }}</td>
+                            <td class="td" style="text-align: left;">{{ row.equipment.Equipment_Description }}</td>
+                            <td class="td">{{ row.equipment.Commissioning_Date|date:"Y"|default:"--" }}</td>
+                            <td class="td">{{ row.equipment.current_meter_value_display }}</td>
+                            <td class="td">
+                                <span style="background: {% if row.intervention_type == 'Replace' %}#ffebe9; color:#d73a49;{% else %}#e2f0d9; color:#385723;{% endif %}">
+                                    {{ row.intervention_type }}
+                                </span>
+                            </td>
+                            <td class="td">${{ row.intervention_cost|floatformat:2|intcomma }}</td>
+                            <td class="td" style="font-weight: bold; {% if row.priority_risk_score > 0.6 %}background-color: #ffebe9; color: #d73a49;{% endif %}">
+                                {{ row.priority_risk_score }}
+                            </td>
+                            <td class="td">{{ row.calculated_year }}</td>
+                            <td class="td">
+                                <input type="number" name="mod_year_{{ row.id }}" value="{{ row.modified_year|default:'' }}" placeholder="{{ row.calculated_year }}" class="input" style="text-align: center;">
+                            </td>
+                            <td class="td">
+                                <input type="text" name="proj_num_{{ row.id }}" value="{{ row.project_number|default:'' }}" placeholder="PRJ-XXXX" class="input">
+                            </td>
+                            <td class="td" style="text-align: center;">
+                                <input type="checkbox" name="approved_{{ row.id }}" {% if row.is_approved %}checked{% endif %}>
+                            </td>
+                            <td class="td" style="text-align: center;">
+                                <input type="checkbox" name="complete_{{ row.id }}" {% if row.is_complete %}checked{% endif %}>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td class="td" colspan="11">No active equipment lifecycle tracking profiles found matching selection filters.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+            <br>
+        </div>
+        
+    </div>
+
+    <script src="{% static 'js/chart.umd.min.js' %}"></script>
+    <script src="{% static 'js/htmx.min.js' %}"></script>
+    <script>
+        function submitForm(action) {
+            if (action === 'save') {
+                document.getElementById('MasterPlanForm').submit();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const timeLabels = {{ timeline_json|safe }};
+            const yCategories = {{ y_axis_categories_json|safe }};
+            const scatterDatasets = {{ datasets_json|safe }};
+
+            const budgetCells = document.querySelectorAll('#summary-budget-table tbody td');
+            const formattedXAxisLabels = timeLabels.map((year, index) => {
+                let yearTotalText = "$0.00";
+                if (budgetCells && budgetCells[index]) {
+                    yearTotalText = budgetCells[index].textContent.trim();
+                }
+                return [year, yearTotalText];
+            });
+
+            const textLabelsPlugin = {
+                id: 'textLabelsPlugin',
+                afterDatasetsDraw(chart) {
+                    const { ctx } = chart;
+                    ctx.save();
+                    
+                    chart.data.datasets.forEach((dataset, datasetIndex) => {
+                        const meta = chart.getDatasetMeta(datasetIndex);
+                        meta.data.forEach((element, index) => {
+                            const dataPoint = dataset.data[index];
+                            const { x: pixelX, y: pixelY } = element;
+                            
+                            ctx.font = 'bold 11px Cascadia Code, monospace';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            
+                            const textWidth = ctx.measureText(dataPoint.display_text).width;
+                            ctx.fillStyle = 'rgba(255, 249, 196, 0.95)';
+                            ctx.fillRect(pixelX - (textWidth/2) - 4, pixelY - 10, textWidth + 8, 20);
+                            ctx.strokeStyle = '#00009c';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(pixelX - (textWidth/2) - 4, pixelY - 10, textWidth + 8, 20);
+                            
+                            ctx.fillStyle = '#00009c';
+                            ctx.fillText(dataPoint.display_text, pixelX, pixelY);
+                        });
+                    });
+                    ctx.restore();
+                }
+            };
+
+            const canvasElement = document.getElementById('lifecycleBarChart');
+            if (canvasElement) {
+                const ctx = canvasElement.getContext('2d');
+                const minXScalar = timeLabels[0] - 0.5;
+                const maxXScalar = timeLabels[timeLabels.length - 1] + 0.5;
+
+                new Chart(ctx, {
+                    type: 'scatter',
+                    data: { datasets: scatterDatasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const pt = context.raw;
+                                        return ` ${pt.machine_label}: $${pt.cost.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                min: minXScalar,
+                                max: maxXScalar,
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        const matchIdx = timeLabels.indexOf(Math.round(value));
+                                        return matchIdx !== -1 ? formattedXAxisLabels[matchIdx] : '';
+                                    },
+                                    font: { family: 'Cascadia Code, monospace', size: 13, weight: 'bold' },
+                                    color: '#00009c'
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Plan Timeline Horizon & Budget Cost Totals Summary',
+                                    font: { family: 'Cascadia Code, monospace', size: 14, weight: 'bold' }
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                min: -0.5,
+                                max: yCategories.length - 0.5,
+                                ticks: {
+                                    stepSize: 1, 
+                                    precision: 0,
+                                    callback: function(value) {
+                                        if (Number.isInteger(value)) {
+                                            return yCategories[value] || '';
+                                        }
+                                        return '';
+                                    },
+                                    font: { family: 'Cascadia Code, monospace', size: 12, weight: 'bold' },
+                                    color: '#00009c'
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Equipment Classification Categories',
+                                    font: { family: 'Cascadia Code, monospace', size: 14, weight: 'bold' }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [textLabelsPlugin]
+                });
+            }
+        });
+    
+        document.body.addEventListener('htmx:configRequest', function(event) {
+            const assetInput = document.getElementById('id_asset_type');
+            const eqTypeInput = document.getElementById('id_eq_type');
+            
+            if (assetInput && assetInput.value) {
+                event.detail.parameters['asset_type'] = assetInput.value;
+            }
+            if (eqTypeInput && eqTypeInput.value) {
+                event.detail.parameters['eq_type'] = eqTypeInput.value;
+            }
+        });
+    </script>
+{% endblock %}

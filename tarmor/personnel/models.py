@@ -1,18 +1,15 @@
 from django.db import models
 from django.core.validators import RegexValidator
-import calendar as py_calendar
+import calendar
 import holidays
-from datetime import date
+from datetime import date, datetime, timedelta
 import uuid
 
 STATUS_CHOICES = [
     ('Active', 'Active'),
     ('Inactive', 'Inactive'),
 ]
-COMP_UoM_CHOICES = [
-    ('hour', 'hour'),
-    ('year', 'year'),
-]
+
 YESNO_CHOICES = [
     ('No', 'No'),
     ('Yes', 'Yes'),
@@ -73,50 +70,181 @@ class ShiftPattern(models.Model):
         steps = [int(x.strip()) for x in self.pattern_sequence.split(',')]
         return steps[0]
     
+class CrewShiftRotation(models.Model):
+    COVERAGE_TYPE_CHOICES = [
+        ("24H", "24 Hour Coverage"),
+        ("DS", "Day Shift Only"),
+        ("NS", "Night Shift Only"),
+    ]
+    
+    CALENDAR_MONTH_CHOICES = [
+        ("January", "January"),
+        ("February", "February"),
+        ("March", "March"),
+        ("April", "April"),
+        ("May", "May"),
+        ("June", "June"),
+        ("July", "July"),
+        ("August", "August"),
+        ("September", "September"),
+        ("October", "October"),
+        ("November", "November"),
+        ("December", "December"),
+    ]
+    
+    Shift_ID = models.CharField(max_length=20, unique=True, editable=False)
+    Location = models.ForeignKey("facilities.Facility",on_delete=models.PROTECT)
+    Coverage_Type = models.CharField(max_length=3, choices=COVERAGE_TYPE_CHOICES)
+    hrs_per_shift = models.CharField(max_length=2)
+    shift_start = models.TimeField(null=True, blank=True, help_text="Format HH:MM (e.g. 07:00 or 19:00)")
+    Calendar_Month = models.CharField(max_length=15, choices=CALENDAR_MONTH_CHOICES, default="January")
+    Start_Date = models.DateField()
+    pattern = models.ForeignKey(ShiftPattern, on_delete=models.PROTECT, null=True)
+    province = models.CharField(max_length=2, choices=PROVINCE_CHOICES, default='MB')
+    batch_id = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def generate_shift_id(self):
+        prefix = str(self.Location.Facility_Code).rstrip("-")
+        last_sequence = -1
+        existing_ids = (
+            CrewShiftRotation.objects
+            .filter(Location=self.Location)
+            .exclude(pk=self.pk)
+            .values_list("Shift_ID", flat=True)
+        )
+        for shift_id in existing_ids:
+            if not shift_id or "-" not in shift_id:
+                continue
+            suffix = shift_id.split("-", 1)[1]
+            last_sequence = max(last_sequence, index_from_alpha(suffix))
+        
+        next_suffix = alpha_from_index(last_sequence + 1)
+        return f"{prefix}-{next_suffix}"
+    
+    def save(self, *args, **kwargs):
+        if not self.Shift_ID and self.Location_id:
+            self.Shift_ID = self.generate_shift_id()
+        super().save(*args, **kwargs)
+        
+        if self.Location and self.Shift_ID:
+            Crew.objects.update_or_create(
+                location_code=str(self.Location.Facility_Code),
+                shift_letter=self.Shift_ID.split('-')[-1],
+                defaults={
+                    'pattern': self.pattern,
+                    'start_date': self.Start_Date,
+                    'province': self.province
+                }
+            )
+
 class Crew(models.Model):
     location_code = models.CharField(max_length=50) 
     shift_letter = models.CharField(max_length=1)
     pattern = models.ForeignKey(ShiftPattern, on_delete=models.PROTECT, related_name="crews")
     start_date = models.DateField()
+    rotation = models.ForeignKey('CrewShiftRotation', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_crews')
     province = models.CharField(max_length=2, choices=PROVINCE_CHOICES, default='MB')
-    
+
     def get_status_for_date(self, target_date):
+        """
+        Determines if a crew is DAY, NIGHT, or OFF based on their specific 
+        rotation block and their initial shift_start time.
+        """
+        if not self.pattern or not self.start_date:
+            return "OFF"
+        
+        steps = self.pattern.get_steps() # e.g. [5, 5, 4, 4]
+        cycle_length = sum(steps)
         delta = (target_date - self.start_date).days
-        if delta < 0: return "OFF"
-        
-        pattern_list = self.pattern.get_pattern_list()
-        cycle_length = len(pattern_list)
+
+        if delta < 0:
+            return "OFF"
+
         day_in_cycle = delta % cycle_length
-        is_working = pattern_list[day_in_cycle]
-        
-        if is_working:
-            if self.pattern.is_rotating and ((delta // cycle_length) % 2 == 1):
-                return "NIGHT"
-            return "DAY"
-        return "OFF"
+
+        running_total = 0
+        block_index = -1
+        for i, step_count in enumerate(steps):
+            running_total += step_count
+            if day_in_cycle < running_total:
+                block_index = i
+                break
+
+        if block_index % 2 != 0 or block_index == -1:
+            return "OFF"
     
-    def get_calendar_data(self, year=None):
-        """Generates 12 months of schedule data for the view."""
-        if not year: year = date.today().year
-        ca_holidays = holidays.CountryHoliday('CA', subdiv=self.province)
-        cal = py_calendar.Calendar(firstweekday=6)
+        starts_on_nights = False
+        if self.rotation and self.rotation.shift_start:
+            if self.rotation.shift_start.hour >= 16:
+                starts_on_nights = True
+
+        if starts_on_nights:
+            return "NIGHT" if block_index % 4 == 0 else "DAY"
+        else:
+            return "DAY" if block_index % 4 == 0 else "NIGHT"       
+    
+    def get_calendar_data(self, year):
+        prov = getattr(self.rotation, 'province', 'MB')
+        ca_holidays = holidays.Canada(subdiv=prov, years=year)
+        steps = self.pattern.get_steps()  # e.g., [5, 5, 4, 4]
+        cycle_length = sum(steps)
+
         all_months = []
 
-        for month_num in range(1, 13):
+        for month in range(1, 13):
             month_weeks = []
-            for week in cal.monthdays2calendar(year, month_num):
-                week_data = []
-                for day_num, _ in week:
-                    if day_num == 0:
-                        week_data.append({'day': '', 'status': 'empty', 'tooltip': ''})
+            cal = calendar.monthcalendar(year, month)
+            
+            for week in cal:
+                week_days = []
+                for day in week:
+                    if day == 0:
+                        week_days.append(None)
                     else:
-                        target_date = date(year, month_num, day_num)
-                        h_name = ca_holidays.get(target_date)
-                        status = 'HOLIDAY' if h_name else self.get_status_for_date(target_date)
-                        week_data.append({'day': day_num, 'status': status, 'tooltip': h_name or ""})
-                month_weeks.append(week_data)
-            all_months.append({'name': py_calendar.month_name[month_num], 'weeks': month_weeks})
+                        current_date = date(year, month, day)
+                        delta = (current_date - self.start_date).days
+                        
+                        if delta < 0:
+                            shift_type = 'OFF'
+                        else:
+                            day_in_cycle = delta % cycle_length
+                            shift_type = self.determine_rotating_shift(day_in_cycle, steps)
+
+                        is_holiday = current_date in ca_holidays
+                        
+                        week_days.append({
+                            'day': day,
+                            'shift_type': shift_type,
+                            'is_holiday': is_holiday,
+                            'holiday_name': ca_holidays.get(current_date) if is_holiday else ""
+                        })
+                month_weeks.append(week_days)
+            all_months.append({'name': calendar.month_name[month], 'weeks': month_weeks})
         return all_months
+    
+    def determine_rotating_shift(self, day_in_cycle, steps):
+        running_total = 0
+        block_index = -1
+
+        for i, step_count in enumerate(steps):
+            running_total += step_count
+            if day_in_cycle < running_total:
+                block_index = i
+                break
+
+        if block_index % 2 != 0 or block_index == -1:
+            return 'OFF'
+        
+        starts_on_nights = False
+        if self.rotation and self.rotation.shift_start:
+            if self.rotation.shift_start.hour >= 16:
+                starts_on_nights = True
+
+        if starts_on_nights:
+            return 'NIGHT' if block_index % 4 == 0 else 'DAY'
+        else:
+            return 'DAY' if block_index % 4 == 0 else 'NIGHT'
     
     @property
     def full_shift_id(self):
@@ -132,14 +260,11 @@ class Employee(models.Model):
         message="Format: '+999999999'"
     )
     crew = models.ForeignKey(Crew, on_delete=models.SET_NULL, null=True, blank=True, related_name="members")
-    
     First_Name = models.CharField(max_length=255)
     Middle_Name = models.CharField(max_length=255, blank=True)
     Last_Name = models.CharField(max_length=255)
     Status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     Position = models.CharField(max_length=255)
-    Compensation = models.DecimalField(max_digits=12, decimal_places=2)
-    Comp_UoM = models.CharField(max_length=6, choices=COMP_UoM_CHOICES)
     Start_Date = models.DateField(null=True, blank=True)
     Last_Date = models.DateField(null=True, blank=True)
     Street_Address = models.CharField(max_length=255, null=True, blank=True)
@@ -155,6 +280,7 @@ class Employee(models.Model):
     EC_Phone = models.CharField(validators=[phone_regex], max_length=17, blank=True)
     EC_Email = models.EmailField(max_length=255, null=True, blank=True)
     Additional_Information = models.TextField(blank=True)
+    Employee_Image = models.ImageField(upload_to='employee_pics/', null=True, blank=True)
     
     def __str__(self):
         return f"{self.First_Name} {self.Last_Name}"
@@ -201,68 +327,5 @@ def index_from_alpha(value):
         total = (total * 26) + (ord(char) - 64)
     return total - 1
 
-class CrewShiftRotation(models.Model):
-    COVERAGE_TYPE_CHOICES = [
-        ("24H", "24 Hour Coverage"),
-        ("DS", "Day Shift Only"),
-        ("NS", "Night Shift Only"),
-    ]
-    
-    CALENDAR_MONTH_CHOICES = [
-        ("January", "January"),
-        ("February", "February"),
-        ("March", "March"),
-        ("April", "April"),
-        ("May", "May"),
-        ("June", "June"),
-        ("July", "July"),
-        ("August", "August"),
-        ("September", "September"),
-        ("October", "October"),
-        ("November", "November"),
-        ("December", "December"),
-    ]
-    
-    Shift_ID = models.CharField(max_length=20, unique=True, editable=False)
-    Location = models.ForeignKey("facilities.Facility",on_delete=models.PROTECT)
-    Coverage_Type = models.CharField(max_length=3, choices=COVERAGE_TYPE_CHOICES)
-    Calendar_Month = models.CharField(max_length=15, choices=CALENDAR_MONTH_CHOICES, default="January")
-    Start_Date = models.DateField()
-    pattern = models.ForeignKey(ShiftPattern, on_delete=models.PROTECT, null=True)
-    province = models.CharField(max_length=2, choices=PROVINCE_CHOICES, default='MB')
-    batch_id = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def generate_shift_id(self):
-        prefix = str(self.Location.Facility_Code).rstrip("-")
-        last_sequence = -1
-        existing_ids = (
-            CrewShiftRotation.objects
-            .filter(Location=self.Location)
-            .exclude(pk=self.pk)
-            .values_list("Shift_ID", flat=True)
-        )
-        for shift_id in existing_ids:
-            if not shift_id or "-" not in shift_id:
-                continue
-            suffix = shift_id.split("-", 1)[1]
-            last_sequence = max(last_sequence, index_from_alpha(suffix))
-        
-        next_suffix = alpha_from_index(last_sequence + 1)
-        return f"{prefix}-{next_suffix}"
-    
-    def save(self, *args, **kwargs):
-        if not self.Shift_ID and self.Location_id:
-            self.Shift_ID = self.generate_shift_id()
-        super().save(*args, **kwargs)
-        
-        Crew.objects.update_or_create(
-            location_code=str(self.Location.Facility_Code),
-            shift_letter=self.Shift_ID.split('-')[-1],
-            defaults={
-                'pattern': self.pattern,
-                'start_date': self.Start_Date,
-                'province': self.province
-            }
-        )
+
         

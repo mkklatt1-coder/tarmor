@@ -4,29 +4,22 @@ from django.http import HttpResponse
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.forms import inlineformset_factory, modelform_factory
-from django.db.models import Count, Max, Min
+from django.db.models import Count, Max, Min, Q, Value
+from django.db.models.functions import Concat
 from .models import Employee, EmployeeCertification, Crew, CrewShiftRotation, ShiftPattern
-from .forms import (
-    NewEmployeeForm,
-    CertificationFormSet,
-    EmployeeCertificationForm,
-    CrewShiftRotationUploadForm,
-    ShiftPatternForm,
-    ReplaceScheduleBatchForm,
-)
+from .forms import (NewEmployeeForm, CertificationFormSet, EmployeeCertificationForm, CrewShiftRotationUploadForm,
+    ShiftPatternForm, ReplaceScheduleBatchForm)
 import openpyxl, datetime, calendar, holidays, uuid
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, time
 from facilities.models import Facility
 
-# --- DASHBOARD ---
 def personnel(request):
     return render(request, 'personnel/personnel.html')
 
-# --- EMPLOYEE MANAGEMENT ---
 def add_employee(request):
     employee = Employee()
     if request.method == 'POST':
-        new_emp_form = NewEmployeeForm(request.POST, instance=employee)
+        new_emp_form = NewEmployeeForm(request.POST, request.FILES, instance=employee)
         cert_formset = CertificationFormSet(
             request.POST,
             instance=employee,
@@ -49,14 +42,22 @@ def add_employee(request):
     
 def edit_employee(request):
     employee = None
-    first_name = request.GET.get('first_name', '')
-    last_name = request.GET.get('last_name', '')
+    full_name_query = request.GET.get('employee_search', '').strip()
 
-    if first_name and last_name:
-        employee = Employee.objects.filter(
-            First_Name__icontains=first_name,
-            Last_Name__icontains=last_name
-        ).first()
+    if full_name_query:
+        parts = full_name_query.split()
+        if len(parts) >= 2:
+            first = parts[0]
+            last = parts[-1]
+            employee = Employee.objects.filter(
+                First_Name__iexact=first,
+                Last_Name__iexact=last
+            ).first()
+        else:
+            employee = Employee.objects.filter(
+                Q(First_Name__icontains=full_name_query) |
+                Q(Last_Name__icontains=full_name_query)
+            ).first()
 
     CertificationFormSet = inlineformset_factory(
         Employee, EmployeeCertification,
@@ -68,102 +69,206 @@ def edit_employee(request):
     if request.method == 'POST':
         emp_id = request.POST.get('employee_id')
         employee = get_object_or_404(Employee, id=emp_id)
-        form = NewEmployeeForm(request.POST, instance=employee)
+        form = NewEmployeeForm(request.POST, request.FILES, instance=employee)
         formset = CertificationFormSet(request.POST, instance=employee, prefix='cert')
         
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
+            messages.success(request, 'Employee updated successfully.')
             return redirect('personnel:personnel')
     else:
         form = NewEmployeeForm(instance=employee)
         formset = CertificationFormSet(instance=employee, prefix='cert')
 
+    all_employees = Employee.objects.all().only('First_Name', 'Last_Name').order_by('First_Name')
+
     return render(request, 'personnel/edit_employee.html', {
         'new_emp_form': form,
         'cert_formset': formset,
         'employee': employee,
-        'first_name': first_name,
-        'last_name': last_name
+        'all_employees': all_employees,
+        'full_name_query': full_name_query
     })
     
-# --- SEARCH & FILTERING ---
 def search_employee(request):
-    first_name = request.GET.get('first_name', '')
-    last_name = request.GET.get('last_name', '')
-    position = request.GET.get('position', '')
-    location = request.GET.get('location', '')
-    status = request.GET.get('status', '')
+    employee_search = request.GET.get('employee_search', '').strip()
+    position = request.GET.get('position', '').strip()
+    crew_query = request.GET.get('crew', '').strip()
+    status = request.GET.get('status', '').strip()
 
-    sort_by = request.GET.get('sort', 'Last_Name')
-    employees = Employee.objects.all()
+    employees = Employee.objects.all().annotate(
+        combined_crew_name=Concat('crew__location_code', Value('-'), 'crew__shift_letter')
+    )
 
-    if first_name:
-        employees = employees.filter(First_Name__icontains=first_name)
-    if last_name:
-        employees = employees.filter(Last_Name__icontains=last_name)
+    if employee_search:
+        parts = employee_search.split()
+        if len(parts) >= 2:
+            first = parts[0]
+            last = parts[-1]
+            employees = employees.filter(
+                (Q(First_Name__icontains=first) & Q(Last_Name__icontains=last)) |
+                (Q(First_Name__icontains=last) & Q(Last_Name__icontains=first))
+            )
+        else:
+            employees = employees.filter(
+                Q(First_Name__icontains=employee_search) |
+                Q(Last_Name__icontains=employee_search)
+            )
+
     if position:
         employees = employees.filter(Position__icontains=position)
-    if location:
-        employees = employees.filter(Location__icontains=location)
+    if crew_query:
+        employees = employees.filter(combined_crew_name__icontains=crew_query)
     if status:
         employees = employees.filter(Status__icontains=status)
+    
+    sort_by = request.GET.get('sort', 'Last_Name')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
+
+    sort_mapping = {
+        'First_Name': 'First_Name',
+        'Middle_Name': 'Middle_Name',
+        'Last_Name': 'Last_Name',
+        'Status': 'Status',
+        'Position': 'Position',
+        'crew': 'combined_crew_name',
+        'Street_Address': 'Street_Address',
+        'City': 'City',
+        'Prov_State': 'Prov_State',
+        'Country': 'Country',
+        'Postal_Zip': 'Postal_Zip',
+        'Phone': 'Phone',
+        'Email': 'Email',
+    }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        employees = employees.order_by(order_field)
+    else:
+        employees = employees.order_by('Last_Name')
 
     params = request.GET.copy()
     if 'sort' in params:
         del params['sort']
     filter_url = params.urlencode()
+
+    all_employees = Employee.objects.all().only('First_Name', 'Last_Name').order_by('First_Name')
+    all_positions = Employee.objects.exclude(Position__isnull=True).values_list('Position', flat=True).distinct().order_by('Position')
+    all_statuses = Employee.objects.exclude(Status__isnull=True).values_list('Status', flat=True).distinct().order_by('Status')
+    all_crews = (
+        Employee.objects.exclude(crew__location_code__isnull=True)
+        .annotate(crew_str=Concat('crew__location_code', Value('-'), 'crew__shift_letter'))
+        .values_list('crew_str', flat=True)
+        .distinct()
+        .order_by('crew_str')
+    )
 
     context = {
         'employees': employees,
         'filter_url': filter_url,
-        'sort_by': sort_by,
-        'first_name': first_name,
-        'last_name': last_name,
-        'position': position,
-        'location': location,
-        'status': status
+        'sort': sort_by,
+        'all_employees': all_employees,
+        'all_positions': all_positions,
+        'all_crews': all_crews,
+        'all_statuses': all_statuses,
+        'employee_search_val': employee_search,
+        'position_val': position,
+        'crew_val': crew_query,
+        'status_val': status,
     }
+
     return render(request, 'personnel/search_employee.html', context)
 
 def search_certifications(request):
-    first_name = request.GET.get('first_name', '')
-    last_name = request.GET.get('last_name', '')
-    position = request.GET.get('position', '')
-    location = request.GET.get('location', '')
-    status = request.GET.get('status', '')
+    employee_search = request.GET.get('employee_search', '').strip()
+    position = request.GET.get('position', '').strip()
+    location_name = request.GET.get('location', '').strip()
+    status = request.GET.get('status', '').strip()
 
-    sort_by = request.GET.get('sort', 'Employee__Last_Name')
-    certs = EmployeeCertification.objects.all()
+    certs = EmployeeCertification.objects.select_related('Employee', 'Employee__crew').all()
 
-    if first_name:
-        certs = certs.filter(Employee__First_Name__icontains=first_name)
-    if last_name:
-        certs = certs.filter(Employee__Last_Name__icontains=last_name)
+    if employee_search:
+        parts = employee_search.split()
+        if len(parts) >= 2:
+            first = parts[0]
+            last = parts[-1]
+            
+            certs = certs.filter(
+                (Q(Employee__First_Name__icontains=first) & Q(Employee__Last_Name__icontains=last)) |
+                (Q(Employee__First_Name__icontains=last) & Q(Employee__Last_Name__icontains=first))
+            )
+        else:
+            certs = certs.filter(
+                Q(Employee__First_Name__icontains=employee_search) |
+                Q(Employee__Last_Name__icontains=employee_search)
+            )
+    
     if position:
         certs = certs.filter(Employee__Position__icontains=position)
-    if location:
-        certs = certs.filter(Employee__Location__icontains=location)
+
+    if position:
+        certs = certs.filter(Employee__Position__icontains=position)
+        
+    if location_name:
+        facility = Facility.objects.filter(Facility_Name__iexact=location_name).first()
+        if facility:
+            certs = certs.filter(Employee__crew__location_code=facility.Facility_Code)
+        else:
+            certs = certs.none()
+            
     if status:
         certs = certs.filter(Employee__Status__icontains=status)
 
-    certs = certs.order_by(sort_by)
+    sort_by = request.GET.get('sort', 'Employee__Last_Name')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
+
+    sort_mapping = {
+        'Employee__First_Name': 'Employee__First_Name',
+        'Employee__Middle_Name': 'Employee__Middle_Name',
+        'Employee__Last_Name': 'Employee__Last_Name',
+        'Employee__Status': 'Employee__Status',
+        'Employee__Position': 'Employee__Position',
+        'Employee__Location': 'Employee__crew__location_code',
+        'Certification': 'Certification',
+        'Institution': 'Institution',
+        'Date_Cert': 'Date_Cert',
+        'Renewable': 'Renewable',
+        'Renewal_Cost': 'Renewal_Cost',
+    }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        certs = certs.order_by(f"-{db_field}" if is_descending else db_field)
+    else:
+        certs = certs.order_by('Employee__Last_Name')
+
     params = request.GET.copy()
     if 'sort' in params:
         del params['sort']
     filter_url = params.urlencode()
 
-    context = {
+    all_employees = Employee.objects.all().only('First_Name', 'Last_Name').order_by('First_Name')
+    all_positions = Employee.objects.exclude(Position__isnull=True).values_list('Position', flat=True).distinct().order_by('Position')
+    all_statuses = Employee.objects.exclude(Status__isnull=True).values_list('Status', flat=True).distinct().order_by('Status')
+    all_locations = Facility.objects.all().values_list('Facility_Name', flat=True).distinct().order_by('Facility_Name')
+
+    return render(request, 'personnel/search_certifications.html', {
         'certs': certs,
         'filter_url': filter_url,
-        'sort_by': sort_by,
-        'first_name': first_name,
-        'last_name': last_name,
-        'position': position,
-        'location': location,
-        'status': status,
-    }
-    return render(request, 'personnel/search_certifications.html', context)
+        'sort': sort_by,
+        'all_employees': all_employees,
+        'all_positions': all_positions,
+        'all_locations': all_locations,
+        'all_statuses': all_statuses,
+        'employee_search_val': employee_search,
+        'position_val': position,
+        'location_val': location_name,
+        'status_val': status,
+    })
 
 # --- EXPORTS ---
 def export_employees_excel(request):
@@ -367,29 +472,53 @@ def create_shift_rotation(request):
     
 def auto_generate_crews(request):
     if request.method == 'POST':
-        location = request.POST.get('location_code')
+        location_code = request.POST.get('location_code')
         pattern_id = request.POST.get('pattern_id')
-        base_start = datetime.datetime.strptime(request.POST.get('base_start_date'), '%Y-%m-%d').date()
+        
+        # Parse user's chosen start date and time
+        user_date = datetime.strptime(request.POST.get('base_start_date'), '%Y-%m-%d').date()
+        user_time = datetime.strptime(request.POST.get('shift_start'), '%H:%M:%S').time()
+        user_hrs = int(request.POST.get('hrs_per_shift', 12))
         
         pattern = get_object_or_404(ShiftPattern, id=pattern_id)
         stagger = pattern.get_stagger_interval()
-        
-        for i in range(4):
-            letter = chr(65 + i)
+        batch_id = uuid.uuid4()
 
-            staggered_start = base_start + timedelta(days=stagger * i)
+        for i in range(4):
+            letter = chr(69 + i)
+            date_offset = stagger if i % 2 != 0 else 0
+            current_date = user_date + timedelta(days=date_offset)
+
+            if i >= 2:
+                
+                temp_dt = datetime.combine(date.today(), user_time) + timedelta(hours=user_hrs)
+                current_time = temp_dt.time()
+            else:
+                current_time = user_time
+
+            with transaction.atomic():
+                rotation = CrewShiftRotation.objects.create(
+                    Location=Location.objects.get(Facility_Code=location_code),
+                    Coverage_Type="24H",
+                    Start_Date=current_date,
+                    shift_start=current_time,
+                    hrs_per_shift=user_hrs,
+                    pattern=pattern,
+                    province='MB',
+                    batch_id=batch_id
+                )
+
+                Crew.objects.update_or_create(
+                        location_code=location_code,
+                        shift_letter=letter,
+                        defaults={
+                            'rotation': rotation,
+                            'pattern': pattern,
+                            'start_date': current_date,
+                        }
+                    )
             
-            Crew.objects.update_or_create(
-                location_code=location,
-                shift_letter=letter,
-                defaults={
-                    'pattern': pattern,
-                    'start_date': staggered_start,
-                    'province': 'MB'
-                }
-            )
-        
-        messages.success(request, f"Cores A-D generated for Location {location}")
+        messages.success(request, f"Cores generated for Location {location}")
         return redirect('personnel:crew_calendar')
     
 def edit_schedule(request, rotation_id=None):

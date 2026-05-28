@@ -133,42 +133,67 @@ def upload_systems_csv(request):
     return redirect("failures:system_list")
 
 def search_system(request):
-    asset_key = request.GET.get('asset_key', '')
-    system_name = request.GET.get('system_name', '')
-    system_key = request.GET.get('system_key', '')
-    combined_sys_key = request.GET.get('combined_sys_key', '')
-    sort_by = request.GET.get('sort', 'system_name')
+    asset_key = request.GET.get('asset_key', '').strip()
+    system_name = request.GET.get('system_name', '').strip()
+    system_key = request.GET.get('system_key', '').strip()
+    combined_sys_key = request.GET.get('combined_sys_key', '').strip()
 
+    clean_sys_name = system_name.split(' - ')[0].strip() if ' - ' in system_name else system_name
     queryset = System.objects.all()
     
     if asset_key:
         queryset = queryset.filter(asset_key__icontains=asset_key)
-    if system_name:
-        queryset = queryset.filter(system_name__icontains=system_name)
+    if clean_sys_name:
+        queryset = queryset.filter(system_name__icontains=clean_sys_name)
     if system_key:
         queryset = queryset.filter(system_key__icontains=system_key)
     if combined_sys_key:
         queryset = queryset.filter(combined_sys_key__icontains=combined_sys_key)
 
-    queryset = queryset.order_by(sort_by)
+    sort_by = request.GET.get('sort', 'system_name')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
 
-    filters = {
-        'asset_key': asset_key,
-        'system_name': system_name,
-        'system_key': system_key,
-        'combined_sys_key': combined_sys_key
+    sort_mapping = {
+        'asset_key': 'asset_key',
+        'system_name': 'system_name',
+        'system_key': 'system_key',
+        'combined_sys_key': 'combined_sys_key',
     }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        queryset = queryset.order_by(order_field)
+    else:
+        queryset = queryset.order_by('system_name')
+
+    filters = {}
+    if asset_key: filters['asset_key'] = asset_key
+    if system_name: filters['system_name'] = system_name
+    if system_key: filters['system_key'] = system_key
+    if combined_sys_key: filters['combined_sys_key'] = combined_sys_key
+    filter_url = urlencode(filters)
     
-    filter_url = urlencode({k: v for k, v in filters.items() if v})
+    all_asset_keys = System.objects.exclude(asset_key__isnull=True).values_list('asset_key', flat=True).distinct().order_by('asset_key')
+    
+    all_system_suggestions = System.objects.all().only('system_name', 'combined_sys_key').order_by('system_name')
+    
+    all_system_keys = System.objects.exclude(system_key__isnull=True).values_list('system_key', flat=True).distinct().order_by('system_key')
+    all_combined_keys = System.objects.exclude(combined_sys_key__isnull=True).values_list('combined_sys_key', flat=True).distinct().order_by('combined_sys_key')
 
     context = {
         'system': queryset,
-        'asset_key': asset_key,
-        'system_name': system_name,
-        'system_key': system_key,
-        'combined_sys_key': combined_sys_key,
-        'sort_by': sort_by,
         'filter_url': filter_url,
+        'sort': sort_by,
+        'all_asset_keys': all_asset_keys,
+        'all_system_suggestions': all_system_suggestions,
+        'all_system_keys': all_system_keys,
+        'all_combined_keys': all_combined_keys,
+        'asset_key_val': asset_key,
+        'system_name_val': system_name,
+        'system_key_val': system_key,
+        'combined_sys_key_val': combined_sys_key,
     }
     return render(request, 'failures/search_system.html', context)
 
@@ -203,13 +228,13 @@ def export_systems_excel(request):
 
 def add_component(request):
     if request.method == "POST":
-        suffix = request.POST.get('component_key', '').upper()
-        comp_name = request.POST.get('component_name', '')
+        suffix = request.POST.get('component_key', '').upper().strip()
+        comp_name = request.POST.get('component_name', '').strip()
         selected_system_ids = request.POST.getlist('selected_systems')
         
         if len(suffix) != 4:
             messages.error(request, "Component key must be exactly 4 characters.")
-            return redirect('add_component')
+            return redirect('failures:add_component')
 
         new_components = []
         errors = []
@@ -217,7 +242,13 @@ def add_component(request):
         for system_id in selected_system_ids:
             try:
                 system = System.objects.get(id=system_id)
-                full_code = f"{system.combined_sys_key}{suffix}"
+
+                clean_sys_key = system.combined_sys_key.strip()
+                full_code = f"{clean_sys_key}{suffix}"
+
+                if len(full_code) != 8:
+                    errors.append(f"Skipped System '{clean_sys_key}': Generated code '{full_code}' is not exactly 8 characters.")
+                    continue
 
                 if Component.objects.filter(combined_comp_key=full_code).exists():
                     errors.append(f"The code {full_code} already exists in the database.")
@@ -225,7 +256,7 @@ def add_component(request):
                     new_components.append(Component(
                         component_name=comp_name,
                         component_key=suffix,
-                        combined_sys_key_id=system.id, # Using the ID for the foreign key
+                        combined_sys_key_id=system.id,
                         combined_comp_key=full_code
                     ))
             except System.DoesNotExist:
@@ -234,25 +265,27 @@ def add_component(request):
         if errors:
             for err in errors:
                 messages.error(request, err)
-        elif new_components:
+        
+        if new_components and not errors:
             Component.objects.bulk_create(new_components)
             messages.success(request, f"Successfully created {len(new_components)} components.")
             return redirect('failures:components')
-        else:
+        elif not selected_system_ids:
             messages.warning(request, "No systems were selected.")
 
-    systems = System.objects.all()
+    systems = System.objects.all().order_by('combined_sys_key')
     return render(request, 'failures/add_component.html', {'systems': systems})
 
 def check_uniqueness(request):
-    suffix = request.GET.get('suffix', '').upper()
+    suffix = request.GET.get('suffix', '').upper().strip()
     asset_keys = request.GET.getlist('asset_keys[]')
     
-    codes_to_check = [f"{key}{suffix}" for key in asset_keys]
+    codes_to_check = [f"{str(key).strip()}{suffix}" for key in asset_keys]
     
-    existing_codes = list(Component.objects.filter(combined_comp_key__in=codes_to_check)
-                          .values_list('combined_comp_key', flat=True))
-    
+    existing_codes = list(
+        Component.objects.filter(combined_comp_key__in=codes_to_check)
+        .values_list('combined_comp_key', flat=True)
+    )
     return JsonResponse({'existing_codes': existing_codes})
 
 def mass_upload_components(request):
@@ -307,35 +340,65 @@ def mass_upload_components(request):
     return redirect('failures:add_component')
 
 def edit_component(request):
-    component_name = request.GET.get('component_name', '')
-    queryset = Component.objects.filter(component_name=component_name) if component_name else Component.objects.none()
+    component_name = request.GET.get('component_name', '').strip()
+    systems = System.objects.all().order_by('combined_sys_key')
     
-    ComponentFormSet = modelformset_factory(
-        Component, 
-        form=ComponentEditForm,
-        extra=0,
-    )
+    ComponentFormSet = modelformset_factory(Component, form=ComponentEditForm, extra=0, can_delete=True)
+    queryset = Component.objects.filter(component_name=component_name) if component_name else Component.objects.none()
 
     if request.method == "POST":
         formset = ComponentFormSet(request.POST, queryset=queryset)
+        selected_system_ids = request.POST.getlist('selected_systems')
+        
         if formset.is_valid():
-            instances = formset.save(commit=False)
-            for instance in instances:
-                instance.combined_comp_key = f"{instance.combined_sys_key.combined_sys_key}{instance.component_key}"
-                instance.save()
-                messages.success(request, "Component edited successfully!")
+            with transaction.atomic():
+                formset.save()
+                
+                if selected_system_ids and formset.forms:
+                    blueprint_form = formset.forms[0]
+                    suffix = blueprint_form.cleaned_data.get('component_key', '').upper().strip()
+                    comp_name = blueprint_form.cleaned_data.get('component_name', '').strip()
+                    
+                    if len(suffix) == 4:
+                        new_components = []
+                        for sys_id in selected_system_ids:
+                            system = System.objects.filter(id=sys_id).first()
+                            if system and system.combined_sys_key:
+                                clean_sys_key = system.combined_sys_key.strip()
+                                full_code = f"{clean_sys_key}{suffix}" 
+
+                                if len(full_code) == 8:
+                                    if not Component.objects.filter(combined_comp_key=full_code).exists():
+                                        new_components.append(Component(
+                                            component_name=comp_name,
+                                            component_key=suffix,
+                                            combined_sys_key_id=system.id,
+                                            combined_comp_key=full_code
+                                        ))
+                                else:
+                                    messages.warning(
+                                        request, 
+                                        f"Skipped System '{clean_sys_key}': Combined code '{full_code}' must be exactly 8 characters (current: {len(full_code)})."
+                                    )
+
+                        if new_components:
+                            Component.objects.bulk_create(new_components)
+                            messages.success(request, f"Bulk assigned component to {len(new_components)} additional systems.")
+
+            messages.success(request, "Component records updated successfully.")
             return redirect('failures:components')
         else:
-            print(formset.errors) 
+            messages.error(request, "Please correct the form errors below.")
     else:
-        formset = ComponentFormSet(queryset=queryset)        
+        formset = ComponentFormSet(queryset=queryset)
 
-    all_components = Component.objects.values('component_name').distinct()
-    
+    all_component_names = Component.objects.values_list('component_name', flat=True).distinct().order_by('component_name')
+
     return render(request, 'failures/edit_component.html', {
         'formset': formset,
+        'systems': systems,
         'component_name': component_name,
-        'all_components': all_components,
+        'all_component_names': all_component_names,
     })
 
 def delete_component(request, pk):
@@ -344,37 +407,68 @@ def delete_component(request, pk):
     return redirect('failures:components')
 
 def search_components(request):
-    combined_comp_key = request.GET.get('combined_comp_key', '')
-    component_name = request.GET.get('component_name', '')
-    component_key = request.GET.get('component_key', '')
-    combined_sys_key = request.GET.get('combined_sys_key', '')
+    combined_comp_key = request.GET.get('combined_comp_key', '').strip()
+    component_name = request.GET.get('component_name', '').strip()
+    component_key = request.GET.get('component_key', '').strip()
+    combined_sys_key = request.GET.get('combined_sys_key', '').strip()
+
+    clean_comp_name = component_name.split(' - ')[0].strip() if ' - ' in component_name else component_name
+    clean_sys_key = combined_sys_key.split(' - ')[0].strip() if ' - ' in combined_sys_key else combined_sys_key
+
+    queryset = Component.objects.all().select_related('combined_sys_key')
+
+    if combined_comp_key: 
+        queryset = queryset.filter(combined_comp_key__icontains=combined_comp_key)
+    if clean_comp_name: 
+        queryset = queryset.filter(component_name__icontains=clean_comp_name)
+    if component_key: 
+        queryset = queryset.filter(component_key__icontains=component_key)
+    if clean_sys_key: 
+        queryset = queryset.filter(combined_sys_key__combined_sys_key__icontains=clean_sys_key)
+
     sort_by = request.GET.get('sort', 'component_name')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
 
-    queryset = Component.objects.all()
-    if combined_comp_key: queryset = queryset.filter(combined_comp_key__icontains=combined_comp_key)
-    if component_name: queryset = queryset.filter(component_name__icontains=component_name)
-    if component_key: queryset = queryset.filter(component_key__icontains=component_key)
-    if combined_sys_key: queryset = queryset.filter(combined_sys_key__combined_sys_key__icontains=combined_sys_key)
-
-    queryset = queryset.order_by(sort_by)
-
-    filters = {
-        'combined_comp_key': combined_comp_key,
-        'component_name': component_name,
-        'component_key': component_key,
-        'combined_sys_key': combined_sys_key
+    sort_mapping = {
+        'combined_comp_key': 'combined_comp_key',
+        'component_name': 'component_name',
+        'component_key': 'component_key',
+        'combined_sys_key': 'combined_sys_key__combined_sys_key',
     }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        queryset = queryset.order_by(order_field)
+    else:
+        queryset = queryset.order_by('component_name')
+
+    filters = {}
+    if combined_comp_key: filters['combined_comp_key'] = combined_comp_key
+    if component_name: filters['component_name'] = component_name
+    if component_key: filters['component_key'] = component_key
+    if combined_sys_key: filters['combined_sys_key'] = combined_sys_key
+    filter_url = urlencode(filters)
     
-    filter_url = urlencode({k: v for k, v in filters.items() if v})
+    all_comp_keys = Component.objects.exclude(combined_comp_key__isnull=True).values_list('combined_comp_key', flat=True).distinct().order_by('combined_comp_key')
+    all_comp_names = Component.objects.exclude(component_name__isnull=True).values_list('component_name', flat=True).distinct().order_by('component_name')
+    all_keys = Component.objects.exclude(component_key__isnull=True).values_list('component_key', flat=True).distinct().order_by('component_key')
+    
+    all_system_suggestions = System.objects.all().only('combined_sys_key', 'system_name').order_by('combined_sys_key')
 
     context = {
         'component': queryset,
-        'combined_comp_key': combined_comp_key,
-        'component_name': component_name,
-        'component_key': component_key,
-        'combined_sys_key': combined_sys_key,
-        'sort_by': sort_by,
         'filter_url': filter_url,
+        'sort': sort_by,
+        'all_comp_keys': all_comp_keys,
+        'all_comp_names': all_comp_names,
+        'all_keys': all_keys,
+        'all_system_suggestions': all_system_suggestions,
+        'combined_comp_key_val': combined_comp_key,
+        'component_name_val': component_name,
+        'component_key_val': component_key,
+        'combined_sys_key_val': combined_sys_key,
     }
     return render(request, 'failures/search_components.html', context)
 
@@ -465,7 +559,12 @@ def mass_upload_fail_codes(request):
 
 def edit_failure_mode(request):
     query = request.GET.get('failure_mode', '').strip()
-    queryset = FailureType.objects.filter(failure_mode__icontains=query) if query else FailureType.objects.none()
+    clean_query = query
+
+    if ' - ' in query:
+        clean_query = query.split(' - ')[1].strip()
+
+    queryset = FailureType.objects.filter(failure_mode__icontains=clean_query) if clean_query else FailureType.objects.none()
     
     FailureTypeEditFormSet = modelformset_factory(
         FailureType, 
@@ -485,9 +584,16 @@ def edit_failure_mode(request):
     else:
         formset = FailureTypeEditFormSet(queryset=queryset)
         
+    all_failure_suggestions = (
+        FailureType.objects.all()
+        .only('failure_code', 'failure_mode')
+        .order_by('failure_code')
+    )
+        
     return render(request, 'failures/edit_failure_mode.html', {
         'formset': formset,
         'failure_mode': query,
+        'all_failure_suggestions': all_failure_suggestions,
     })
     
 def delete_failure_mode(request, pk):
@@ -498,29 +604,50 @@ def delete_failure_mode(request, pk):
     return redirect('failures:failure_modes')
 
 def search_failure_modes(request):
-    failure_mode = request.GET.get('failure_mode', '')
-    failure_code = request.GET.get('failure_code', '')
-    sort_by = request.GET.get('sort', 'failure_mode')
+    failure_mode = request.GET.get('failure_mode', '').strip()
+    failure_code = request.GET.get('failure_code', '').strip()
+
+    clean_fm = failure_mode.split(' - ').strip() if ' - ' in failure_mode else failure_mode
 
     queryset = FailureType.objects.all()
-    if failure_mode: queryset = queryset.filter(failure_mode__icontains=failure_mode)
-    if failure_code: queryset = queryset.filter(failure_code__icontains=failure_code)
-
-    queryset = queryset.order_by(sort_by)
-
-    filters = {
-        'failure_mode': failure_mode,
-        'failure_code': failure_code
-    }
     
-    filter_url = urlencode({k: v for k, v in filters.items() if v})
+    if clean_fm: 
+        queryset = queryset.filter(failure_mode__icontains=clean_fm)
+    if failure_code: 
+        queryset = queryset.filter(failure_code__icontains=failure_code)
+
+    sort_by = request.GET.get('sort', 'failure_mode')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
+
+    sort_mapping = {
+        'failure_mode': 'failure_mode',
+        'failure_code': 'failure_code',
+    }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        queryset = queryset.order_by(order_field)
+    else:
+        queryset = queryset.order_by('failure_mode')
+
+    filters = {}
+    if failure_mode: filters['failure_mode'] = failure_mode
+    if failure_code: filters['failure_code'] = failure_code
+    filter_url = urlencode(filters)
+
+    all_fm_suggestions = FailureType.objects.all().only('failure_mode', 'failure_code').order_by('failure_mode')
+    all_codes = FailureType.objects.exclude(failure_code__isnull=True).values_list('failure_code', flat=True).distinct().order_by('failure_code')
 
     context = {
         'failure_modes': queryset,
-        'combined_comp_key': failure_mode,
-        'component_name': failure_code,
-        'sort_by': sort_by,
         'filter_url': filter_url,
+        'sort': sort_by,
+        'all_fm_suggestions': all_fm_suggestions,
+        'all_codes': all_codes,
+        'failure_mode_val': failure_mode,
+        'failure_code_val': failure_code,
     }
     return render(request, 'failures/search_failure_modes.html', context)
 
@@ -639,29 +766,50 @@ def delete_action(request, pk):
     return redirect('failures:actions')
 
 def search_actions(request):
-    action_name = request.GET.get('action_name', '')
-    action_key = request.GET.get('action_key', '')
-    sort_by = request.GET.get('sort', 'action_name')
+    action_name = request.GET.get('action_name', '').strip()
+    action_key = request.GET.get('action_key', '').strip()
+
+    clean_name = action_name.split(' - ').strip() if ' - ' in action_name else action_name
 
     queryset = Action.objects.all()
-    if action_name: queryset = queryset.filter(action_name__icontains=action_name)
-    if action_key: queryset = queryset.filter(action_key__icontains=action_key)
-
-    queryset = queryset.order_by(sort_by)
-
-    filters = {
-        'action_name': action_name,
-        'action_key': action_key
-    }
     
-    filter_url = urlencode({k: v for k, v in filters.items() if v})
+    if clean_name: 
+        queryset = queryset.filter(action_name__icontains=clean_name)
+    if action_key: 
+        queryset = queryset.filter(action_key__icontains=action_key)
+
+    sort_by = request.GET.get('sort', 'action_name')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
+
+    sort_mapping = {
+        'action_name': 'action_name',
+        'action_key': 'action_key',
+    }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        queryset = queryset.order_by(order_field)
+    else:
+        queryset = queryset.order_by('action_name')
+
+    filters = {}
+    if action_name: filters['action_name'] = action_name
+    if action_key: filters['action_key'] = action_key
+    filter_url = urlencode(filters)
+    
+    all_action_suggestions = Action.objects.all().only('action_name', 'action_key').order_by('action_name')
+    all_keys = Action.objects.exclude(action_key__isnull=True).values_list('action_key', flat=True).distinct().order_by('action_key')
 
     context = {
         'actions': queryset,
-        'action_name': action_name,
-        'action_key': action_key,
-        'sort_by': sort_by,
         'filter_url': filter_url,
+        'sort': sort_by,
+        'all_action_suggestions': all_action_suggestions,
+        'all_keys': all_keys,
+        'action_name_val': action_name,
+        'action_key_val': action_key,
     }
     return render(request, 'failures/search_actions.html', context)
 

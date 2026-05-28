@@ -1,0 +1,43 @@
+
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Tires
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'condition_monitoring:tire_change' %}">Tire Change</a></li>
+            <li><a href="{% url 'condition_monitoring:search_tire_changes' %}">Chng History</a></li>
+            <br>
+            <li><a href="{% url 'condition_monitoring:tire_inspections' %}">Tire Insp</a></li>
+            <li><a href="{% url 'condition_monitoring:tire_inspection_history' %}">Insp History</a></li>
+            <br>
+            <li><a href="{% url 'condition_monitoring:rim_inspections' %}">Rim Insp</a></li>
+            <br>
+            <li><a href="{% url 'condition_monitoring:tire_information' %}">Tire Info</a></li>
+            <li><a href="{% url 'condition_monitoring:tire_fail_types' %}">Fail Types</a></li>
+            <br>
+            <li><a href="{% url 'condition_monitoring:tires_dashboard' %}">Dashboard</a></li>
+            <br>
+            <li><a href="{% url 'condition_monitoring:condition_monitoring' %}">Return</a> </li>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Tires</h2>
+        <div>
+        <br>
+        <img class="image" src="{% static 'Images/tire.jpg' %}">
+        </div>
+
+    </div>
+{% endblock %}

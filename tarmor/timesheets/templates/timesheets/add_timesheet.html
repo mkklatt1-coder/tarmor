@@ -38,8 +38,8 @@
                 <input type="hidden" name="next" value="{{ next_url }}">
                 <input type="hidden" name="work_order" value="{{ work_order_id }}">
 
-                <h2 style="align-items: center;"> &nbsp; Time Entry
-                     &nbsp; &nbsp; &nbsp; &nbsp; <button type="button" onclick="addTimesheetRow()" class="button">Add</button> </h2>
+                <h3 style="align-items: center;"> &nbsp; Time Entry
+                     &nbsp; &nbsp; &nbsp; &nbsp; <button type="button" onclick="addTimesheetRow()" class="button">Add</button> </h3>
                 <br>
                 <p> Please ensure time is separated by work type </p>
 
@@ -102,8 +102,36 @@
                 totalForms.value = currentFormCount + 1;
             }
 
+            function roundToNearest15Minutes(dateTimeString) {
+                if (!dateTimeString) return "";
+                
+                const dateObj = new Date(dateTimeString);
+                const minutes = dateObj.getMinutes();
+                
+                const roundedMinutes = Math.round(minutes / 15) * 15;
+                
+                dateObj.setMinutes(roundedMinutes);
+                dateObj.setSeconds(0);
+                dateObj.setMilliseconds(0);
+                
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const hours = String(dateObj.getHours()).padStart(2, '0');
+                const mins = String(dateObj.getMinutes()).padStart(2, '0');
+                
+                return `${year}-${month}-${day}T${hours}:${mins}`;
+            }
+
             document.addEventListener('change', function(e) {
                 if (e.target.type === 'datetime-local') {
+                    if (e.target.value) {
+                        const standardizedTime = roundToNearest15Minutes(e.target.value);
+                        if (e.target.value !== standardizedTime) {
+                            e.target.value = standardizedTime;
+                        }
+                    }
+
                     const row = e.target.closest('tr');
                     const startInput = row.querySelector('input[name$="-start_date"]');
                     const finishInput = row.querySelector('input[name$="-finish_date"]');

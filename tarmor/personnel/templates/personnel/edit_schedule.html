@@ -13,32 +13,32 @@
 </div>
 {% endblock %}
 
+
 {% block content %}
 
 <div class="main">
     <h2>Edit Schedule</h2>
     <br>
     
-    <div class="container-fluid mt-4">
-        <!-- Facility Selector -->
-        <div class="form">
-            <h5 class="form">Edit Schedule For: &nbsp;
-                <form method="get" style="display: inline-block;">
-                    <select name="facility_id" class="input" style="max-width: 300px;" onchange="this.form.submit()">
-                        <option value="">-- Select Facility --</option>
-                        {% for f in facilities %}
-                        <option value="{{ f.id }}" {% if f.id|stringformat:"s" == selected_facility_id %}selected{% endif %}>
-                            {{ f.Facility_Code }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </form>
-            </h5>
-        </div>
-        <br>
+    
+    <div>
+        <form method="get" >
+            <h3>Edit Schedule For: &nbsp;
+                <select name="facility_id" class="input" style="max-width: 300px;" onchange="this.form.submit()">
+                    <option value="">-- Select Facility --</option>
+                    {% for f in facilities %}
+                    <option value="{{ f.id }}" {% if f.id|stringformat:"s" == selected_facility_id %}selected{% endif %}>
+                        {{ f.Facility_Code }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </h3>
+        </form>
+    </div>
+    <br>
 
+    <div class="container-fluid mt-4">
         <div class="schedule-columns">
-            <!-- LEFT COLUMN: Batch List -->
             <div class="schedule-column" style="flex: 0 0 300px;">
                 <div class="schedule-panel">
                     <h4>Available Batches</h4>
@@ -59,10 +59,8 @@
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN: Workspace -->
             <div class="schedule-column" style="flex: 3; padding-left: 20px;">
                 {% if selected_rotation %}
-                    <!-- Header Info -->
                     <div class="schedule-panel mb-3" style="padding: 10px; border-bottom: 1px solid #eee;">
                         <div class="d-flex justify-content-between align-items-end">
                             <div>
@@ -86,12 +84,10 @@
                         </div>
                     </div>
 
-                    <!-- Preview Section -->
                     <div class="schedule-column">
                         {% if target_batch_id %}
                             {% if employee_preview %}
                                 <div class="mt-3">
-                                    <!-- Header with Action Button -->
                                     <div class="d-flex justify-content-between align-items-center mb-2" style="max-width: 600px;">
                                         <h5 class="mb-0" style="color: #00009c; font-weight: bold;">Preview & Swap</h5>
                                         <form method="post">
@@ -106,7 +102,6 @@
                                         </form>
                                     </div>
 
-                                    <!-- Shrink-wrapped Table -->
                                     <div class="compact-table-container shadow-sm">
                                         <table class="table table-sm table-hover compact-table">
                                             <thead class="table-light">
@@ -135,9 +130,8 @@
                                     </div>
                                 </div>
                             {% else %}
-                                <!-- Fallback if mapping finds no people -->
                                 <div class="schedule-panel border border-danger bg-white p-3 mt-3" style="max-width: 500px;">
-                                    <h5 class="text-danger">No Employees Found</h5>
+                                    <h3 class="text-danger">No Employees Found</h3>
                                     <p class="text-muted small mb-0">No employees are currently assigned to the crews in this batch.</p>
                                 </div>
                             {% endif %}

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize', 
     'django_filters',
     'import_export',
     'equipment',
@@ -57,6 +58,10 @@ INSTALLED_APPS = [
     'kpis',
     'planning',
     'scheduling',
+    'condition_monitoring',
+    'smart_selects',
+    'moc',
+    'projects',
 ]
 
 MIDDLEWARE = [

@@ -13,4 +13,6 @@ urlpatterns = [
     path('export_wos_excel/', views.export_wos_excel, name='export_wos_excel'),
     path('print_work_order/<int:pk>/', views.fill_pdf, name='print_work_order'),
     path('load_components/', views.load_components, name='load_components'),
+    path('ajax/get-failure-components/', views.get_failure_components, name='ajax_get_failure_components'),
+    path('upload/<str:wo_number>/', views.upload_file_view, name='upload_file_view'),
 ]

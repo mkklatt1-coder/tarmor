@@ -12,8 +12,9 @@
     <div class="leftnavbar" >
         <ul>
             <li><a href="{% url 'kpis:kpis' %}">KPIs</a> </li>
-            <li><a >Cond Mon</a> </li>
+            <li><a href="{% url 'condition_monitoring:condition_monitoring' %}">Cond Mon</a> </li>
             <li><a href="{% url 'failures:failure_codes' %}">Fail Codes</a> </li>
+            <li><a href="{% url 'reliability:rebuild_plan' %}">5 Yr Plan</a> </li>
             <br>
             <li><a href="{% url 'core:home' %}">Main</a> </li> 
         </ul>

@@ -24,35 +24,88 @@
         <h2>Search Components </h2>
         <br>
         <div>
-            <h5 > 
+            <h3> 
                 &nbsp; Search Criteria &nbsp;
                     <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
                     <a href="{% url 'failures:search_components' %}">
                     <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
                 </a>
-            </h5>
-            <br>
+            </h3>
+            
             <form id="search-form"  method="GET" action="{% url 'failures:search_components' %}">
-                Comb Comp Key: <input type="text" name="combined_comp_key" value="{{ combined_comp_key }}" placeholder="Combined Component Key" class="input"> &nbsp;
-                Component Name: <input type="text" name="component_name" value="{{ component_name }}" placeholder="Component Name" class="input"> &nbsp;
-                Component Key: <input type="text" name="component_key" value="{{ component_key }}" placeholder="Component Key" class="input"> &nbsp;
-                Comb Sys Key: <input type="text" name="combined_sys_key" value="{{ combined_sys_key }}" placeholder="Combined System Key" class="input"> <br>
-                <input type="hidden" name="sort" value="{{ sort_by }}">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Comb Comp Key</td>
+                        <td>
+                            <input type="text" name="combined_comp_key" value="{{ combined_comp_key_val }}" list="comb-comp-list" placeholder="Combined Component Key" class="input" autocomplete="off">
+                            <datalist id="comb-comp-list">
+                                {% for cck in all_comp_keys %}
+                                    <option value="{{ cck }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Component Name</td>
+                        <td>
+                            <input type="text" name="component_name" value="{{ component_name_val }}" list="comp-name-list" placeholder="Component Name" class="input" autocomplete="off">
+                            <datalist id="comp-name-list">
+                                {% for cn in all_comp_names %}
+                                    <option value="{{ cn }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Component Key</td>
+                        <td>
+                            <input type="text" name="component_key" value="{{ component_key_val }}" list="comp-key-list" placeholder="4-Char Key" class="input" autocomplete="off">
+                            <datalist id="comp-key-list">
+                                {% for ck in all_keys %}
+                                    <option value="{{ ck }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Comb Sys Key</td>
+                        <td>
+                            <input type="text" name="combined_sys_key" value="{{ combined_sys_key_val }}" list="sys-key-list" placeholder="System Key or Name" class="input" autocomplete="off">
+                            <datalist id="sys-key-list">
+                                {% for sys in all_system_suggestions %}
+                                    <option value="{{ sys.combined_sys_key }}" label="{{ sys.system_name }}">
+                                        {{ sys.combined_sys_key }} - {{ sys.system_name }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
             </form>
-            <br>
         </div>
 
         <div class="form">
             <form class="form" id="sesarch_component_form" method="POST">
-                <h2> Search Results </h2>
+                <h3> Search Results </h3>
                 <br>
                 <table class="table">
                     <thead>
                         <tr>
-                            <th class="th"><a href="?sort=combined_comp_key&{{ filter_url }}" class="sort_header">Comb Comp Key:{% if sort_by == 'combined_comp_key' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=component_name&{{ filter_url }}" class="sort_header">Component Name:{% if sort_by == 'component_name' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=component_key&{{ filter_url }}" class="sort_header">Component Key:{% if sort_by == 'component_key' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=combined_sys_key&{{ filter_url }}" class="sort_header">Comb Sys Key:{% if sort_by == 'combined_sys_key' %}▲{% endif %}</a></th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'combined_comp_key' %}-combined_comp_key{% else %}combined_comp_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Comb Comp Key {% if sort == 'combined_comp_key' %} ▲ {% elif sort == '-combined_comp_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'component_name' %}-component_name{% else %}component_name{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Component Name {% if sort == 'component_name' %} ▲ {% elif sort == '-component_name' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'component_key' %}-component_key{% else %}component_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Component Key {% if sort == 'component_key' %} ▲ {% elif sort == '-component_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'combined_sys_key' %}-combined_sys_key{% else %}combined_sys_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Comb Sys Key {% if sort == 'combined_sys_key' %} ▲ {% elif sort == '-combined_sys_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
                         </tr>
                     <thead>
                     <tbody>

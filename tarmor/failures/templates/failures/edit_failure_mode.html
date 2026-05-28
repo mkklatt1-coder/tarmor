@@ -40,16 +40,29 @@
 
         <h2>Edit / Delete Failure Mode </h2>
         <br>
-
-        <h5 class="form"> &nbsp; Failure Mode &nbsp; &nbsp;
-            <form method="GET" action="{% url 'failures:edit_failure_mode' %}" style="display:inline;">
-                <input class="input" type="text" id="failure_mode-search" name="failure_mode" list="failure_mode-options" value="{{ failure_mode }}" placeholder="Failure Mode">
-                <datalist id="failure_mode-options"> 
-                    {% for fail in all_failures %} <option value="{{ fail.failure_mode }}"> {% endfor %} 
+        
+        <form method="GET" action="{% url 'failures:edit_failure_mode' %}" style="display:inline;">
+            <h3> Failure Mode &nbsp; &nbsp;
+                <input class="input" 
+                    type="text" 
+                    id="failure-mode-search" 
+                    name="failure_mode" 
+                    list="failure-mode-options" 
+                    value="{{ failure_mode|default:'' }}" 
+                    placeholder="Search Code or Mode..."
+                    autocomplete="off"
+                    style="min-width: 280px;">
+               
+                <datalist id="failure-mode-options"> 
+                    {% for item in all_failure_suggestions %} 
+                        <option value="{{ item.failure_code }} - {{ item.failure_mode }}" label="{{ item.failure_mode }}">
+                            {{ item.failure_code }} - {{ item.failure_mode }}
+                        </option>
+                    {% endfor %} 
                 </datalist>
                 <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
-            </form> 
-        </h5>
+            </h3>
+        </form> 
         <br>
 
         <form class="form" id="edit_fms" method="POST" action="?failure_mode={{ failure_mode|urlencode }}">

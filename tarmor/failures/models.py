@@ -38,6 +38,7 @@ class System(models.Model):
     def __str__(self):
         return self.system_name
 
+
 class Component(models.Model):
     component_name = models.CharField(max_length=50)
     component_key = models.CharField(max_length=4)
@@ -45,12 +46,16 @@ class Component(models.Model):
     combined_comp_key = models.CharField(max_length=8, unique=True)
     
     def save(self, *args, **kwargs):
-        combined_comp_key = f"{self.combined_sys_key}{self.component_key}"
+        suffix = self.component_key.strip().upper()
+        system_code = self.combined_sys_key.combined_sys_key.strip()
+        calculated_code = f"{system_code}{suffix}"
         
-        if len(combined_comp_key) != 8:
-            raise ValidationError("Final code must be exactly 8 characters.")
+        if len(calculated_code) != 8:
+            raise ValidationError(f"Final code must be exactly 8 characters. (Generated: '{calculated_code}' - Length: {len(calculated_code)})")
         
-        self.full_code = combined_comp_key
+        self.combined_comp_key = calculated_code
+        self.component_key = suffix
+        
         super().save(*args, **kwargs)
     
     def __str__(self):

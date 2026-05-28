@@ -23,42 +23,120 @@
     <h2>Search Certifications</h2>
     <br>
     <div >
-        <h5 > 
+        <h3> 
             &nbsp; Search Criteria &nbsp;
                 <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
                 <a href="{% url 'personnel:search_certifications' %}">
                 <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
             </a>
-        </h5>
-        <br>
-        <form id="search-form"  method="GET" action="{% url 'personnel:search_certifications' %}">
-            First Name: <input type="text" name="first_name" value="{{ first_name }}" placeholder="First Name" class="input"> &nbsp;
-            Last Name: <input type="text" name="last_name" value="{{ last_name }}" placeholder="Last Name" class="input"> &nbsp;
-            Position: <input type="text" name="position" value="{{ position }}" placeholder="Position" class="input"> &nbsp;
-            Location: <input type="text" name="location" value="{{ location }}" placeholder="Location" class="input">  &nbsp;
-            Status: <input type="text" name="location" value="{{ status }}" placeholder="Status" class="input"> <br>
+        </h3>
+        
+        <form id="search-form" method="GET" action="{% url 'personnel:search_certifications' %}">
+            <table class="table-bare-container">
+                <tr>
+                    <td>Employee Name</td>
+                    <td>
+                        <input type="text" name="employee_search" value="{{ employee_search_val }}" list="emp-list" placeholder="First and/or Last Name" class="input" autocomplete="off">
+                        <datalist id="emp-list">
+                            {% for emp in all_employees %}
+                                <option value="{{ emp.First_Name }} {{ emp.Last_Name }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>Position</td>
+                    <td>
+                        <input type="text" name="position" value="{{ position_val }}" list="position-list" placeholder="Position" class="input" autocomplete="off">
+                        <datalist id="position-list">
+                            {% for pos in all_positions %}
+                                <option value="{{ pos }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>Location</td>
+                    <td>
+                        <input type="text" name="location" value="{{ location_val }}" list="location-list" placeholder="Facility Name" class="input" autocomplete="off">
+                        <datalist id="location-list">
+                            {% for loc in all_locations %}
+                                <option value="{{ loc }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>Status</td>
+                    <td>
+                        <input type="text" name="status" value="{{ status_val }}" list="status-list" placeholder="Status" class="input" autocomplete="off">
+                        <datalist id="status-list">
+                            {% for st in all_statuses %}
+                                <option value="{{ st }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                </tr>
+            </table>
         </form>
-        <br>
     </div>
 
     <div >
-        <h2 > Search Results </h2>
+        <h3> Search Results </h3>
         <br>
         <div class="table-container">
             <table  class="table">
                 <thead>
-                    <tr>
-                        <th class="th"><a href="?sort=Employee__First_Name&{{ filter_url }}" class="sort_header">First Name{% if sort_by == 'Employee__First_Name' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Employee__Middle_Name&{{ filter_url }}" class="sort_header">Middle Name{% if sort_by == 'Employee__Middle_Name' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Employee__Last_Name&{{ filter_url }}" class="sort_header">Last Name{% if sort_by == 'Employee__Last_Name' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Employee__Status&{{ filter_url }}" class="sort_header">Status{% if sort_by == 'Employee__Status' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Employee__Position&{{ filter_url }}" class="sort_header">Position{% if sort_by == 'Employee__Position' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Employee__Location&{{ filter_url }}" class="sort_header">Location{% if sort_by == 'Employee__Location' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Certification&{{ filter_url }}" class="sort_header">Certification{% if sort_by == 'Certification' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Institution&{{ filter_url }}" class="sort_header">Institution{% if sort_by == 'Institution' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Date_Cert&{{ filter_url }}" class="sort_header">Cert Date{% if sort_by == 'Date_Cert' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Renewable&{{ filter_url }}" class="sort_header">Renewable{% if sort_by == 'Renewable' %}▲{% endif %}</a></th>
-                        <th class="th"><a href="?sort=Renewal_Cost&{{ filter_url }}" class="sort_header">Renewal Cost{% if sort_by == 'Renewal_Cost' %}▲{% endif %}</a></th>
+                     <tr>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Employee__First_Name' %}-Employee__First_Name{% else %}Employee__First_Name{% endif %}" class="sort_header">
+                                First Name {% if sort == 'Employee__First_Name' %} ▲ {% elif sort == '-Employee__First_Name' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Employee__Middle_Name' %}-Employee__Middle_Name{% else %}Employee__Middle_Name{% endif %}" class="sort_header">
+                                Middle Name {% if sort == 'Employee__Middle_Name' %} ▲ {% elif sort == '-Employee__Middle_Name' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Employee__Last_Name' %}-Employee__Last_Name{% else %}Employee__Last_Name{% endif %}" class="sort_header">
+                                Last Name {% if sort == 'Employee__Last_Name' %} ▲ {% elif sort == '-Employee__Last_Name' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Employee__Status' %}-Employee__Status{% else %}Employee__Status{% endif %}" class="sort_header">
+                                Status {% if sort == 'Employee__Status' %} ▲ {% elif sort == '-Employee__Status' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Employee__Position' %}-Employee__Position{% else %}Employee__Position{% endif %}" class="sort_header">
+                                Position {% if sort == 'Employee__Position' %} ▲ {% elif sort == '-Employee__Position' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Employee__Location' %}-Employee__Location{% else %}Employee__Location{% endif %}" class="sort_header">
+                                Location {% if sort == 'Employee__Location' %} ▲ {% elif sort == '-Employee__Location' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Certification' %}-Certification{% else %}Certification{% endif %}" class="sort_header">
+                                Certification {% if sort == 'Certification' %} ▲ {% elif sort == '-Certification' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Institution' %}-Institution{% else %}Institution{% endif %}" class="sort_header">
+                                Institution {% if sort == 'Institution' %} ▲ {% elif sort == '-Institution' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Date_Cert' %}-Date_Cert{% else %}Date_Cert{% endif %}" class="sort_header">
+                                Cert Date {% if sort == 'Date_Cert' %} ▲ {% elif sort == '-Date_Cert' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Renewable' %}-Renewable{% else %}Renewable{% endif %}" class="sort_header">
+                                Renewable {% if sort == 'Renewable' %} ▲ {% elif sort == '-Renewable' %} ▼ {% endif %}
+                            </a>
+                        </th>
+                        <th class="th">
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Renewal_Cost' %}-Renewal_Cost{% else %}Renewal_Cost{% endif %}" class="sort_header">
+                                Renewal Cost {% if sort == 'Renewal_Cost' %} ▲ {% elif sort == '-Renewal_Cost' %} ▼ {% endif %}
+                            </a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,7 +147,13 @@
                             <td class="td">{{ cert.Employee.Last_Name }}</td>
                             <td class="td">{{ cert.Employee.Status }}</td>
                             <td class="td">{{ cert.Employee.Position }}</td>
-                            <td class="td">{{ cert.Employee.Location }}</td>
+                            <td class="td">
+                                {% if cert.Employee.crew %}
+                                    {{ cert.Employee.crew.location_code }}
+                                {% else %}
+                                    ---
+                                {% endif %}
+                            </td>
                             <td class="td">{{ cert.Certification }}</td>
                             <td class="td">{{ cert.Institution }}</td>
                             <td class="td">{{ cert.Date_Cert }}</td>
@@ -78,7 +162,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" style="text-align: center;">No employees found matching those criteria.</td>
+                            <td colspan="11" style="text-align: center;">No employees found matching those criteria.</td>
                         </tr>
                     {% endfor %}
                 </tbody>

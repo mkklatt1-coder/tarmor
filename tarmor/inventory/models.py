@@ -12,6 +12,7 @@ yesno_choices = [
     ("Yes", "Yes"),
 ]
 
+
 class InventoryItem(models.Model):
     part_number = models.CharField(max_length=20)
     part_description = models.CharField(max_length=255)

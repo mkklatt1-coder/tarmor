@@ -8,9 +8,12 @@ from openpyxl.utils import get_column_letter
 from django.contrib import messages
 from django.db.models import Q
 
-# EQUIPMENT VIEWS
 def equipment(request):
     return render(request, 'equipment/equipment.html', {'content_type': 'text/html'})
+
+def shift_report_list(request):
+    reports = ShiftReport.objects.all().order_by('-date')
+    return render(request, 'equipment/shift_report_list.html', {'reports': reports})
 
 def equpload(request):
     if request.method == 'POST':
@@ -47,13 +50,10 @@ def create_eq(request):
     return render(request, 'equipment/create_eq.html', {'equploadform': equploadform, 'meter_formset': meter_formset})
 
 def get_next_equipment_number(selected_type):
-    # Get the prefix from the EQ_Type model
     eq_type = EQ_Type.objects.get(Equipment_Type=selected_type)
     prefix = eq_type.Prefix
-    # Use Django ORM to find the max suffix
     last_eq = Equipment.objects.filter(Equipment_Number__startswith=prefix).order_by('Equipment_Number').last()
     if last_eq:
-        # Assumes format "PREFIX-001"
         last_num = int(last_eq.Equipment_Number.split('-')[-1])
         next_num = str(last_num + 1).zfill(3)
     else:
@@ -69,14 +69,23 @@ def load_equipment_types(request):
 
 def load_equipment_options(request):
     form = EqUploadForm(data=request.GET)
-    eq_type_id = request.GET.get('Equipment_Type')
+    asset_val = request.GET.get('Asset_Type')
+
+    if asset_val:
+        form.fields['Equipment_Type'].queryset = EQ_Type.objects.filter(
+            Asset_Type__name=asset_val
+        ).order_by('Equipment_Type')
     
+    eq_type_id = request.GET.get('Equipment_Type')
     if eq_type_id and eq_type_id.isdigit():
         try:
-            eq_type_obj = EQ_Type.objects.get(id=int(eq_type_id)) # Force to int
+            eq_type_obj = EQ_Type.objects.get(id=int(eq_type_id))
             new_num = get_next_equipment_number(eq_type_obj.Equipment_Type)
+
             form.data = form.data.copy()
             form.data['Equipment_Number'] = new_num
+            form.initial['Equipment_Number'] = new_num
+
         except EQ_Type.DoesNotExist:
             pass
     return render(request, 'equipment/equipment_fields.html', {'equploadform': form})
@@ -99,15 +108,14 @@ def generate_eq_number(request):
         return JsonResponse({'new_number': 'Error: Type Not Found'}, status=404)
     
 def search_eq(request):
-    sort_by = request.GET.get('sort', 'Equipment_Number')
     equipment_list = Equipment.objects.all().select_related('Asset_Type', 'Equipment_Type')
-    equipment_number = request.GET.get('Equipment_Number')
-    asset_type = request.GET.get('Asset_Type')
-    equipment_type = request.GET.get('Equipment_Type')
-    equipment_status = request.GET.get('Equipment_Status')
-    make = request.GET.get('Make')
-    model = request.GET.get('Model')
-    # ONLY apply the filter if the user typed something (is not empty)
+    equipment_number = request.GET.get('Equipment_Number', '').strip()
+    asset_type = request.GET.get('Asset_Type', '').strip()
+    equipment_type = request.GET.get('Equipment_Type', '').strip()
+    equipment_status = request.GET.get('Equipment_Status', '').strip()
+    make = request.GET.get('Make', '').strip()
+    model = request.GET.get('Model', '').strip()
+
     if equipment_number:
         equipment_list = equipment_list.filter(Equipment_Number__icontains=equipment_number)
     if asset_type:
@@ -120,8 +128,55 @@ def search_eq(request):
         equipment_list = equipment_list.filter(Make__icontains=make)
     if model:
         equipment_list = equipment_list.filter(Model__icontains=model)
-    equipment_list = equipment_list.order_by(sort_by)
-    return render(request, 'equipment/search_eq.html', {'equipment_list': equipment_list, 'sort_by': sort_by})
+
+    sort_by = request.GET.get('sort', 'Equipment_Number')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
+
+    sort_mapping = {
+        'Equipment_Number': 'Equipment_Number',
+        'Asset_Type': 'Asset_Type__name',
+        'Equipment_Type': 'Equipment_Type__Equipment_Type',
+        'Equipment_Status': 'Equipment_Status',
+        'Equipment_Description': 'Equipment_Description',
+        'Commissioning_Date': 'Commissioning_Date',
+        'Decommissioning_Date': 'Decommissioning_Date',
+        'Make': 'Make',
+        'Model': 'Model',
+    }
+    
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        equipment_list = equipment_list.order_by(order_field)
+    else:
+        equipment_list = equipment_list.order_by('Equipment_Number')
+
+    all_equipment_suggestions = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description').order_by('Equipment_Number')
+    
+    all_asset_types = Equipment.objects.exclude(Asset_Type__name__isnull=True).values_list('Asset_Type__name', flat=True).distinct().order_by('Asset_Type__name')
+    all_eq_types = Equipment.objects.exclude(Equipment_Type__Equipment_Type__isnull=True).values_list('Equipment_Type__Equipment_Type', flat=True).distinct().order_by('Equipment_Type__Equipment_Type')
+    all_statuses = Equipment.objects.exclude(Equipment_Status__isnull=True).values_list('Equipment_Status', flat=True).distinct().order_by('Equipment_Status')
+    all_makes = Equipment.objects.exclude(Make__isnull=True).values_list('Make', flat=True).distinct().order_by('Make')
+    all_models = Equipment.objects.exclude(Model__isnull=True).values_list('Model', flat=True).distinct().order_by('Model')
+
+
+    return render(request, 'equipment/search_eq.html', {
+        'equipment_list': equipment_list, 
+        'sort': sort_by,
+         'all_equipment_suggestions': all_equipment_suggestions,
+        'all_asset_types': all_asset_types,
+        'all_eq_types': all_eq_types,
+        'all_statuses': all_statuses,
+        'all_makes': all_makes,
+        'all_models': all_models,
+        'eq_num_val': equipment_number,
+        'asset_type_val': asset_type,
+        'eq_type_val': equipment_type,
+        'status_val': equipment_status,
+        'make_val': make,
+        'model_val': model,
+    })
 
 def export_equipment(request):
     sort_by = request.GET.get('sort', 'Equipment_Number')
@@ -167,44 +222,38 @@ def export_equipment(request):
     return response
 
 def edit_eq(request):
-    all_equipment = Equipment.objects.all().values_list('Equipment_Number', flat=True)
+    all_equipment = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description').order_by('Equipment_Number')
     eq_number = request.GET.get('eqedit')
     
     if request.method == 'POST':
-        
         eq_number = request.POST.get('Equipment_Number')
         item = get_object_or_404(Equipment, Equipment_Number=eq_number)
         
-        eqeditform = EqEditForm(request.POST, instance=item)
+        form = EqEditForm(request.POST, request.FILES, instance=item)
         meter_formset = MeterFormSet(request.POST, instance=item, prefix='meters')
-        
-        if eqeditform.is_valid() and meter_formset.is_valid():
-            eqeditform.save()
+                
+        if form.is_valid() and meter_formset.is_valid():
+            form.save()
             meter_formset.save()
             messages.success(request, 'Equipment updated successfully.')
             return redirect('equipment:equipment') 
-            
-        return render(request, 'equipment/edit_eq.html', {
-            'item': item,
-            'eqeditform': eqeditform,
-            'meter_formset': meter_formset,
-        })
-
-    item = None
-    eqeditform = None
-    meter_formset = None
+    else:
+        item = None
+        form = None
+        meter_formset = None
     
     if eq_number:
-        item = Equipment.objects.filter(Equipment_Number=eq_number).first()
-        if item:
-            eqeditform = EqEditForm(instance=item)
-            meter_formset = MeterFormSet(instance=item, prefix='meters')
+            item = Equipment.objects.filter(Equipment_Number=eq_number).first()
+            if item:
+                form = EqEditForm(instance=item)
+                meter_formset = MeterFormSet(instance=item, prefix='meters')
             
     return render(request, 'equipment/edit_eq.html', {
         'all_equipment': all_equipment,
         'item': item,
-        'eqeditform': eqeditform,
+        'equploadform': form,
         'meter_formset': meter_formset,
+        'eq_number': eq_number,
     })
 
 def add_component(request):
@@ -249,7 +298,13 @@ def add_component(request):
             except Exception as e:
                 form.add_error('Component_Description', f"A component with this description already exists: {generated_desc}")
         else:
-            print(form.errors)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    field_label = form.fields[field].label or field.replace('_', ' ').title()
+                    messages.error(request, f"{field_label}: {error}")
+                    
+            for error in form.non_field_errors():
+                messages.error(request, error)
     else:
         form = CompUploadForm(initial=initial_data)
 
@@ -287,34 +342,28 @@ def get_next_component_id(request):
     equipment = get_object_or_404(Equipment, id=eq_id)
     comp_type = get_object_or_404(ComponentType, id=type_id)
     
-    # New Logic: No more "count + 1"
-    # Result: "LHD-001-ENG"
     full_id = f"{equipment.Equipment_Number}-{comp_type.short_code}"
     
     return JsonResponse({'full_id': full_id})
 
 def change_component(request):
-    all_equipment = Equipment.objects.all().values_list('Equipment_Number', flat=True)
+    all_equipment = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description').order_by('Equipment_Number')
+
     if request.method == 'POST':
         form = CompChangeForm(request.POST)
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # 1. Identify and RE-FETCH the "Slot" to be 100% sure we have the DB object
                     comp_id = form.cleaned_data['Component'].id
                     comp_slot = Component.objects.get(id=comp_id) 
                     
-                    # 2. Create History Record
                     history = form.save(commit=False)
                     history.Old_Serial = comp_slot.Serial_Number
                     
-                    # (Your mapping logic for history stays here...)
                     history.New_PO = form.cleaned_data.get('New_PO')
-                    # ... rest of your mapping ...
                     
                     history.save()
 
-                    # 3. Update the Live Component Slot
                     comp_slot.Make = form.cleaned_data.get('New_Make')
                     comp_slot.Model = form.cleaned_data.get('New_Model')
                     comp_slot.Serial_Number = form.cleaned_data.get('New_Serial')
@@ -327,27 +376,26 @@ def change_component(request):
                     comp_slot.Warranty_Start_Date = form.cleaned_data.get('New_Wty_Start')
                     comp_slot.Warranty_End_Date = form.cleaned_data.get('New_Wty_End')
                     
-                    # FORCE the save to the database
                     comp_slot.save()
                 messages.success(request, 'Component updated successfully.')
                 return redirect('equipment:equipment')
             
             except Exception as e:
-                # This will tell you EXACTLY why the component failed to save
                 print(f"DATABASE ERROR: {e}")
                 form.add_error(None, f"Internal Error: {e}")
     else:
         form = CompChangeForm()
     
-    return render(request, 'equipment/change_comp.html', {'all_equipment': all_equipment,'compchangeform': form})
+    return render(request, 'equipment/change_comp.html', {
+        'all_equipment': all_equipment,
+        'compchangeform': form,
+    })
 
-# 2. Used by Search Step 1: Find components for the selected machine
 def get_equipment_components(request):
     eq_num = request.GET.get('eq_num')
     try:
         equipment = Equipment.objects.get(Equipment_Number=eq_num)
-        # We grab all components tied to this machine
-        components = Component.objects.filter(Equipment=equipment).values('id', 'Component_Number')
+        components = Component.objects.filter(Equipment=equipment).values('id', 'Component_Number', 'Component_Description')
         return JsonResponse({
             'success': True,
             'components': list(components)
@@ -355,7 +403,6 @@ def get_equipment_components(request):
     except Equipment.DoesNotExist:
         return JsonResponse({'success': False})
 
-# 3. Used by Search Step 2: Fill the form with current data
 def get_component_details_by_id(request):
     comp_id = request.GET.get('comp_id')
     try:
@@ -370,24 +417,26 @@ def get_component_details_by_id(request):
             'serial': c.Serial_Number,
             'po': c.PO_Number,
             'lifespan': c.Expected_Lifespan,
+            'image_url': c.Component_Image.url if c.Component_Image else None,
         })
     except Component.DoesNotExist:
         return JsonResponse({'error': 'Not found'}, status=404)
     
 def search_component_history(request):
     history_query = ComponentHistory.objects.select_related('Equipment', 'Component').all()
+    equipment_list = Equipment.objects.all().select_related('Asset_Type', 'Equipment_Type')
 
-    eq_num = request.GET.get('Equipment_Number')
-    asset_type = request.GET.get('Asset_Type')
-    eq_type = request.GET.get('Equipment_Type')
-    status = request.GET.get('Equipment_Status')
-    make = request.GET.get('Make')
-    model = request.GET.get('Model')
+    eq_num = request.GET.get('Equipment_Number', '').strip()
+    asset_type = request.GET.get('Asset_Type', '').strip()
+    eq_type = request.GET.get('Equipment_Type', '').strip()
+    status = request.GET.get('Equipment_Status', '').strip()
+    make = request.GET.get('Make', '').strip()
+    model = request.GET.get('Model', '').strip()
 
     if eq_num:
         history_query = history_query.filter(Equipment__Equipment_Number__icontains=eq_num)
     if asset_type:
-        history_query = history_query.filter(Equipment__Asset_Type__icontains=asset_type)
+        history_query = history_query.filter(Equipment__Asset_Type__name__icontains=asset_type)
     if eq_type:
         history_query = history_query.filter(Equipment__Equipment_Type__Equipment_Type__icontains=eq_type)
     if status:
@@ -403,9 +452,9 @@ def search_component_history(request):
         'Component_Number': 'Component__Component_Number',
         'Change_Date': 'Change_Date',
         'Change_Type': 'Change_Type',
-        'Meter_Desc': 'Meter_Descprition',
+        'Meter_Desc': 'Meter_Description',
         'Meter_Reading': 'Meter_Reading',
-        'New_Make': 'New Make',
+        'New_Make': 'New_Make',
         'New_Model': 'New_Model',
         'New_Serial': 'New_Serial',
         'Old_Serial': 'Old_Serial',
@@ -418,12 +467,39 @@ def search_component_history(request):
         'New_Wty_End': 'New_Wty_End',
     }
     
-    order_field = sort_mapping.get(sort_by, '-Change_Date')
+    is_descending = sort_by.startswith('-')
+    clean_key = sort_by.lstrip('-')
+
+    if clean_key in sort_mapping:
+        order_field = f"-{sort_mapping[clean_key]}" if is_descending else sort_mapping[clean_key]
+    else:
+        order_field = '-Change_Date'
+
     history_query = history_query.order_by(order_field)
+    
+    all_equipment_suggestions = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description').order_by('Equipment_Number')
+    all_asset_types = Equipment.objects.exclude(Asset_Type__name__isnull=True).values_list('Asset_Type__name', flat=True).distinct().order_by('Asset_Type__name')
+    all_eq_types = Equipment.objects.exclude(Equipment_Type__Equipment_Type__isnull=True).values_list('Equipment_Type__Equipment_Type', flat=True).distinct().order_by('Equipment_Type__Equipment_Type')
+    all_statuses = Equipment.objects.exclude(Equipment_Status__isnull=True).values_list('Equipment_Status', flat=True).distinct().order_by('Equipment_Status')
+    all_makes = Equipment.objects.exclude(Make__isnull=True).values_list('Make', flat=True).distinct().order_by('Make')
+    all_models = Equipment.objects.exclude(Model__isnull=True).values_list('Model', flat=True).distinct().order_by('Model')
+
 
     return render(request, 'equipment/search_comp.html', {
         'equipment_list': history_query,
-        'sort_by': sort_by,
+        'sort': sort_by,
+        'all_equipment_suggestions': all_equipment_suggestions,
+        'all_asset_types': all_asset_types,
+        'all_eq_types': all_eq_types,
+        'all_statuses': all_statuses,
+        'all_makes': all_makes,
+        'all_models': all_models,
+        'eq_num_val': eq_num,
+        'asset_type_val': asset_type,
+        'eq_type_val': eq_type,
+        'status_val': status,
+        'make_val': make,
+        'model_val': model,
     })
     
 def export_component_history(request):
@@ -474,7 +550,7 @@ def _build_shift_report_context(form, report=None, request=None):
     asset_types = Equipment.objects.values_list('Asset_Type__name', flat=True).distinct().order_by('Asset_Type__name')
     garages = Equipment.objects.values_list('Garage__Facility_Name', flat=True).distinct().order_by('Garage__Facility_Name')
     equipment_list = Equipment.objects.all().select_related('Equipment_Type').order_by('Equipment_Type__Equipment_Type', 'Equipment_Number')
-    hours_range = range(6, 18)   # 06:00 to 16:00 headers = 12 hours
+    hours_range = range(6, 18)
     range_48 = range(48)
     
     if request:
@@ -536,7 +612,6 @@ def _save_machine_statuses(report, machines_json):
         )
         
 def shift_report(request):
-    
     if request.method == 'POST':
         date = request.POST.get('date')
         shift = request.POST.get('shift')
@@ -699,13 +774,13 @@ def search_comp_list(request):
         'Equipment__Equipment_Type',
     ).all()
     
-    equip_val = request.GET.get('Equipment')
-    asset_type_val = request.GET.get('Asset_Type')
-    equip_type_val = request.GET.get('Equipment_Type')
-    comp_num_val = request.GET.get('Component_Number')
-    comp_desc_val = request.GET.get('Component_Description')
-    make_val = request.GET.get('Make')
-    model_val = request.GET.get('Model')
+    equip_val = request.GET.get('Equipment_Number', '').strip()
+    asset_type_val = request.GET.get('Asset_Type', '').strip()
+    equip_type_val = request.GET.get('Equipment_Type', '').strip()
+    comp_num_val = request.GET.get('Component_Number', '').strip()
+    comp_desc_val = request.GET.get('Component_Description', '').strip()
+    make_val = request.GET.get('Make', '').strip()
+    model_val = request.GET.get('Model', '').strip()
     
     if equip_val:
         comp_list = comp_list.filter(Equipment__Equipment_Number__icontains=equip_val)
@@ -723,15 +798,58 @@ def search_comp_list(request):
         comp_list = comp_list.filter(Model__icontains=model_val)
             
     sort_by = request.GET.get('sort', 'Component_Number')
-    allowed_sorts = ['Equipment', 'Asset_Type', 'Equipment_Type', 'Component_Number', 'Component_Description', 
-        'Make', 'Model', 'Serial_Number']
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
     
-    if sort_by in allowed_sorts:
-        comp_list = comp_list.order_by(sort_by)
+    sort_mapping = {
+        'Equipment_Number': 'Equipment__Equipment_Number',
+        'Asset_Type': 'Equipment__Asset_Type__name',
+        'Equipment_Type': 'Equipment__Equipment_Type__Equipment_Type',
+        'Component_Number': 'Component_Number',
+        'Component_Description': 'Component_Description',
+        'Make': 'Make',
+        'Model': 'Model',
+        'Serial_Number': 'Serial_Number',
+        'Warranty_Duration': 'Warranty_Duration',
+        'Wty_UoM': 'Wty_UoM',
+        'Warranty_Start_Date': 'Warranty_Start_Date',
+        'Warranty_End_Date': 'Warranty_End_Date',
+        'PO_Number': 'PO_Number',
+    }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        comp_list = comp_list.order_by(order_field)
+    else:
+        comp_list = comp_list.order_by('Component_Number')
+
+    all_equipment_suggestions = Equipment.objects.all().only('Equipment_Number', 'Equipment_Description').order_by('Equipment_Number')
+    
+    all_component_suggestions = Component.objects.all().only('Component_Number', 'Component_Description').order_by('Component_Number')
+    
+    all_asset_types = Equipment.objects.exclude(Asset_Type__name__isnull=True).values_list('Asset_Type__name', flat=True).distinct().order_by('Asset_Type__name')
+    all_eq_types = Equipment.objects.exclude(Equipment_Type__Equipment_Type__isnull=True).values_list('Equipment_Type__Equipment_Type', flat=True).distinct().order_by('Equipment_Type__Equipment_Type')
+    all_makes = Component.objects.exclude(Make__isnull=True).values_list('Make', flat=True).distinct().order_by('Make')
+    all_models = Component.objects.exclude(Model__isnull=True).values_list('Model', flat=True).distinct().order_by('Model')
+
 
     context = {
         'comp_list': comp_list,
-        'sort_by': sort_by,
+        'sort': sort_by,
+        'all_equipment_suggestions': all_equipment_suggestions,
+        'all_component_suggestions': all_component_suggestions,
+        'all_asset_types': all_asset_types,
+        'all_eq_types': all_eq_types,
+        'all_makes': all_makes,
+        'all_models': all_models,
+        'equip_val': equip_val,
+        'asset_type_val': asset_type_val,
+        'equip_type_val': equip_type_val,
+        'comp_num_val': comp_num_val,
+        'comp_desc_val': comp_desc_val,
+        'make_val': make_val,
+        'model_val': model_val,
     }
     
     return render(request, 'equipment/search_comp_list.html', context)
@@ -743,7 +861,7 @@ def export_list_excel(request):
         'Equipment__Equipment_Type'
     ).all()
     
-    equip_val = request.GET.get('Equipment')
+    equip_val = request.GET.get('Equipment_Number')
     asset_type_val = request.GET.get('Asset_Type')
     equip_type_val = request.GET.get('Equipment_Type')
     comp_num_val = request.GET.get('Component_Number')

@@ -54,7 +54,7 @@
             </form>
         </div>
 
-        <h2> &nbsp; System &nbsp; &nbsp; &nbsp; <button class="button" type="button" id="add-sys">Add Sys</button></h2>
+        <h3> System &nbsp; &nbsp; &nbsp; <button class="button" type="button" id="add-sys">Add Sys</button></h3>
         <br>
 
         <form class="form" id="create_sys" method="POST" action=".">
@@ -75,31 +75,38 @@
                                 {{ form.non_field_errors }}
                             </div>
                         {% endif %}
-                        <div>
-                            <label>Asset Key:</label>
-                            {{ form.asset_key }}
-                            {% if form.asset_key.errors %}
-                                <div>{{ form.asset_key.errors }}</div>
-                            {% endif %}
-                            <small>Is this Fixed (F) or Mobile (M) equipment?</small>
-                        </div>
-                        <br>
-                        <div>
-                            <label>System Name:</label>
-                            {{ form.system_name }}
-                            {% if form.system_name.errors %}
-                                <div>{{ form.system_name.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <br>
-                        <div>
-                            <label>System Key:</label>
-                            {{ form.system_key }}
-                            {% if form.system_key.errors %}
-                                <div>{{ form.system_key.errors }}</div>
-                            {% endif %}
-                            <small>Must be a unique 3 character identifier (uppercase).</small>
-                        </div>
+                        <table>
+                            <tr>
+                                <td>Asset Key</td>
+                                <td>
+                                    {{ form.asset_key }}
+                                    {% if form.asset_key.errors %}
+                                        <div>{{ form.asset_key.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                <td><small>Is this Fixed (F) or Mobile (M) equipment?</small></td>
+                            </tr>
+                            <tr>
+                                <td>System Name</td>
+                                <td>
+                                    {{ form.system_name }}
+                                    {% if form.system_name.errors %}
+                                        <div>{{ form.system_name.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>System Key</td>
+                                <td>
+                                    {{ form.system_key }}
+                                    {% if form.system_key.errors %}
+                                        <div>{{ form.system_key.errors }}</div>
+                                    {% endif %}
+                                </td>
+                                <td><small>Must be a unique 3 character identifier (uppercase).</small></td>
+                            </tr>
+                        </table>
                         <br>
                     </div>
                 {% endfor %}
@@ -109,23 +116,31 @@
             <h4> Next Item: </h4>
             <div class="system-form">
                 <div>
-                    <label>Asset Key:</label>
-                    {{ formset.empty_form.asset_key }}
-                    <small>Is this Fixed (F) or Mobile (M) equipment?</small>
+                    <table>
+                        <tr>
+                            <td>Asset Key</td>
+                            <td>
+                                {{ formset.empty_form.asset_key }}
+                            </td>
+                            <td><small>Is this Fixed (F) or Mobile (M) equipment?</small></td>
+                        </tr>
+                        <tr>
+                            <td>System Name</td>
+                            <td>
+                                {{ formset.empty_form.system_name }}
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>System Key</td>
+                            <td>
+                                {{ formset.empty_form.system_key }}
+                            </td>
+                            <td><small>Must be a unique 3 character identifier (uppercase).</small></td>
+                        </tr>
+                    </table>
+                    <br>
                 </div>
-                <br>
-                <div>
-                    <label>System Name:</label>
-                    {{ formset.empty_form.system_name }}
-                </div>
-                <br>
-                <div>
-                    <label>System Key:</label>
-                    {{ formset.empty_form.system_key }}
-                    <small>Must be a unique 3 character identifier (uppercase).</small>
-                </div>
-                <br>
-                <hr>
             </div>
         </div>
     </div>

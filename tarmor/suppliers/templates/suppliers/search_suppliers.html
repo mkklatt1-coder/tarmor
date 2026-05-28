@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Search Employee
+    Search Suppliers
 {% endblock %}
 
 {% block top_navigation %}{% endblock %}
@@ -20,44 +20,102 @@
 
 {% block content %}
 <div class="main">
-    <h2>Search Employees</h2>
+    <h2>Search Suppliers</h2>
     <br>
     <div >
-        <h5 > 
+        <h3> 
             &nbsp; Search Criteria &nbsp;
                 <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
                 <a href="{% url 'suppliers:search_suppliers' %}">
                 <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
             </a>
-        </h5>
-        <br>
+        </h3>
+        
         <form id="search-form"  method="GET" action="{% url 'suppliers:search_suppliers' %}">
-            Supplier Name: <input type="text" name="supplier_name" value="{{ supplier_name }}" placeholder="Supplier Name" class="input"> &nbsp;
-            City: <input type="text" name="city" value="{{ city }}" placeholder="City" class="input"> &nbsp;
-            Status: <input type="text" name="location" value="{{ status }}" placeholder="Status" class="input"> <br>
+            <table class="table-bare-container">
+                <tr>
+                    <td>Supplier Name</td>
+                    <td><input type="text" name="supplier_name" value="{{ supplier_name }}" placeholder="Supplier Name" class="input"></td>
+                    <td>City</td>
+                    <td><input type="text" name="city" value="{{ city }}" placeholder="City" class="input"> </td>
+                    <td>Status</td>
+                    <td><input type="text" name="location" value="{{ status }}" placeholder="Status" class="input"></td>
+                </tr>
+            </table>
         </form>
-        <br>
 
         <div >
-            <h2 > Search Results </h2>
+            <h3> Search Results </h3>
             <br>
             <div class="table-container">
                 <table  class="table">
                     <thead>
                         <tr>
-                            <th class="th"><a href="?sort=supplier_name&{{ filter_url }}" class="sort_header">Supplier Name{% if sort_by == 'supplier_name' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=status&{{ filter_url }}" class="sort_header">Status{% if sort_by == 'status' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=street_address&{{ filter_url }}" class="sort_header">Street Address{% if sort_by == 'street_address' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=city&{{ filter_url }}" class="sort_header">City{% if sort_by == 'city' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=province_state&{{ filter_url }}" class="sort_header">Prov / State{% if sort_by == 'province_state' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=country&{{ filter_url }}" class="sort_header">Country{% if sort_by == 'country' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=postal_zip&{{ filter_url }}" class="sort_header">Postal / Zip Code{% if sort_by == 'postal_zip' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=conatact&{{ filter_url }}" class="sort_header">Contact{% if sort_by == 'contact' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=phone&{{ filter_url }}" class="sort_header">Phone{% if sort_by == 'phone' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=email&{{ filter_url }}" class="sort_header">Email{% if sort_by == 'email' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=supplier_discount&{{ filter_url }}" class="sort_header">Supplier Discount{% if sort_by == 'supplier_discount' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=payment_method&{{ filter_url }}" class="sort_header">Payment Method{% if sort_by == 'payment_method' %}▲{% endif %}</a></th>
-                            <th class="th"><a href="?sort=supplier_currency&{{ filter_url }}" class="sort_header">Supplier Currency{% if sort_by == 'supplier_currency' %}▲{% endif %}</a></th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'supplier_name' %}-supplier_name{% else %}supplier_name{% endif %}" class="sort_header">
+                                    Supplier Name {% if sort == 'supplier_name' %} ▲ {% elif sort == '-supplier_name' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'status' %}-status{% else %}status{% endif %}" class="sort_header">
+                                    Status {% if sort == 'status' %} ▲ {% elif sort == '-status' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'street_address' %}-street_address{% else %}street_address{% endif %}" class="sort_header">
+                                    Street Address {% if sort == 'street_address' %} ▲ {% elif sort == '-street_address' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'city' %}-city{% else %}city{% endif %}" class="sort_header">
+                                    City {% if sort == 'city' %} ▲ {% elif sort == '-city' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'province_state' %}-province_state{% else %}province_state{% endif %}" class="sort_header">
+                                    Prov / State {% if sort == 'province_state' %} ▲ {% elif sort == '-province_state' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'country' %}-country{% else %}country{% endif %}" class="sort_header">
+                                    Country {% if sort == 'country' %} ▲ {% elif sort == '-country' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'postal_zip' %}-postal_zip{% else %}postal_zip{% endif %}" class="sort_header">
+                                    Postal / Zip Code {% if sort == 'postal_zip' %} ▲ {% elif sort == '-postal_zip' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'contact' %}-contact{% else %}contact{% endif %}" class="sort_header">
+                                    Contact {% if sort == 'contact' %} ▲ {% elif sort == '-contact' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'phone' %}-phone{% else %}phone{% endif %}" class="sort_header">
+                                    Phone {% if sort == 'phone' %} ▲ {% elif sort == '-phone' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'email' %}-email{% else %}email{% endif %}" class="sort_header">
+                                    Email {% if sort == 'email' %} ▲ {% elif sort == '-email' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'supplier_discount' %}-supplier_discount{% else %}supplier_discount{% endif %}" class="sort_header">
+                                    Supplier Discount {% if sort == 'supplier_discount' %} ▲ {% elif sort == '-supplier_discount' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'payment_method' %}-payment_method{% else %}payment_method{% endif %}" class="sort_header">
+                                    Payment Method {% if sort == 'payment_method' %} ▲ {% elif sort == '-payment_method' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'supplier_currency' %}-supplier_currency{% else %}supplier_currency{% endif %}" class="sort_header">
+                                    Supplier Currency {% if sort == 'supplier_currency' %} ▲ {% elif sort == '-supplier_currency' %} ▼ {% endif %}
+                                </a>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -79,7 +137,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" style="text-align: center;">No suppliers found matching those criteria.</td>
+                                <td colspan="13" style="text-align: center;">No suppliers found matching those criteria.</td>
                             </tr>
                         {% endfor %}
                     </tbody>

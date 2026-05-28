@@ -38,18 +38,47 @@
             {% endfor %}
         {% endif %}
 
-        <p> Facility Code {{ facilityuploadform.Facility_Code }} (4 digit code for shift rotation information)</p>
-        <p> Facility Name {{ facilityuploadform.Facility_Name }} </p>
-        <p> Cost Center {{ facilityuploadform.Cost_Centre }} &nbsp; Status {{ facilityuploadform.Status }} </p>
-        <p> Street Address {{ facilityuploadform.Street_Address }} </p>
-        <p> City {{ facilityuploadform.City }}  &nbsp; Province / State {{ facilityuploadform.Province_State }}  </p>
-        <p> Country {{ facilityuploadform.Country }} </p>
-        <p> Postal / Zip Code {{ facilityuploadform.Postal_Zip_Code }}  </p>
-        <p> Contact Name {{ facilityuploadform.Contact_Name }} </p>
-        <p> Contact Phone Number {{ facilityuploadform.Contact_Phone_Number }} </p>
-        <p> Email Address {{ facilityuploadform.Email_Address }} </p>
-        <p> Additional Information <br> {{ facilityuploadform.Additional_Information }} </p>
-
+        <table class="table-bare-container">
+            <tr>
+                <td>Facility Code</td>
+                <td>{{ facilityuploadform.Facility_Code }}</td>
+                <td colspan="2">(4 digit code for shift rotation information)</td>
+                <td>Facility Name</td>
+                <td>{{ facilityuploadform.Facility_Name }}</td>
+            </tr>
+            <tr>
+                <td>Cost Center</td>
+                <td>{{ facilityuploadform.Cost_Centre }}</td>
+                <td>Shop Rate</td>
+                <td>{{ facilityuploadform.Shop_Rate }}</td>
+                <td>Status</td>
+                <td>{{ facilityuploadform.Status }}</td>
+            </tr>
+            <tr>
+                <td>Street Address </td>
+                <td colspan="3">{{ facilityuploadform.Street_Address }}</td>
+                <td>City</td>
+                <td>{{ facilityuploadform.City }}</td>
+            </tr>
+            <tr>
+                <td>Province / State</td>
+                <td>{{ facilityuploadform.Province_State }}</td>
+                <td>Country</td>
+                <td>{{ facilityuploadform.Country }}</td>
+                <td>Postal / Zip Code</td>
+                <td>{{ facilityuploadform.Postal_Zip_Code }}</td>
+            </tr>
+            <tr>
+                <td>Contact Name </td>
+                <td>{{ facilityuploadform.Contact_Name }}</td>
+                <td>Contact Phone Number</td>
+                <td>{{ facilityuploadform.Contact_Phone_Number }}</td>
+                <td>Email Address</td>
+                <td>{{ facilityuploadform.Email_Address }}</td>
+            </tr>
+        </table>
+        Additional Information <br> 
+        {{ facilityuploadform.Additional_Information }}
     </form>
 </div>
 {% endblock %}

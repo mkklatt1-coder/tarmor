@@ -1,0 +1,108 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    MOC Questions
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a >Save</a></li>
+        <li><a href="{% url 'moc:mocs' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2> MOC Questions</h2>
+    <br>
+    <h3 class="filter-bar" style="margin-bottom: 20px; padding: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <form method="GET" action="{% url 'moc:moc_questions' %}" id="section-filter-form">
+                <label>Select Section to Edit:</label>
+                <select name="section_filter" class="input" style="height: 30px;">
+                    <option value="">-- Select Section --</option>
+                    {% for sec in sections %}
+                        <option value="{{ sec }}" {% if sec == selected_section %}selected{% endif %}>{{ sec }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="section-filter-form" >
+            <a href="{% url 'moc:moc_questions' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </div>
+    </h3>
+    <br>
+    <form method="POST">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        
+        <table id="question-table">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Question Text</th>
+                    <th>Order</th>
+                    <th>Delete?</th>
+                </tr>
+            </thead>
+            <tbody id="formset-container">
+                {% for form in formset %}
+                    <tr class="question-row">
+                        {{ form.id }}
+                        <td>{{ form.section }}</td>
+                        <td>{{ form.text }}</td>
+                        <td>{{ form.order }}</td>
+                        <td>{{ form.DELETE }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <template id="empty-row">
+            <tr class="question-row">
+                <td>{{ formset.empty_form.section }}</td>
+                <td>{{ formset.empty_form.text }}</td>
+                <td>{{ formset.empty_form.order }}</td>
+                <td></td>
+            </tr>
+        </template>
+        <div style="margin-top: 15px;">
+        <button type="button" id="add-row-btn">Add Question</button>
+        <button type="submit" style="background-color: #28a745; color: white;">Save</button>
+        </div>
+    </form>
+    
+</div>
+<script>
+    document.getElementById('add-row-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const container = document.getElementById('formset-container');
+        const totalForms = document.querySelector('input[id$="-TOTAL_FORMS"]');
+        const formNum = parseInt(totalForms.value);
+        
+        const template = document.getElementById('empty-row').innerHTML;
+        const newRowHtml = template.replace(/__prefix__/g, formNum);
+        
+        container.insertAdjacentHTML('beforeend', newRowHtml);
+        
+        const filterDropdown = document.querySelector('select[name="section_filter"]');
+        if (filterDropdown && filterDropdown.value) {
+            const lastRow = container.lastElementChild;
+            const sectionInput = lastRow.querySelector('input[name$="-section"], select[name$="-section"]');
+            if (sectionInput) {
+                sectionInput.value = filterDropdown.value;
+            }
+        }
+        
+        totalForms.value = formNum + 1;
+    });
+</script>
+{% endblock %}

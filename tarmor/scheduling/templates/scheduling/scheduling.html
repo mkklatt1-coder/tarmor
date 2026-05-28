@@ -11,11 +11,10 @@
 {% block sidebar %}
     <div class="leftnavbar" >
         <ul>
-            <li><a href="{% url 'scheduling:schedule' %}">Create Sched</a> </li>
-            <li><a >Search Sched</a> </li>
-            <li><a >Edit Sched</a> </li>
+            <li><a href="{% url 'scheduling:schedule' %}">Schedule</a> </li>
+            <li><a href="{% url 'scheduling:forecast' %}">7/21</a> </li>
             <br>
-            <li><a >7/21</a> </li>
+            <li><a href="{% url 'scheduling:weeksetup_view' %}">Set Week</a> </li>
             <br>
             <li><a href="{% url 'core:home' %}">Main</a> </li> 
         </ul>

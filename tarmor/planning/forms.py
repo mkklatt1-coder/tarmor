@@ -1,42 +1,29 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import (
-    QualityMaintenance,
-    QualityMaintenanceStep
-)
+from .models import QualityMaintenanceDocument, QualityMaintenanceDocumentStep, QualityMaintenancePlan
+from equipment.models import Equipment, Meter
 
 class QualityMaintenanceCreateForm(forms.ModelForm):
     class Meta:
-        model = QualityMaintenance
+        model = QualityMaintenanceDocument
         fields = [
-            'qm_number',
-            'equipment',
-            'description',
-            'qm_type',
-            'step_type',
-            'start_date',
-            'meter_start',
-            'meter_type',
-            'single_interval_value',
-            'calendar_unit',
-            'est_work_hours',
-            'single_interval_checklist',
-            'work_order_lead_days',
-            'active',
+            'qm_number', 'description', 'qm_type', 'step_type',
+            'single_interval_value', 'calendar_unit', 'est_work_hours',
+            'single_interval_checklist', 'work_order_lead_days', 'active', 'single_interval_parts_list',
         ]
         widgets = {
             'single_interval_checklist': forms.ClearableFileInput(attrs={
                 'class': 'input',
                 'accept': '.pdf'
             }),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
+            'single_interval_parts_list': forms.ClearableFileInput(attrs={
+                'class': 'input',
+                'accept': '.pdf'
+            }),
             'qm_number': forms.TextInput(attrs={'class': 'locked', 'readonly': 'readonly'}),
-            'equipment': forms.Select(attrs={'class': 'input'}),
             'description': forms.TextInput(attrs={'class': 'input'}),
             'qm_type': forms.Select(attrs={'class': 'input'}),
             'step_type': forms.Select(attrs={'class': 'input'}),
-            'meter_start': forms.NumberInput(attrs={'class': 'input'}),
-            'meter_type': forms.Select(attrs={'class': 'input'}),
             'single_interval_value': forms.NumberInput(attrs={'class': 'input'}),
             'calendar_unit': forms.Select(attrs={'class': 'input'}),
             'work_order_lead_days': forms.NumberInput(attrs={'class': 'input'}),
@@ -47,102 +34,44 @@ class QualityMaintenanceCreateForm(forms.ModelForm):
         self.fields['qm_number'].required = False
         self.fields['qm_number'].disabled = True
         if not self.instance.pk:
-            self.initial['qm_number'] = QualityMaintenance.get_next_number()
+            self.initial['qm_number'] = QualityMaintenanceDocument.get_next_number()
+
     def clean(self):
         cleaned = super().clean()
         qm_type = cleaned.get('qm_type')
         step_type = cleaned.get('step_type')
-        if qm_type == 'CALENDAR':
-            cleaned['meter_start'] = None
-            cleaned['meter_type'] = None
-            if step_type == 'SINGLE':
-                if cleaned.get('single_interval_value') is None:
-                    self.add_error('single_interval_value', 'Required for calendar single-step QM.')
-                if not cleaned.get('calendar_unit'):
-                    self.add_error('calendar_unit', 'Required for calendar single-step QM.')
-        elif qm_type == 'METER':
-            cleaned['calendar_unit'] = None
-            if cleaned.get('meter_start') is None:
-                self.add_error('meter_start', 'Required for meter QM.')
-            if not cleaned.get('meter_type'):
-                self.add_error('meter_type', 'Required for meter QM.')
-            if step_type == 'SINGLE' and cleaned.get('single_interval_value') is None:
-                self.add_error('single_interval_value', 'Required for meter single-step QM.')
-        return super().clean()
-    def save(self, commit=True):
-        return super().save(commit=commit)
+
+        if step_type == 'SINGLE':
+            if cleaned.get('single_interval_value') is None:
+                self.add_error('single_interval_value', 'Required for single-step QM.')
+            
+            if qm_type == 'CALENDAR' and not cleaned.get('calendar_unit'):
+                self.add_error('calendar_unit', 'Calendar unit is required for single-step Calendar QM.')
+            
+            if qm_type == 'METER':
+                cleaned['calendar_unit'] = None
+        
+        return cleaned
     
-class QualityMaintenanceEditForm(forms.ModelForm):
-    class Meta:
-        model = QualityMaintenance
-        fields = [
-            'qm_number',
-            'equipment',
-            'description',
-            'qm_type',
-            'step_type',
-            'start_date',
-            'meter_start',
-            'meter_type',
-            'single_interval_value',
-            'calendar_unit',
-            'single_interval_checklist',
-            'est_work_hours',
-            'work_order_lead_days',
-            'active',
-        ]
-        widgets = {
-            'single_interval_checklist': forms.ClearableFileInput(attrs={
-                'class': 'input',
-                'accept': '.pdf'
-            }),
-            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'input'}),
-            'qm_number': forms.TextInput(attrs={'class': 'locked', 'readonly': 'readonly'}),
-            'equipment': forms.Select(attrs={'class': 'input'}),
-            'description': forms.TextInput(attrs={'class': 'input'}),
-            'qm_type': forms.Select(attrs={'class': 'input'}),
-            'step_type': forms.Select(attrs={'class': 'input'}),
-            'meter_start': forms.NumberInput(attrs={'class': 'input'}),
-            'meter_type': forms.Select(attrs={'class': 'input'}),
-            'est_work_hours': forms.NumberInput(attrs={'class': 'input'}),
-            'single_interval_value': forms.NumberInput(attrs={'class': 'input'}),
-            'calendar_unit': forms.Select(attrs={'class': 'input'}),
-            'work_order_lead_days': forms.NumberInput(attrs={'class': 'input'}),
-        }
+class QualityMaintenanceEditForm(QualityMaintenanceCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['qm_number'].disabled = True
-    def clean(self):
-        cleaned = super().clean()
-        qm_type = cleaned.get('qm_type')
-        step_type = cleaned.get('step_type')
-        if qm_type == 'CALENDAR':
-            cleaned['meter_start'] = None
-            cleaned['meter_type'] = None
-            if step_type == 'SINGLE':
-                if cleaned.get('single_interval_value') is None:
-                    self.add_error('single_interval_value', 'Required for calendar single-step QM.')
-                if not cleaned.get('calendar_unit'):
-                    self.add_error('calendar_unit', 'Required for calendar single-step QM.')
-        elif qm_type == 'METER':
-            cleaned['calendar_unit'] = None
-            if cleaned.get('meter_start') is None:
-                self.add_error('meter_start', 'Required for meter QM.')
-            if not cleaned.get('meter_type'):
-                self.add_error('meter_type', 'Required for meter QM.')
-            if step_type == 'SINGLE' and cleaned.get('single_interval_value') is None:
-                self.add_error('single_interval_value', 'Required for meter single-step QM.')
-        return cleaned
+
     
 class QualityMaintenanceStepForm(forms.ModelForm):
     class Meta:
         
-        model = QualityMaintenanceStep
-        fields = ['step_order', 'interval_value', 'interval_unit', 'step_label', 'est_work_hours', 'step_checklist']
+        model = QualityMaintenanceDocumentStep
+        fields = ['step_order', 'interval_value', 'interval_unit', 'step_label', 'est_work_hours', 'step_checklist', 'step_parts_list']
         widgets = {
             'step_checklist': forms.ClearableFileInput(attrs={
                 'class': 'input',
-                'accept': '.pdf'  # Restricts the file browser to PDFs
+                'accept': '.pdf'
+            }),
+            'step_parts_list': forms.ClearableFileInput(attrs={
+                'class': 'input',
+                'accept': '.pdf'
             }),
             'step_order': forms.NumberInput(attrs={'class': 'input'}),
             'interval_value': forms.NumberInput(attrs={'class': 'input'}),
@@ -152,33 +81,136 @@ class QualityMaintenanceStepForm(forms.ModelForm):
         }
         
 QualityMaintenanceStepFormSet = inlineformset_factory(
-    QualityMaintenance,
-    QualityMaintenanceStep,
+    QualityMaintenanceDocument,
+    QualityMaintenanceDocumentStep,
+
     form=QualityMaintenanceStepForm,
     extra=0,
     can_delete=True
 )
 
 class QualityMaintenanceSearchForm(forms.Form):
-    qm_number = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'input'}))
-    equipment_number = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'input'}))
-    description = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'input'}))
+    qm_number = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'input', 'list': 'qm-number-list', 'placeholder': 'Search QM...'})
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'input', 'list': 'qm-desc-list', 'placeholder': 'Search Description...'})
+    )
     qm_type = forms.ChoiceField(
         required=False,
-        choices=[('', '---------')] + QualityMaintenance.QM_TYPE_CHOICES,
+        choices=[('', '---------')] + QualityMaintenanceDocument.QM_TYPE_CHOICES,
         widget=forms.Select(attrs={'class': 'input'})
     )
     step_type = forms.ChoiceField(
         required=False,
-        choices=[('', '---------')] + QualityMaintenance.STEP_TYPE_CHOICES,
+        choices=[('', '---------')] + QualityMaintenanceDocument.STEP_TYPE_CHOICES,
         widget=forms.Select(attrs={'class': 'input'})
     )
-    active = forms.NullBooleanField(required=False, widget=forms.Select(attrs={'class': 'input'}))
+    active = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('', 'All Statuses'),
+            ('Yes', 'Yes (Active)'),
+            ('No', 'No (Inactive)')
+        ],
+        widget=forms.Select(attrs={'class': 'input'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            existing = field.widget.attrs.get('class', '')
+            if 'input' not in existing.split():
+                field.widget.attrs['class'] = f'{existing} input'.strip()
     
 class QualityMaintenanceEditLookupForm(forms.Form):
-    qm_number = forms.ModelChoiceField(
-        queryset=QualityMaintenance.objects.all().order_by('qm_number'),
-        empty_label='Select QM',
-        label='QM Number',
-        widget=forms.Select(attrs={'class': 'input'})
+    qm_number = forms.CharField(
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input', 
+            'list': 'qm-lookup-list', 
+            'placeholder': 'Type Number or Description...',
+            'autocomplete': 'off'
+        })
     )
+    
+class QualityMaintenancePlanForm(forms.ModelForm):
+    document = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input',
+            'list': 'document-suggestions',
+            'placeholder': 'Type document or description...',
+            'autocomplete': 'off'
+        })
+    )
+    equipment = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input',
+            'list': 'equipment-suggestions',
+            'placeholder': 'Type equipment or description...',
+            'autocomplete': 'off',
+            'hx-get': '/planning/get-linked-meters/',
+            'hx-trigger': 'input changed delay:300ms, change',
+            'hx-target': '#meter-type-datalist-wrapper',
+        })
+    )
+    meter_type = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'input',
+            'list': 'meter-type-suggestions',
+            'placeholder': 'Select equipment first...',
+            'autocomplete': 'off'
+        })
+    )
+
+    class Meta:
+        model = QualityMaintenancePlan
+        fields = ['document', 'equipment', 'active', 'start_date', 'meter_start', 'meter_type']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for name, field in self.fields.items():
+            existing_classes = field.widget.attrs.get('class', '')
+            if 'input' not in existing_classes.split():
+                field.widget.attrs['class'] = f'{existing_classes} input'.strip()
+
+        if 'start_date' in self.fields:
+            self.fields['start_date'].widget = forms.DateInput(attrs={'type': 'date', 'class': 'input'})
+
+        if self.instance and self.instance.pk:
+            if self.instance.document:
+                self.initial['document'] = self.instance.document.qm_number
+            if self.instance.equipment:
+                self.initial['equipment'] = self.instance.equipment.Equipment_Number
+            if self.instance.meter_type:
+                self.initial['meter_type'] = self.instance.meter_type.meter_type
+
+    def clean_document(self):
+        qm_str = self.cleaned_data.get('document')
+        doc = QualityMaintenanceDocument.objects.filter(qm_number=qm_str).first()
+        if not doc:
+            raise forms.ValidationError(f"Quality Maintenance Document '{qm_str}' does not exist.")
+        return doc
+
+    def clean_equipment(self):
+        eq_str = self.cleaned_data.get('equipment')
+        eq = Equipment.objects.filter(Equipment_Number=eq_str).first()
+        if not eq:
+            raise forms.ValidationError(f"Equipment Unit '{eq_str}' does not exist.")
+        return eq
+
+    def clean_meter_type(self):
+        mt_str = self.cleaned_data.get('meter_type')
+        if not mt_str:
+            return None
+        mt = Meter.objects.filter(meter_type=mt_str).first()
+        if not mt:
+            raise forms.ValidationError(f"Meter Type '{mt_str}' does not exist.")
+        return mt

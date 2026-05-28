@@ -40,68 +40,28 @@
 
         {{ meter_formset.management_form }}
 
-        <div class="form-row" id="dynamic-form-fields">
-            <label>Eq Number:</label> {{equploadform.Equipment_Number}} &nbsp;
+        <div class="form-row" id="form-container">
 
-            <label>Asset Type:</label>
-            <select name="Asset_Type" 
-                hx-get="{% url 'equipment:load_options' %}" 
-                hx-target="#dynamic-form-fields" 
-                hx-include="closest form" 
-                class="input">
-                {% for value, text in equploadform.fields.Asset_Type.choices %}
-                    <option value="{{ value }}" {% if equploadform.Asset_Type.value == value %}selected{% endif %}>{{ text }}</option>
-                {% endfor %}
-            </select>&nbsp;
+            <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
 
-            <label>Eq Type:</label> 
-            <select name="Equipment_Type" 
-                hx-get="{% url 'equipment:load_options' %}" 
-                hx-target="#dynamic-form-fields" 
-                hx-include="closest form"
-                class="input">
-                {% for value, text in equploadform.fields.Equipment_Type.choices %}
-                    <option value="{{ value }}" {% if equploadform.Equipment_Type.value == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
-                {% endfor %}
-            </select> &nbsp;
-            <label>Eq Status:</label> {{equploadform.Equipment_Status}} <br>
-            <br>
-            <label>Eq Description:</label> {{equploadform.Equipment_Description}} &nbsp;
-            <label>Commission Date:</label> {{equploadform.Commissioning_Date}} &nbsp;
-            <label>Decommission Date:</label> {{equploadform.Decommissioning_Date}} <br>
-            <br>
-            <label>Make:</label> {{equploadform.Make}} &nbsp;
-            <label>Model:</label> {{equploadform.Model}} &nbsp;
-            <label>Serial Number:</label> {{equploadform.Serial_Number}} &nbsp;
-            <label>Resp Garage:</label> {{equploadform.Garage}} <br>
-            <br>
-            <label>Purchase Order:</label> {{equploadform.PO_Number}} &nbsp;
-            <label>Eq Value:</label> {{equploadform.Equipment_Value}} &nbsp;
-            <label>Warranty Start:</label> {{equploadform.Warranty_Start_Date}} &nbsp;
-            <label> Warranty End:</label> {{equploadform.Warranty_End_Date}} <br>
-            <br>
-            <label>Overhaul Period:</label> {{equploadform.Overhaul_Period}} &nbsp;
-            <label>Overhaul Value:</label> {{equploadform.Overhaul_Value}} &nbsp;
-            <label>End Of Life:</label> {{equploadform.End_of_Life}} <br>
-            <br>
-            {% if not equploadform.Engine_HP_Rating.is_hidden %}
-                    <label>Engine HP:</label> {{equploadform.Engine_HP_Rating}} &nbsp;
-            {% endif %} 
-            {% if not equploadform.CANMET_Number.is_hidden %}
-                    <label>CANMET Number:</label> {{equploadform.CANMET_Number}} &nbsp;
-                    <label>Ventilation Rating:</label> {{equploadform.Ventilation_Rating}} <br>
-            {% endif %} 
-            <br>
-            {% if not equploadform.Eng_Tier.is_hidden %}
-                <label>Eng_Tier:</label> {{ equploadform.Eng_Tier }} &nbsp;
-            {% endif %}
-            {% if not equploadform.Cab_Style.is_hidden %}
-                <label>Cab Style:</label> {{ equploadform.Cab_Style }} &nbsp;
-            {% endif %}
-            {% if not equploadform.Box_Type.is_hidden %}
-                <label>Box Style:</label> {{ equploadform.Box_Type }} <br>
-            {% endif %}
-            <br>
+                <div id="equipment-table-wrapper" style="width: 75%;">
+                    {% include 'equipment/equipment_fields.html' %}
+                </div>
+                
+                <div class="container-wrapper" style="flex: 0 0 350px; margin: 0;">
+                    <div id="image-preview-zone" onclick="document.getElementById('id_Equipment_Image').click();">
+                        <div id="placeholder-text">
+                            <p style="font-size: 50px; margin: 0;">+</p>
+                            <p>Click to Add Equipment Image</p>
+                        </div>
+                        <img id="preview-img" src="" alt="Equipment Preview" style="display: none;">
+                    </div>
+                    <div style="display: none;">
+                        {{ equploadform.Equipment_Image }}
+                    </div>
+                </div>
+            </div>
+
             <label>Additional Information:</label><br>
             {{equploadform.Additional_Information}}<br>
             <br>
@@ -147,6 +107,26 @@
             const newHtml = emptyForm.replace(/__prefix__/g, count);
             list.insertAdjacentHTML('beforeend', newHtml);
             totalForms.value = count + 1;
+        }
+    });
+    
+    function previewImage(input) {
+        const previewImg = document.getElementById('preview-img');
+        const placeholder = document.getElementById('placeholder-text');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                placeholder.style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'id_Equipment_Image') {
+            previewImage(e.target);
         }
     });
 </script>

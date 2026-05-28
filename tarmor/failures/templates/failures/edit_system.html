@@ -62,29 +62,20 @@
                     {% for form in formset %}
 
                         <div class="system-form">
-                            
                             {{ form.id }}
-
                             {% if form.non_field_errors %}
                                 <div> {{ form.non_field_errors }} </div>
                             {% endif %}
-
-                            <div> <label>Asset Key:</label>
-                                {{ form.asset_key }}
-                            </div>
-                            <br>
-
-                            <div>
-                                <label>System Name:</label>
-                                {{ form.system_name }}
-                            </div>
-                            <br>
-
-                            <div>
-                                <label>System Key:</label>
-                                {{ form.system_key }}
-                            </div>
-                            <br>
+                            <table>
+                                <tr>
+                                    <td>Asset Key</td>
+                                    <td>{{ form.asset_key }}</td>
+                                    <td>System Name</td>
+                                    <td>{{ form.system_name }}</td>
+                                    <td>System Key</td>
+                                    <td>{{ form.system_key }}</td>
+                                </tr>
+                            </table>
                         </div>
                     {% endfor %}
                 </div>

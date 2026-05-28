@@ -14,4 +14,6 @@ urlpatterns = [
     path('edit_facility/', views.edit_facility, name='edit_facility'),
     path('edit_facility/<int:pk>/', views.edit_facility, name='edit_facility'),
     path("search_facilities/", views.search_facilities, name="search_facilities"),
+    path('export/', views.export_facilities_excel, name='export_facilities_excel'),
+
 ]

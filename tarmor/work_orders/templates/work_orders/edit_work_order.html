@@ -12,7 +12,8 @@
             <li>
                 <a href="javascript:void(0)" id="sidebar-save-btn" 
                     onclick="document.getElementById('save_cont_trigger').value='false'; document.getElementById('work-order-form').submit();">
-                    Save/Exit</a>
+                    Save/Exit
+                </a>
             </li>
             <li>
                 <a href="#" class="btn btn-primary" onclick="submitWorkOrder(event)">Save/Rtrn</a>
@@ -56,8 +57,10 @@
                     <input class="input" type="text" id="wo-search-input" list="wo_numbers" name="work_order_search" placeholder="Work Order #" autocomplete="off"
                         value="{% if work_order_obj %}{{ work_order_obj.work_order }}{% else %}{{ preview_work_order }}{% endif %}">
                         <datalist id="wo_numbers">
-                            {% for number in orders %}
-                                <option value="{{ number }}">
+                            {% for wo in orders %}
+                                <option value="{{ wo.work_order }}" label="{{ wo.troubleshoot_description|default:'' }}">
+                                    {{ wo.work_order }} - {{ wo.troubleshoot_description|default:'No Description' }}
+                                </option>
                             {% endfor %}
                         </datalist>
                     <img src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" 
@@ -71,48 +74,84 @@
             </h3>
             <br>
             
-            <div>
-                Equipment Number: <input type="text" class="input" id="equipment-number-search" value="{{ work_order_obj.equipment_number }}" autocomplete="off"> &nbsp;
-                Equipment Description: <input type="text" class="input" id="equipment-description-search" value="{{ work_order_obj.equipment_description }}" autocomplete="off">
-                <div id="equipment-search-results" style="border: 1px solid #ccc; display: none; position: absolute; background: white; z-index: 100;">
-                        <!-- JS will inject results here -->
-                    </div>
-                    <span id="selected-equipment-number"></span>
-                    <span id="selected-equipment-description"></span>
-                    <input type="hidden" id="equipment-description-search">
+            <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                    
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Equipment Number</td>
+                        <td><input type="text" class="input" id="equipment-number-search" value="{{ work_order_obj.equipment_number }}" autocomplete="off">
+                            <div id="equipment-search-results" style="border: 1px solid #ccc; display: none; position: absolute; background: white; z-index: 100;">
+                                <!-- JS will inject results here -->
+                            </div>
+                        </td>
+                        <td>Equipment Description</td>
+                        <td colspan="3">
+                            <input type="text" class="input" id="equipment-description" value="{{ work_order_obj.equipment_description }}" autocomplete="off">
+                            <input type="hidden" id="equipment-description-search">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Date Created</td>
+                        <td>{{ workorderform.date_created }}</td>
+                        <td>Date Closed</td>
+                        <td>{{ workorderform.date_closed }}</td>
+                        <td>Job Status</td>
+                        <td>{{ workorderform.job_status }}</td>
+                    </tr>
+                    <tr>
+                        <td>Work Type</td>
+                        <td>{{ workorderform.work_type }}</td>
+                        <td>Priority</td>
+                        <td>{{ workorderform.priority }}</td>
+                        <td>Machine Out Of Service</td>
+                        <td>{{ workorderform.machine_oos }}</td>
+                    </tr>
+                    <tr>
+                        <td>Hours</td>
+                        <td>{{ workorderform.hours }}</td>
+                        <td>Meter</td>
+                        <td>{{ workorderform.meter }}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {% for wo in proj.work_orders.all %}
+                    <tr>
+                        <td>{{ wo.wo_number }}</td>
+                        <td>{{ proj.project_number }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tr>
+                </table>
+            </div>
+
+            <h3> Troubleshooting </h3>
+
+            <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+                <div id="equipment-table-wrapper" style="width: 45%; margin-right: 10px;">
+                    <table class="table-bare-container">
+                        <tr>
+                            <td>Failure Description</td>
+                            <td>{{ workorderform.troubleshoot_description }}</td>
+                        </tr>
+                    </table>
+                    <br>
+                    Extended Description:<br>
+                    {{ workorderform.ts_extended_description }}<br>
+                </div>
+                <div id="equipment-table-wrapper" style="width: 45%; margin-left: 10px;">
+                    <table class="table-bare-container">
+                        <tr>
+                            <td>Equipment Location</td>
+                            <td>{{ workorderform.equipment_location }}</td>
+                        </tr>
+                    </table>
+                    <br>
+                    Service Report:<br>
+                    {{ workorderform.ts_service_report }}
                 </div>
             </div>
             <br>
-            
-            <div>
-                Date Created: {{ workorderform.date_created }}&nbsp;
-                Date Closed: {{ workorderform.date_closed }}<br>
-                <br>
-                Work Type: {{ workorderform.work_type }}&nbsp;
-                Priority: {{ workorderform.priority }}&nbsp;
-                Machine OOS: {{ workorderform.machine_oos }}<br>
-                <br>
-                Hours: {{ workorderform.hours }}&nbsp;
-                Meter: {{ workorderform.meter }}&nbsp;
-                Job Status: {{ workorderform.job_status }}<br>
-                <br>
-                <br>
-            </div>
 
-            <div>
-                <h3> Troubleshooting </h3>
-                <br>
-                Troubleshoot Description: {{ workorderform.troubleshoot_description }}<br>
-                <br>
-                Extended Description: <br>
-                {{ workorderform.ts_extended_description }}<br>
-                Equipment Location: {{ workorderform.equipment_location }}<br>
-                <br>
-                Service Report: <br>
-                {{ workorderform.ts_service_report }}<br>
-                <br>
-            </div>
-            <br>
             <div style="display: flex; align-items: center; gap: 15px;">
                 <button type="button" id="plan-button">Plan</button> &nbsp; &nbsp; 
                 <a class="button" href="{% url 'timesheets:add_timesheet' %}?work_order={{ work_order_obj.pk }}&next={{ request.get_full_path|urlencode }}">
@@ -138,30 +177,73 @@
                     <div style="display: flex; align-items: center;">
                         <span style="font-size: 0.85rem; color: #999; margin-right: 8px;">No Checklist:</span>
                         {{ workorderform.attached_checklist }}
+                    </div> &nbsp;
+                {% endif %}
+                {% if work_order_obj.attached_parts_list %}
+                    <div style="display: flex; align-items: center;">
+                        <a href="{{ work_order_obj.attached_parts_list.url }}" target="_blank" class="button">
+                            Parts List
+                        </a>
+                        
+                        <label for="id_attached_parts_list" 
+                            style="margin-left: 8px; font-size: 0.75rem; color: #666; text-decoration: underline; cursor: pointer;">
+                            (Change)
+                        </label>
+                        
+                        <span style="display: none;">
+                            {{ workorderform.attached_parts_klist }}
+                        </span>
+                    </div>
+                {% else %}
+                    <div style="display: flex; align-items: center;">
+                        <span style="font-size: 0.85rem; color: #999; margin-right: 8px;">No Parts List:</span>
+                        {{ workorderform.attached_parts_list }}
                     </div>
                 {% endif %}
                 <br>
             </div>
             <div id="planning-section" style="display:none; margin-top:20px;">
+
                 <h3> Planning  &nbsp; &nbsp;&nbsp; &nbsp; Plan Start Date: {{ workorderform.plan_start_date }}</h3> 
-                
-                Safety Instructions: 
-                {{ workorderform.safety_instructions }}
                 <br>
-                Spec Requirements: 
-                {{ workorderform.spec_requirements }}
+
+                <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+                    
+                    <div id="equipment-table-wrapper" style="width: 45%; margin-right: 10px;">
+                        Safety Instructions: 
+                        {{ workorderform.safety_instructions }}
+                    </div>
+                    <div id="equipment-table-wrapper" style="width: 45%; margin-left: 10px;">
+                        Spec Requirements: 
+                        {{ workorderform.spec_requirements }}
+                    </div>
+                </div>
                 <br>
-                Legislative: {{ workorderform.legislative }}&nbsp;
-                License Req: {{ workorderform.license_req }}&nbsp;
-                Tools Req: {{ workorderform.tools_req }}&nbsp;
-                Conf Space: {{ workorderform.conf_space }}<br>
-                <br>
-                JHA: {{ workorderform.jha }}&nbsp;
-                Hot Work: {{ workorderform.hot_work }}&nbsp;
-                Parts WTY: {{ workorderform.parts_wty }}&nbsp;
-                Work WTY: {{ workorderform.work_wty }}<br>
-                <br>
-                <br>
+                <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                    
+                    <table class="table-bare-container">
+                        <tr>
+                            <td>Legislative</td>
+                            <td>{{ workorderform.legislative }}</td>
+                            <td>License Req</td>
+                            <td>{{ workorderform.license_req }}</td>
+                            <td>Tools Req</td>
+                            <td>{{ workorderform.tools_req }}</td>
+                            <td>Conf Space</td>
+                            <td>{{ workorderform.conf_space }}</td>
+                        </tr>
+                        <tr>
+                            <td>JHA</td>
+                            <td>{{ workorderform.jha }}</td>
+                            <td>Hot Work</td>
+                            <td>{{ workorderform.hot_work }}</td>
+                            <td>Parts WTY:</td>
+                            <td>{{ workorderform.parts_wty }}</td>
+                            <td>Work WTY</td>
+                            <td>{{ workorderform.work_wty }}</td>
+                        </tr>
+                    </table>
+                </div>
 
                 <div id="warranty-table-container">
                     {% if components %}
@@ -187,27 +269,89 @@
                     </div>
                 </h3>
                 <br>
+                <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+                    <div id="equipment-table-wrapper" style="width: 45%; margin-right: 10px;">
+                        <table class="table-bare-container">
+                            <tr>
+                                <td>Repair Description</td>
+                                <td>{{ workorderform.repair_description }} </td>
+                            </tr>
+                        </table>
+                        <br>
+                        Repair Extended Description:<br>
+                        {{ workorderform.repair_extended_description }}<br>
+                    </div>
+                    <div id="equipment-table-wrapper" style="width: 45%; margin-left: 10px;">
+                        <table class="table-bare-container">
+                            <tr>
+                                <td>Estimated Hours</td>
+                                <td>{{ workorderform.est_work_hours }}</td>
+                            </tr>
+                        </table>
+                        <br>
+                        Job Instructions:<br>
+                        {{ workorderform.job_instructions }}
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 30px; width: 98%;">
+                    <div id="equipment-table-wrapper" style="width: 45%; margin-right: 10px;">
+                        <table class="table-bare-container">
+                            <tr>
+                                <td>Failure System</td>
+                                <td>{{ workorderform.fc_system }}</td>
+                                <td>Failure Component</td>
+                                <td>{{ workorderform.fc_component }}</td>
+                            </tr>
+                            <tr>
+                                <td>Failure Mode</td>
+                                <td>{{ workorderform.fc_failure_mode }}</td>
+                                <td>Action</td>
+                                <td>{{ workorderform.fc_action }}</td>
+                            </tr>
+                        </table>
+                        <div>
+                        Repair Service Report<br>
+                        {{ workorderform.repair_service_report }}<br>
+                        </div>
+                    </div>
+                    <div id="attachments-container" style="width: 45%; margin-left: 10px;">
+                        <h4> 
+                            Attachments &nbsp; <button type="button" onclick="addRow('attachments')">Add</button> &nbsp; 
+                            <button type="button" onclick="uploadAllFiles(this, '{{ work_order_obj.work_order }}')">Upload</button>
+                        </h4>
+                        <p>Include any pictures, specifications, layouts, designs, etc.</p>
 
-                Repair Description: {{ workorderform.repair_description }} &nbsp; &nbsp;
-                Estimated Hours: {{ workorderform.est_work_hours }}<br>
-                <br>
-                Repair Extended Description: 
-                {{ workorderform.repair_extended_description }}<br>
-                <br>
-                Job Instructions: 
-                {{ workorderform.job_instructions }}<br>
-                <br>
-                Failure System: {{ workorderform.fc_system }}&nbsp;
-                Failure Component: {{ workorderform.fc_component }}<br>
-                <br>
-                Failure Mode: {{ workorderform.fc_failure_mode }}&nbsp;
-                Action: {{ workorderform.fc_action }}<br>
-                <br>
-                Repair Service Report: 
-                {{ workorderform.repair_service_report }}
+                        {{ attachments_formset.management_form }}
+                        <p>Attachments List:</p>
+                        {% for attach in attachments_formset %}
+                            <div class="attach-row formset-row">
+                                {{ attach.id }}
+                                <span>Name:</span> {{ attach.description }} 
+                                <div class="file-area">
+                                    {% if attach.instance.file %} 
+                                        <a href="{{ attach.instance.file.url }}" target="_blank" class="button"
+                                        style="text-decoration: none; background-color: #28a745; color: white; padding: 5px; margin-left: 10px; border-radius: 8px;">
+                                        ✓ View File</a>
+                                    {% else %}
+                                        {{ attach.file }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </form>
         <br>
+        <div id="attachments-template" style="display:none;">
+            <div class="attach-row formset-row" style="margin-bottom: 10px;">
+                <span>Name:</span> {{ attachments_formset.empty_form.description }}
+                <div class="file-area">
+                    {{ attachments_formset.empty_form.file }}
+                </div>
+            </div>
+        </div>
+
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const equipmentField = document.getElementById('id_equipment');
@@ -218,24 +362,18 @@
                 const selectedDescription = document.getElementById('selected-equipment-description');
                 const planningSection = document.getElementById('planning-section');
 
-                // This function handles the selection, auto-fills both fields, and updates the table
                 function setEquipment(item) {
-                    // 1. Update Hidden Form Field
                     equipmentField.innerHTML = `<option value="${item.id}" selected>${item.equipment_number}</option>`;
                     equipmentField.value = item.id;
 
-                    // 2. Auto-fill Search Inputs (Cross-population)
                     numberSearch.value = item.equipment_number;
                     descriptionSearch.value = item.equipment_description;
 
-                    // 3. Update Display Labels
                     selectedNumber.textContent = item.equipment_number;
                     selectedDescription.textContent = item.equipment_description;
                     
-                    // 4. Hide results box
                     resultsBox.style.display = 'none';
 
-                    // 5. FETCH WARRANTY TABLE (Standard JS Replacement for HTMX)
                     fetch(`{% url 'work_orders:load_components' %}?equipment=${item.id}`)
                         .then(response => response.text())
                         .then(html => {
@@ -263,7 +401,6 @@
                             }
                             data.results.forEach(item => {
                                 const row = document.createElement('div');
-                                // Show both Number and Description in the dropdown for clarity
                                 row.textContent = `${item.equipment_number} - ${item.equipment_description}`;
                                 row.style.padding = '8px';
                                 row.style.cursor = 'pointer';
@@ -278,7 +415,6 @@
                         });
                 }
 
-                // Search listeners for both Number and Description fields
                 numberSearch.addEventListener('input', function () {
                     runSearch(this.value, 'number');
                 });
@@ -287,7 +423,6 @@
                     runSearch(this.value, 'description');
                 });
 
-                // Toggle Planning Section
                 const planButton = document.getElementById('plan-button');
                 if (planButton) {
                     planButton.addEventListener('click', function () {
@@ -295,7 +430,6 @@
                     });
                 }
 
-                // Status Icon Logic
                 function bindYesNoIcon(fieldId, iconId) {
                     const field = document.getElementById(fieldId);
                     const icon = document.getElementById(iconId);
@@ -321,7 +455,6 @@
                 iconMappings.forEach(mapping => bindYesNoIcon(mapping[0], mapping[1]));
 
                 if (equipmentField && equipmentField.value) {
-                    // Fetch the table immediately for the existing equipment
                     fetch(`{% url 'work_orders:load_components' %}?equipment=${equipmentField.value}`)
                         .then(response => response.text())
                         .then(html => {
@@ -331,9 +464,36 @@
                             }
                         });
                 }
+
+                const systemDropdown = document.getElementById('id_fc_system');
+                const componentDropdown = document.getElementById('id_fc_component');
+
+                if (systemDropdown && componentDropdown) {
+                    systemDropdown.addEventListener('change', function () {
+                        const systemId = this.value;
+                        const url = "{% url 'work_orders:ajax_get_failure_components' %}";
+
+                        if (systemId) {
+                            fetch(`${url}?system_id=${systemId}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    componentDropdown.innerHTML = '<option value="">---------</option>';
+                                    
+                                    data.forEach(item => {
+                                        const option = document.createElement('option');
+                                        option.value = item.id;
+                                        option.textContent = item.name;
+                                        componentDropdown.appendChild(option);
+                                    });
+                                })
+                                .catch(err => console.error('Error loading failure components:', err));
+                        } else {
+                            componentDropdown.innerHTML = '<option value="">---------</option>';
+                        }
+                    });
+                }
             });
 
-            // Global function for the Work Order lookup input
             function lookupWorkOrder() {
                 const woSearchInput = document.getElementById('wo-search-input');
                 if (woSearchInput && woSearchInput.value) {
@@ -346,6 +506,93 @@
                 const form = document.getElementById('work-order-form');
                 document.getElementById('save_cont_trigger').value = 'true';
                 form.submit();
+            }
+
+            function addRow(prefix) {
+                const container = document.getElementById(`${prefix}-container`);
+                
+                let totalForms = document.getElementById(`id_${prefix}-TOTAL_FORMS`) || 
+                                document.getElementById('id_form-TOTAL_FORMS');
+                
+                if (!totalForms) {
+                    const allManagementForms = document.querySelectorAll('input[id$="TOTAL_FORMS"]');
+                    if (allManagementForms.length > 0) {
+                        totalForms = allManagementForms[allManagementForms.length - 1];
+                    }
+                }
+
+                if (!totalForms) {
+                    alert("Management form not found. Please ensure the management_form tag is in your HTML.");
+                    return;
+                }
+
+                let newIndex = parseInt(totalForms.value);
+                
+                const templateElement = document.getElementById(`${prefix}-template`);
+                if (!templateElement) {
+                    alert("Template element missing: " + prefix + "-template");
+                    return;
+                }
+
+                const templateHtml = templateElement.innerHTML;
+                const newRow = document.createElement('div');
+                newRow.className = `attach-row formset-row`;
+                newRow.style.marginBottom = "10px";
+                
+                newRow.innerHTML = templateHtml.replace(/__prefix__/g, newIndex);
+
+                container.appendChild(newRow);
+                
+                totalForms.value = newIndex + 1;
+            }
+
+            async function uploadAllFiles(btn, work_orderNumber) {
+                const rows = document.querySelectorAll('.attach-row');
+                let uploadCount = 0;
+
+                for (const row of rows) {
+                    const fileInput = row.querySelector('input[type="file"]');
+                    const descInput = row.querySelector('input[name*="description"]');
+                    const fileArea = row.querySelector('.file-area');
+
+                    if (!fileInput || !fileInput.files[0] || fileArea.querySelector('a.button')) {
+                        continue;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+                    formData.append('description', descInput ? descInput.value : "");
+                    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                    try {
+                        fileArea.innerHTML = "<span>Uploading...</span>";
+                        
+                        const response = await fetch(`/work_orders/upload/${work_orderNumber}/`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+
+                        if (data.success) {
+                            const fileArea = row.querySelector('.file-area');
+                            fileArea.innerHTML = `<a href="${data.url}" target="_blank" class="button" style="background-color: #28a745; color: white; padding: 5px; border-radius: 8px; text-decoration: none;">✓ View File</a>`;
+                            if (fileInput) fileInput.disabled = true;
+                            if (descInput) descInput.disabled = true;
+                            row.style.opacity = "0.7"; 
+                            uploadCount++;
+                        } else {
+                            fileArea.innerHTML = `<span style="color:red;">Error: ${data.error || 'Failed'}</span>`;
+                        }
+                    } catch (err) {
+                        console.error("Upload failed", err);
+                        fileArea.innerHTML = `<span style="color:red;">Server Error</span>`;
+                    }
+                }
+
+                if (uploadCount === 0) {
+                    alert("No new files found to upload.");
+                }
             }
         </script>
     </div>

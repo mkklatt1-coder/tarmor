@@ -11,9 +11,13 @@
 {% block sidebar %}
     <div class="leftnavbar" >
         <ul>
-            <li><a href="{% url 'planning:create_qm' %}">Create Plan</a> </li>
-            <li><a href="{% url 'planning:search_qm' %}">Search Plan</a> </li>
-            <li><a href="{% url 'planning:edit_qm' %}">Edit Plan</a> </li>
+            <li><a href="{% url 'planning:create_qm' %}">Create QM</a> </li>
+            <li><a href="{% url 'planning:search_qm' %}">Search QM</a> </li>
+            <li><a href="{% url 'planning:lookup_qm_for_edit' %}">Edit QM</a> </li>
+            <br>
+            <li><a href="{% url 'planning:create_plan' %}">Create Plan</a> </li>
+            <li><a href="{% url 'planning:search_plans' %}">Search Plan</a> </li>
+            <li><a href="{% url 'planning:edit_plan' %}">Edit Plan</a> </li>
             <br>
             <li><a href="{% url 'planning:forecast' %}">Forecast</a> </li>
             <br>

@@ -41,15 +41,15 @@
         <h2>Edit or Remove Component </h2>
         <br>
 
-        <h5 class="form"> &nbsp; Component &nbsp; &nbsp;
-            <form method="GET" action="{% url 'failures:edit_component' %}" style="display:inline;">
+        <form method="GET" action="{% url 'failures:edit_component' %}" style="display:inline;">
+            <h3> &nbsp; Component &nbsp; &nbsp;
                 <input class="input" type="text" id="component-search" name="component_name" list="component-options" value="{{ component_name }}" placeholder="Component Name.">
                 <datalist id="component-options"> 
                     {% for comp in all_components %} <option value="{{ comp.component_name }}"> {% endfor %} 
                 </datalist>
                 <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo">
-            </form> 
-        </h5>
+            </h3>
+        </form> 
         <br>
 
         <div id="form-container" style="{% if not component_name %}display: none;{% endif %}">
@@ -67,39 +67,54 @@
                 <div class="form" id="form-container">
                     {% for form in formset %}
 
-                        <div class="component-form">
+                        <table class="component-form">
                             
                             {{ form.id }}
 
                             {% if form.errors %}
                                 <div> {{ form.errors }} </div>
                             {% endif %}
-
-                            <div> 
-                                <label>Combined Component Key:</label>
-                                <input type="text" class="locked" value="{{ form.instance.combined_comp_key }}">
-                            </div>
-                            <br>
-
-                            <div>
-                                <label>Component Name:</label>
-                                {{ form.component_name }}
-                            </div>
-                            <br>
-
-                            <div>
-                                <label>Component Key: <small>Note: this must be 4 characters in UPPERCASE</small></label>
-                                {{ form.component_key }}
-                            </div>
-                            <br>
-
-                            <div>
-                                <label>Combined System Key:</label>
-                                {{ form.combined_sys_key }}
-                            </div>
-                            <br>
-                        </div>
+                            <tr>
+                                <td>Combined Component Key:</td>
+                                <td><input type="text" class="locked" value="{{ form.instance.combined_comp_key }}"></td>
+                            </tr>
+                            <tr>
+                                <td>Component Name:</td>
+                                <td>{{ form.component_name }}</td>
+                            </tr>
+                            <tr>
+                                <td>Component Key</td>
+                                <td>
+                                    <input type="text" 
+                                        name="form-{{ forloop.counter0 }}-component_key" 
+                                        id="id_form-{{ forloop.counter0 }}-component_key" 
+                                        value="{{ form.component_key.value|default:'' }}" 
+                                        class="input formset-comp-key" 
+                                        maxlength="4" 
+                                        style="text-transform: uppercase;">
+                                </td>
+                                <td><small>Note: this must be 4 characters in UPPERCASE</small></td>
+                            </tr>
+                            <tr>
+                                <td>Combined System Key:</td>
+                                <td>{{ form.combined_sys_key }}</td>
+                            </tr>
+                        </table>
+                        <br>
                     {% endfor %}
+                </div>
+                <div class="filter-container">
+                    <label for="systemSearch"><strong>Add Systems (by Name or Asset Key):</strong></label><br>
+                    <input class="input" type="text" id="systemSearch" placeholder="Type to filter..." onkeyup="filterAndShowSystems()"><br>
+                    <br>
+                    <div class="system-list" id="systemList" style="display: block; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px;">
+                        {% for system in systems %}
+                        <label class="system-item" data-name="{{ system.system_name }}" data-key="{{ system.combined_sys_key }}" style="display: block; margin-bottom: 5px; padding: 3px; cursor: pointer;">
+                            <input class="input" type="checkbox" name="selected_systems" value="{{ system.id }}" onchange="validateUniqueness()">
+                            <span style="font-family: monospace; font-weight: bold; color: #00009c;">{{ system.combined_sys_key }}</span> — {{ system.system_name }}
+                        </label>
+                        {% endfor %}
+                    </div>
                 </div>
             </form>
         </div>
@@ -108,7 +123,7 @@
     <script>
         const searchInput = document.getElementById('component-search');
         const datalist = document.getElementById('component-options');
-        const formContainer = document.getElementById('edit-form-container');
+        const formContainer = document.getElementById('form-container');
 
         if ("{{ component_name }}".length > 0) {
             formContainer.style.display = 'block';
@@ -124,13 +139,94 @@
             }
         });
 
-        // Auto-submit when an option is selected from the datalist
         document.getElementById('component-search').addEventListener('input', function() {
             const options = Array.from(document.getElementById('component-options').options).map(opt => opt.value);
             if (options.includes(this.value)) {
                 this.form.submit();
             }
         });
+
+        function filterAndShowSystems() {
+            const query = document.getElementById('systemSearch').value.toLowerCase().trim();
+            const items = document.querySelectorAll('.system-item');
+            
+            if (query.length === 0) {
+                items.forEach(item => {
+                    item.style.display = "block";
+                });
+                return;
+            }
+
+            items.forEach(item => {
+                const name = item.getAttribute('data-name').toLowerCase();
+                const key = item.getAttribute('data-key').toLowerCase();
+                
+                if (name.includes(query) || key.includes(query)) {
+                    item.style.display = "block"; 
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        const component_keyInput = document.getElementById('component_key');
+        const checkboxes = document.getElementsByName('selected_systems');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function validateUniqueness() {
+            const firstKeyInput = document.querySelector('.formset-comp-key');
+            const submitBtn = document.getElementById('hidden-submit');
+            const checkboxes = document.getElementsByName('selected_systems');
+
+            if (!firstKeyInput) return;
+    
+            const val = firstKeyInput.value.toUpperCase().trim();
+            const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+            
+            if (val.length !== 4 || checkedBoxes.length === 0) {
+                return;
+            }
+
+            const selectedKeys = checkedBoxes.map(cb => cb.closest('.system-item').getAttribute('data-key'));
+
+            fetch(`/failures/check-uniqueness/?suffix=${val}&${selectedKeys.map(k => `asset_keys[]=${k}`).join('&')}`)
+                .then(response => response.json())
+                .then(data => {
+                    const existing = data.existing_codes;
+                    let hasError = false;
+
+                    checkboxes.forEach(cb => {
+                        const item = cb.closest('.system-item');
+                        const fullCode = item.getAttribute('data-key') + val;
+                        
+                        if (cb.checked && existing.includes(fullCode)) {
+                            item.style.color = 'red';
+                            hasError = true;
+                        } else {
+                            item.style.color = '';
+                        }
+                    });
+                })
+                .catch(err => console.error("Validation error:", err));
+        }
+
+        document.querySelectorAll('.formset-comp-key').forEach(input => {
+            input.addEventListener('input', validateUniqueness);
+        });
+
+        document.querySelectorAll('input[name="selected_systems"]').forEach(cb => {
+            cb.addEventListener('change', validateUniqueness);
+        });
+
+        document.getElementById('edit_component_form').onsubmit = function(e) {
+            const firstKeyInput = document.querySelector('.formset-comp-key');
+            const checkedBoxes = document.querySelectorAll('input[name="selected_systems"]:checked');
+            
+            if (firstKeyInput && firstKeyInput.value.trim().length !== 4) {
+                e.preventDefault();
+                alert("Component key must be exactly 4 characters.");
+            }
+        };
     </script>
 
 {% endblock %}

@@ -141,6 +141,7 @@
     <br>
     <div>
         <h2>Shift Report Archive</h2>
+
         <br>
         <table class="table">
             <thead>
@@ -153,7 +154,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in reports %}
+                {% for item in reports|slice:":14"  %}
                 <tr>
                     <td class="td">{{ item.date }}</td>
                     <td class="td">{{ item.get_shift_display }}</td>
@@ -178,34 +179,59 @@
 <script>
     let isDragging = false;
     let selectedSlots = [];
+    let activeRow = null;
     document.addEventListener('mousedown', (e) => {
         if (e.target.classList.contains('slot')) {
             isDragging = true;
+            activeRow = e.target.closest('tr');
+            // Get the index of the clicked slot within its row
+            const slots = Array.from(activeRow.querySelectorAll('.slot'));
+            startSlotIndex = slots.indexOf(e.target);
+            
             clearSelection();
-            toggleSlot(e.target);
+            updateSelection(e.target);
         }
     });
+
     document.addEventListener('mouseover', (e) => {
         if (isDragging && e.target.classList.contains('slot')) {
-            toggleSlot(e.target);
+            // Only process if we are still in the same row
+            if (e.target.closest('tr') === activeRow) {
+                updateSelection(e.target);
+            }
         }
     });
+
     document.addEventListener('mouseup', () => {
         if (isDragging) {
             isDragging = false;
             if (selectedSlots.length > 0) {
                 showStatusPopup();
             }
+            startSlotIndex = null;
+            activeRow = null;
         }
     });
-    function toggleSlot(el) {
-        el.classList.add('selected');
-        if (!selectedSlots.includes(el)) selectedSlots.push(el);
-    }
-    function clearSelection() {
-        document.querySelectorAll('.slot.selected').forEach(s => s.classList.remove('selected'));
+
+    function updateSelection(currentSlot) {
+        const slots = Array.from(activeRow.querySelectorAll('.slot'));
+        const currentIndex = slots.indexOf(currentSlot);
+        
+        // Determine the range (works dragging left-to-right or right-to-left)
+        const start = Math.min(startSlotIndex, currentIndex);
+        const end = Math.max(startSlotIndex, currentIndex);
+        
+        // Clear previous selection highlight within this row only
+        activeRow.querySelectorAll('.slot.selected').forEach(s => s.classList.remove('selected'));
         selectedSlots = [];
+
+        // Fill the entire range
+        for (let i = start; i <= end; i++) {
+            slots[i].classList.add('selected');
+            selectedSlots.push(slots[i]);
+        }
     }
+
     function showStatusPopup() {
         let status = prompt("Enter 'D' for Down, 'W' for Worked, or 'P' for Planned (Leave blank to clear):");
         let val = status ? status.toUpperCase() : "";
@@ -241,7 +267,6 @@
         row.querySelector('.tw-total').value = totalWorked.toFixed(2);
         row.querySelector('.av-total').value = available.toFixed(2);
         const statusDropdown = row.querySelector('.status-choice');
-        statusDropdown.value = (available < 12.0) ? "Down" : "Available";
     }
     document.querySelectorAll('.slot').forEach(slot => {
         const val = slot.innerText.trim();

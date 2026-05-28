@@ -25,14 +25,34 @@
         <table class="table-container">
             <thead>
                 <tr>
-                    <th class="th"><a href="?sort=work_order&{{ filter_url }}" class="sort_header">Work Order{% if sort_by == 'work_order' %}▲{% endif %}</a></th>
-                    <th class="th"><a href="?sort=equipment&{{ filter_url }}" class="sort_header">Equipment Number{% if sort_by == 'equipment' %}▲{% endif %}</a></th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'work_order' %}-work_order{% else %}work_order{% endif %}" class="sort_header">
+                            Work Order {% if sort == 'work_order' %} ▲ {% elif sort == '-work_order' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment' %}-equipment{% else %}equipment{% endif %}" class="sort_header">
+                            Equipment Number {% if sort == 'equipment' %} ▲ {% elif sort == '-equipment' %} ▼ {% endif %}
+                        </a>
+                    </th>
                     <th class="th">Equipment Description</th>
                     <th class="th">Troubleshoot Description</th>
                     <th class="th">Repair Description</th>
-                    <th class="th"><a href="?sort=date_created&{{ filter_url }}" class="sort_header">Date Created{% if sort_by == 'date_created' %}▲{% endif %}</a></th>
-                    <th class="th"><a href="?sort=plan_start_date&{{ filter_url }}" class="sort_header">Plan Start Date{% if sort_by == 'plan_start_date' %}▲{% endif %}</a></th>
-                    <th class="th"><a href="?sort=priority&{{ filter_url }}" class="sort_header">Priority{% if sort_by == 'priority' %}▲{% endif %}</a></th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'date_created' %}-date_created{% else %}date_created{% endif %}" class="sort_header">
+                            Date Created {% if sort == 'date_created' %} ▲ {% elif sort == '-date_created' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'plan_start_date' %}-plan_start_date{% else %}plan_start_date{% endif %}" class="sort_header">
+                            Plan Start Date {% if sort == 'plan_start_date' %} ▲ {% elif sort == '-plan_start_date' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'priority' %}-priority{% else %}priority{% endif %}" class="sort_header">
+                            Priority {% if sort == 'priority' %} ▲ {% elif sort == '-priority' %} ▼ {% endif %}
+                        </a>
+                    </th>
                     <th class="th">Edit</th>
                 </tr>
             </thead>

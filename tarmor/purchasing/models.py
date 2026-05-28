@@ -10,6 +10,8 @@ from io import BytesIO
 import barcode
 from barcode.writer import ImageWriter
 from django.core.files import File
+from projects.models import Project
+
 
 purchase_type_choices = [
     ('P', 'Purchase Order'),
@@ -32,12 +34,14 @@ class Purchase(models.Model):
     purchase_type = models.CharField(max_length=1, choices=purchase_type_choices)
     purchase_number = models.CharField(max_length=9, unique=True, blank=True)
     barcode_image = models.ImageField(upload_to='barcodes/', blank=True, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_orders')
     date = models.DateField(default=timezone.now)
     bill_location = models.CharField(max_length=20, choices=billing_choices)
     wo_cc = models.CharField(max_length=50)
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     status = models.CharField(max_length=10, choices=status_choices, default="Pending")
     additional_information = models.TextField(null=True, blank=True)
+
     class Meta:
         ordering = ['-id']
     def __str__(self):
@@ -64,7 +68,22 @@ class Purchase(models.Model):
         total = self.lines.aggregate(total=Sum('total_price'))['total'] or Decimal('0.00')
         self.grand_total = total
         Purchase.objects.filter(pk=self.pk).update(grand_total=total)
+            
+    @property
+    def wo_cc_display(self):
+        """Returns the actual WO or CC value instead of the ID"""
+        if not self.wo_cc:
+            return ""
+        try:
+            if self.bill_location == 'Work Order':
+                return WorkOrder.objects.get(work_order=self.wo_cc).work_order
+            elif self.bill_location == 'Cost Centre':
+                return CostCentre.objects.get(Cost_Centre=self.wo_cc).Cost_Centre
+        except (WorkOrder.DoesNotExist, CostCentre.DoesNotExist):
+            return self.wo_cc
         
+        return self.wo_cc
+    
     def save(self, *args, **kwargs):
         if not self.purchase_number:
             with transaction.atomic():
@@ -84,22 +103,7 @@ class Purchase(models.Model):
             buffer.seek(0) 
             filename = f'barcode-{self.purchase_number}.png'
             self.barcode_image.save(filename, File(buffer), save=False)
-            super().save(*args, **kwargs)
-            
-    @property
-    def wo_cc_display(self):
-        """Returns the actual WO or CC value instead of the ID"""
-        if not self.wo_cc:
-            return ""
-        try:
-            if self.bill_location == 'Work Order':
-                return WorkOrder.objects.get(work_order=self.wo_cc).work_order
-            elif self.bill_location == 'Cost Centre':
-                return CostCentre.objects.get(Cost_Centre=self.wo_cc).Cost_Centre
-        except (WorkOrder.DoesNotExist, CostCentre.DoesNotExist):
-            return self.wo_cc
-        
-        return self.wo_cc
+        super().save(*args, **kwargs)
         
         
 class PurchaseLine(models.Model):

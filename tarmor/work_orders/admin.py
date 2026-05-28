@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import StatusChoices, WorkType, WorkOrder
+from failures.models import System
 
 @admin.register(StatusChoices)
 class StatusChoicesAdmin(admin.ModelAdmin):
@@ -45,6 +46,9 @@ class WorkOrderAdmin(admin.ModelAdmin):
         }),
     )
 
+    class Media:
+        js = ('js/admin_filter.js',)
+    
     def barcode_preview(self, obj):
         if obj.barcode_image:
             from django.utils.html import format_html

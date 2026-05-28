@@ -1,0 +1,149 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Tire Inspections
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="javascript:void(0)" onclick="submitForm('save')">Save</a></li>
+            <li><a href="{% url 'condition_monitoring:tires' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Tire Inspections &nbsp; &nbsp; <button type="button" onclick="addFormRow()">Add</button></h2>
+    <br>
+    <form id="TireInspectionForm" method="POST">
+        {% csrf_token %}
+        <table class="table-bare-container">
+            <tbody class="form-info">
+                <tr>
+                    <td>Date</td>
+                    <td>{{ form.date }}</td>
+                    <td>Equipment #</td>
+                    <td>{{ form.equipment }}</td>
+                    <td>WO #</td>
+                    <td>{{ form.work_order }}</td>
+                </tr>
+                <tr>
+                    <td>Meter</td>
+                    <td>{{ form.meter }}</td>
+                    <td>Meter Reading</td>
+                    <td>{{ form.meter_reading }}</td>
+                    <td>Comments</td>
+                    <td>{{ form.comments }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        
+        {{ formset.management_form }}
+        <div id="tire-entries-container">
+            {% for reading_form in formset %}
+                {{ reading_form.id }}
+
+                <div class="tire-entry-card">
+                    <h4>
+                        Position {{ reading_form.position }}
+                         <span style="display: none;">{{ reading_form.DELETE }}</span>
+                        <button type="button" onclick="triggerRowDelete(this)" class="remove_button">Remove</button>
+                    </h4>
+                    <table class="table-bare-container">
+                        <tbody>
+                            <tr>
+                                <td>Tire Identifier</td>
+                                <td>{{ reading_form.tire_id }}</td>
+                                <td>Tread Depth</td>
+                                <td>{{ reading_form.tread_depth }}</td>
+                                <td>Tire Diameter</td>
+                                <td>{{ reading_form.tire_diameter }}</td>
+                                <td>Inflation Pressure</td>
+                                <td>{{ reading_form.inflation_pressure }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div id="empty-form-template" style="display:none;">
+            <div class="tire-entry-card">
+                <h4>
+                    Position {{ formset.empty_form.position }}
+                    <span style="display: none;">{{ formset.empty_form.DELETE }}</span>
+                    <button type="button" onclick="triggerRowDelete(this)" class="remove_button">Remove</button>
+                </h4>
+                <table class="table-bare-container">
+                    <tbody>
+                        <tr>
+                            <td>Tire Identifier</td>
+                            <td>{{ formset.empty_form.tire_id }}</td>
+                            <td>Tread Depth</td>
+                            <td>{{ formset.empty_form.tread_depth }}</td>
+                            <td>Tire Diameter</td>
+                            <td>{{ formset.empty_form.tire_diameter }}</td>
+                            <td>Inflation Pressure</td>
+                            <td>{{ formset.empty_form.inflation_pressure }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function submitForm() {
+        document.getElementById('TireInspectionForm').submit();
+    }
+    
+    function addFormRow() {
+        const totalForms = document.getElementById('id_readings-TOTAL_FORMS') || 
+                        document.getElementById('id_tireinspectionreading_set-TOTAL_FORMS') ||
+                        document.querySelector('input[id$="-TOTAL_FORMS"]');
+                        
+        if (!totalForms) {
+            console.error("Critical Error: Django management form total form tracker not found on this page.");
+            return;
+        }
+
+        const formIndex = parseInt(totalForms.value);
+        const emptyBlueprintHtml = document.getElementById('empty-form-template').innerHTML.replaceAll('__prefix__', formIndex);
+        const tempContainerNode = document.createElement('div');
+        tempContainerNode.innerHTML = emptyBlueprintHtml;
+        
+        const newCardBlock = tempContainerNode.querySelector('.tire-entry-card');
+        document.getElementById('tire-entries-container').appendChild(newCardBlock);
+        totalForms.value = formIndex + 1;
+    }
+
+    function triggerRowDelete(buttonElement) {
+        const cardGroup = buttonElement.closest('.tire-entry-card');
+        const hiddenCheckbox = cardGroup.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+        if (hiddenCheckbox) {
+            hiddenCheckbox.checked = true;
+            cardGroup.style.opacity = '0.4';
+            cardGroup.style.pointerEvents = 'none';
+            buttonElement.textContent = "Marked for Deletion";
+            buttonElement.style.backgroundColor = "#ddd";
+            buttonElement.style.color = "#666";
+        } else {
+            cardGroup.remove();
+            const totalForms = document.getElementById('id_readings-TOTAL_FORMS') || document.querySelector('input[id$="-TOTAL_FORMS"]');
+            if (totalForms) {
+                totalForms.value = parseInt(totalForms.value) - 1;
+            }
+        }
+    }
+</script>
+{% endblock %}

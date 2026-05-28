@@ -8,4 +8,5 @@ urlpatterns = [
     path('add_timesheet/', views.add_timesheet, name='add_timesheet'),
     path('edit/', views.edit_timesheet, name='edit_timesheet'),
     path('search/', views.search_timesheets, name='search_timesheets'),
+    path('export/excel/', views.export_timesheets_excel, name='export_timesheets_excel'),
 ]

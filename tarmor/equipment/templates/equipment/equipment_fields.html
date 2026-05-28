@@ -1,65 +1,109 @@
-<label>Eq Number:</label> {{equploadform.Equipment_Number}} &nbsp;
+<div class="container-wrapper" style="width: 100%;">
+    <table class="table-bare-container">
+        <tr>
+            <td>Eq Number</td>
+            <td colspan="2" id="eq-number-field">{{ equploadform.Equipment_Number }}</td>
+            <td>Asset Type</td>
+            <td colspan="2">
+                <select name="Asset_Type" 
+                    hx-get="{% url 'equipment:load_options' %}" 
+                    hx-target="#equipment-table-wrapper" 
+                    hx-include="closest form" 
+                    class="input">
+                    {% for value, text in equploadform.fields.Asset_Type.choices %}
+                        <option value="{{ value }}" {% if equploadform.Asset_Type.value == value %}selected{% endif %}>{{ text }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
 
-            <label>Asset Type:</label>
-            <select name="Asset_Type" 
-                hx-get="{% url 'equipment:load_options' %}" 
-                hx-target="#dynamic-form-fields" 
-                hx-include="closest form" 
-                class="input">
-                {% for value, text in equploadform.fields.Asset_Type.choices %}
-                    <option value="{{ value }}" {% if equploadform.Asset_Type.value == value %}selected{% endif %}>{{ text }}</option>
-                {% endfor %}
-            </select>&nbsp;
+        <tr>
+            <td>Eq Type</td>
+            <td>
+                <select name="Equipment_Type" 
+                    hx-get="{% url 'equipment:load_options' %}" 
+                    hx-target="#equipment-table-wrapper"
+                    hx-include="closest form"
+                    class="input">
+                    {% for value, text in equploadform.fields.Equipment_Type.choices %}
+                        <option value="{{ value }}" {% if equploadform.Equipment_Type.value == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>Purchase Order</td>
+            <td>{{equploadform.PO_Number}}</td>
+            <td>Eq Status</td>
+            <td>{{equploadform.Equipment_Status}}</td>
+        </tr>
 
-            <label>Eq Type:</label> 
-            <select name="Equipment_Type" 
-                hx-get="{% url 'equipment:load_options' %}" 
-                hx-target="#dynamic-form-fields" 
-                hx-include="closest form"
-                class="input">
-                {% for value, text in equploadform.fields.Equipment_Type.choices %}
-                    <option value="{{ value }}" {% if equploadform.Equipment_Type.value == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
-                {% endfor %}
-            </select> &nbsp;
-            <label>Eq Status:</label> {{equploadform.Equipment_Status}} <br>
-            <br>
-            <label>Eq Description:</label> {{equploadform.Equipment_Description}} &nbsp;
-            <label>Commission Date:</label> {{equploadform.Commissioning_Date}} &nbsp;
-            <label>Decommission Date:</label> {{equploadform.Decommissioning_Date}} <br>
-            <br>
-            <label>Make:</label> {{equploadform.Make}} &nbsp;
-            <label>Model:</label> {{equploadform.Model}} &nbsp;
-            <label>Serial Number:</label> {{equploadform.Serial_Number}} &nbsp;
-            <label>Resp Garage:</label> {{equploadform.Garage}} <br>
-            <br>
-            <label>Purchase Order:</label> {{equploadform.PO_Number}} &nbsp;
-            <label>Eq Value:</label> {{equploadform.Equipment_Value}} &nbsp;
-            <label>Warranty Start:</label> {{equploadform.Warranty_Start_Date}} &nbsp;
-            <label> Warranty End:</label> {{equploadform.Warranty_End_Date}} <br>
-            <br>
-            <label>Overhaul Period:</label> {{equploadform.Overhaul_Period}} &nbsp;
-            <label>Overhaul Value:</label> {{equploadform.Overhaul_Value}} &nbsp;
-            <label>End Of Life:</label> {{equploadform.End_of_Life}} <br>
-            <br>
-            {% if not equploadform.Engine_HP_Rating.is_hidden %}
-                    <label>Engine HP:</label> {{equploadform.Engine_HP_Rating}} &nbsp;
-            {% endif %} 
+        <tr>
+            <td>Eq Description</td>
+            <td colspan="5">{{equploadform.Equipment_Description}}</td>
+        </tr>
+
+        <tr>
+            <td>Make</td>
+            <td>{{equploadform.Make}}</td>
+            <td>Model</td>
+            <td>{{equploadform.Model}}</td>
+            <td>Serial Number</td>
+            <td>{{equploadform.Serial_Number}}</td>
+        </tr>
+
+        <tr>
+            <td>Resp Garage</td>
+            <td>{{equploadform.Garage}}</td>
+            <td>Warranty Start</td>
+            <td>{{equploadform.Warranty_Start_Date}}</td>
+            <td>Warranty End</td>
+            <td>{{equploadform.Warranty_End_Date}}</td>
+        </tr>
+
+        <tr>
+            
+            <td>Eq Value</td>
+            <td>{{equploadform.Equipment_Value}}</td>
+            <td>Commission Date</td>
+            <td>{{equploadform.Commissioning_Date}}</td>
+            <td>Decommission Date</td>
+            <td>{{equploadform.Decommissioning_Date}}</td>
+        </tr>
+
+        <tr>
+            <td>Overhaul Period</td>
+            <td>{{equploadform.Overhaul_Period}}</td>
+            <td>Overhaul Value</td>
+            <td>{{equploadform.Overhaul_Value}}</td>
+            <td>End Of Life</td>
+            <td>{{equploadform.End_of_Life}}</td>
+        </tr>
+
+        {% if not equploadform.Engine_HP_Rating.is_hidden %}
+        <tr>
+            <td>Engine HP</td>
+            <td>{{equploadform.Engine_HP_Rating}}</td>
             {% if not equploadform.CANMET_Number.is_hidden %}
-                    <label>CANMET Number:</label> {{equploadform.CANMET_Number}} &nbsp;
-                    <label>Ventilation Rating:</label> {{equploadform.Ventilation_Rating}} <br>
+                <td>CANMET Number</td>
+                <td>{{equploadform.CANMET_Number}}</td>
+                <td>Ventilation Rating</td>
+                <td>{{equploadform.Ventilation_Rating}}</td>
             {% endif %} 
-            <br>
-            {% if not equploadform.Eng_Tier.is_hidden %}
-                <label>Eng_Tier:</label> {{ equploadform.Eng_Tier }} &nbsp;
-            {% endif %}
+        </tr>
+        {% endif %}
+
+        {% if not equploadform.Eng_Tier.is_hidden %}
+        <tr>
+            <td>Eng_Tier</td>
+            <td>{{ equploadform.Eng_Tier }}</td>
             {% if not equploadform.Cab_Style.is_hidden %}
-                <label>Cab Style:</label> {{ equploadform.Cab_Style }} &nbsp;
+                <td>Cab Style</td>
+                <td>{{ equploadform.Cab_Style }}</td>
             {% endif %}
             {% if not equploadform.Box_Type.is_hidden %}
-                <label>Box Style:</label> {{ equploadform.Box_Type }} <br>
+                <td>Box Style</td>
+                <td>{{ equploadform.Box_Type }}</td>
             {% endif %}
-            <br>
-            <label>Additional Information:</label><br>
-            {{equploadform.Additional_Information}}<br>
-            <br>
-        </div>
+        </tr>
+        {% endif %}
+    </table>
+</div>

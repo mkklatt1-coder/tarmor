@@ -8,7 +8,7 @@ class NewSupplierForm(forms.ModelForm):
                   'contact', 'phone', 'email', 'supplier_discount', 'payment_method',
                   'supplier_currency', 'additional_information')
         widgets = {
-            'additional_information': forms.Textarea(attrs={'rows': 4}),
+            'additional_information': forms.Textarea(attrs={'rows': 4, 'style': 'width: 90%'}),
         }
 
     def __init__(self, *args, **kwargs):

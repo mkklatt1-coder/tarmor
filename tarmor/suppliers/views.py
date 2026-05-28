@@ -60,7 +60,6 @@ def search_suppliers(request):
     province_state = request.GET.get('province_state', '')
     status = request.GET.get('status', '')
 
-    sort_by = request.GET.get('sort', 'supplier_name')
     suppliers = Supplier.objects.all()
 
     if supplier_name:
@@ -70,6 +69,33 @@ def search_suppliers(request):
     if status:
         suppliers = suppliers.filter(status__icontains=status)
 
+    sort_by = request.GET.get('sort', 'supplier_name')
+    is_descending = sort_by.startswith('-')
+    clean_sort_key = sort_by.lstrip('-')
+
+    sort_mapping = {
+        'supplier_name': 'supplier_name',
+        'status': 'status',
+        'street_address': 'street_address',
+        'city': 'city',
+        'province_state': 'province_state',
+        'country': 'country',
+        'postal_zip': 'postal_zip',
+        'contact': 'contact',
+        'phone': 'phone',
+        'email': 'email',
+        'supplier_discount': 'supplier_discount',
+        'payment_method': 'payment_method',
+        'supplier_currency': 'supplier_currency',
+    }
+
+    if clean_sort_key in sort_mapping:
+        db_field = sort_mapping[clean_sort_key]
+        order_field = f"-{db_field}" if is_descending else db_field
+        suppliers = suppliers.order_by(order_field)
+    else:
+        suppliers = suppliers.order_by('supplier_name')
+
     params = request.GET.copy()
     if 'sort' in params:
         del params['sort']
@@ -78,11 +104,12 @@ def search_suppliers(request):
     context = {
         'suppliers': suppliers,
         'filter_url': filter_url,
-        'sort_by': sort_by,
+        'sort': sort_by,
         'supplier_name': supplier_name,
         'province_state': province_state,
         'status': status
     }
+
     return render(request, 'suppliers/search_suppliers.html', context)
 
 def export_suppliers_excel(request):

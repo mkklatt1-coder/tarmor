@@ -1,0 +1,176 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}
+    Search Cylinder Temps
+{% endblock %}
+{% block top_navigation %}{% endblock %}
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="exportFilteredExcel()">Export</a></li>
+        <li><a href="{% url 'condition_monitoring:cylinder_temps' %}">Return</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+{% block content %}
+<div class="main">
+    <h2>Search Cylinder Temps</h2>
+    <br>
+    
+    <form method="GET" id="search-form">
+        <h3> 
+            Search Criteria &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                <a href="{% url 'condition_monitoring:search_cylinder_temps' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h3>
+        <table class="table-bare-container">
+            <tbody>
+                <tr>
+                    <td>Equipment</td>
+                    <td>
+                        <input type="text" name="equipment_number" value="{{ eq_num_val }}" list="eq-num-list" placeholder="Number or Desc..." class="input" autocomplete="off">
+                        <datalist id="eq-num-list">
+                            {% for eq in all_equipment_suggestions %}
+                                <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                    {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                                </option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+
+                    <td>Work Order</td>
+                    <td>
+                        <input type="text" name="work_order_number" value="{{ wo_num_val }}" list="wo-num-list" placeholder="WO# or Desc..." class="input" autocomplete="off">
+                        <datalist id="wo-num-list">
+                            {% for wo in all_work_order_suggestions %}
+                                <option value="{{ wo.work_order }}" label="{{ wo.troubleshoot_description }}">
+                                    {{ wo.work_order }} - {{ wo.troubleshoot_description }}
+                                </option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+
+                    <td>Meter Type</td>
+                    <td>
+                        <select name="meter" class="input">
+                            <option value="">All Meters</option>
+                            {% for choice_value in meter_choices %}
+                                <option value="{{ choice_value }}" {% if selected_meter == choice_value %}selected{% endif %}>
+                                    {{ choice_value }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+    <br>
+    <h3>Search Results</h3>
+    <br>
+    <table class="table-container">
+        <thead>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'date' %}-date{% else %}date{% endif %}" class="sort_header">
+                    Date {% if sort == 'date' %} ▲ {% elif sort == '-date' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_number' %}-equipment_number{% else %}equipment_number{% endif %}" class="sort_header">
+                    Equipment {% if sort == 'equipment_number' %} ▲ {% elif sort == '-equipment_number' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_desc' %}-equipment_desc{% else %}equipment_desc{% endif %}" class="sort_header">
+                    Equipment Description {% if sort == 'equipment_desc' %} ▲ {% elif sort == '-equipment_desc' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'work_order' %}-work_order{% else %}work_order{% endif %}" class="sort_header">
+                    Work Order {% if sort == 'work_order' %} ▲ {% elif sort == '-work_order' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'wo_desc' %}-wo_desc{% else %}wo_desc{% endif %}" class="sort_header">
+                    WO Troubleshoot Desc {% if sort == 'wo_desc' %} ▲ {% elif sort == '-wo_desc' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'meter' %}-meter{% else %}meter{% endif %}" class="sort_header">
+                    Meter {% if sort == 'meter' %} ▲ {% elif sort == '-meter' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'meter_reading' %}-meter_reading{% else %}meter_reading{% endif %}" class="sort_header">
+                    Meter Reading {% if sort == 'meter_reading' %} ▲ {% elif sort == '-meter_reading' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">Cyl #</th>
+            <th class="th">
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'temp_reading' %}-temp_reading{% else %}temp_reading{% endif %}" class="sort_header">
+                    Temp Reading {% if sort == 'temp_reading' %} ▲ {% elif sort == '-temp_reading' %} ▼ {% endif %}
+                </a>
+            </th>
+            <th class="th">UOM</th>
+            <th class="th">Comments</th>
+            <th class="th">Edit</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for temp in cyl_temps %}
+                {% for reading in temp.cyl_temp_readings.all %}
+                    <tr>
+                        <td class="td">{{ temp.date }}</td>
+                        <td class="td">{{ temp.equipment }}</td>
+                        <td class="td">{{ temp.equipment.Equipment_Description }}</td>
+                        <td class="td">{{ temp.work_order.work_order }}</td>
+                        <td class="td">{{ temp.work_order.troubleshoot_description }}</td>
+                        <td class="td">{{ temp.meter.meter_type }}</td>
+                        <td class="td">{{ temp.meter_reading }}</td>
+                        <td class="td">{{ reading.cylinder_number }}</td>
+                        <td class="td">{{ reading.temp_reading }}</td>
+                        <td class="td">{{ reading.uom }}</td>
+                        <td class="td">{{ temp.comments }}</td>
+                        <td class="td">
+                            <a href="{% url 'condition_monitoring:edit_cylinder_temps' temp.id %}">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td class="td">{{ temp.date }}</td>
+                        <td class="td">{{ temp.equipment }}</td>
+                        <td class="td">{{ temp.equipment.Equipment_Description }}</td>
+                        <td class="td">{{ temp.work_order.work_order }}</td>
+                        <td class="td">{{ temp.work_order.troubleshoot_description }}</td>
+                        <td class="td">{{ temp.meter.meter_type }}</td>
+                        <td class="td">{{ temp.meter_reading }}</td>
+                        <td class="td">{{ temp.comments }}</td>
+                        <td class="td">
+                            <a href="{% url 'condition_monitoring:edit_cylinder_temps' temp.id %}">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% empty %}
+                <tr>
+                    <td class="td" colspan="12">No cylinder temps found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    function exportFilteredExcel() {
+        const activeFilters = window.location.search;
+        const exportBaseUrl = "{% url 'condition_monitoring:export_cylinder_temps_excel' %}";
+        window.location.href = exportBaseUrl + activeFilters;
+    }
+</script>
+{% endblock %}

@@ -9,8 +9,8 @@ class EmployeeCertificationInline(admin.TabularInline):
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ('First_Name', 'Last_Name', 'Position', 'Status', 'Compensation', 'Comp_UoM', 'Email')
-    list_filter = ('Status', 'Comp_UoM', 'Prov_State', 'Country')
+    list_display = ('First_Name', 'Last_Name', 'Position', 'Status', 'Email')
+    list_filter = ('Status', 'Prov_State', 'Country')
     search_fields = ('First_Name', 'Last_Name', 'Email', 'Position')
     
     # Groups fields into sections for a cleaner edit form
@@ -18,8 +18,8 @@ class EmployeeAdmin(admin.ModelAdmin):
         ('Basic Information', {
             'fields': (('First_Name', 'Middle_Name', 'Last_Name'), ('Status', 'Position'))
         }),
-        ('Compensation & Employment', {
-            'fields': (('Compensation', 'Comp_UoM'), ('Start_Date', 'Last_Date'), ('crew'))
+        ('Employment', {
+            'fields': (('Start_Date', 'Last_Date'), ('crew'))
         }),
         ('Contact Details', {
             'fields': ('Phone', 'Email', 'Street_Address', 'City', 'Prov_State', 'Country', 'Postal_Zip')
@@ -47,19 +47,19 @@ class ShiftPatternAdmin(admin.ModelAdmin):
 
 @admin.register(Crew)
 class CrewAdmin(admin.ModelAdmin):
-    list_display = ('full_shift_id', 'location_code', 'shift_letter', 'pattern', 'start_date', 'province')
+    list_display = ('full_shift_id', 'location_code', 'shift_letter', 'pattern', 'start_date', 'province', 'rotation')
     list_filter = ('province', 'pattern', 'location_code')
     search_fields = ('location_code', 'shift_letter')
     
     fieldsets = (
         ('Identity', {'fields': ('location_code', 'shift_letter', 'province')}),
-        ('Schedule Logic', {'fields': ('pattern', 'start_date')}),
+        ('Schedule Logic', {'fields': ('pattern', 'start_date', 'rotation')}),
     )
         
 @admin.register(CrewShiftRotation)
 class CrewShiftRotationAdmin(admin.ModelAdmin):
     
-    list_display = ('Shift_ID', 'Location', 'Coverage_Type', 'Calendar_Month', 'Start_Date', 'batch_id', 'created_at')
+    list_display = ('Shift_ID', 'Location', 'Coverage_Type', 'Calendar_Month', 'Start_Date', 'batch_id', 'created_at', 'hrs_per_shift', 'shift_start')
     list_filter = ('Coverage_Type', 'Calendar_Month', 'province', 'created_at') 
     search_fields = ('Shift_ID', 'Location__Facility_Code', 'batch_id') 
     
@@ -67,6 +67,6 @@ class CrewShiftRotationAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Deployment', {'fields': ('Shift_ID', 'Location', 'province', 'batch_id')}),
-        ('Timing', {'fields': ('Calendar_Month', 'Start_Date', 'created_at')}),
+        ('Timing', {'fields': ('Calendar_Month', 'Start_Date', 'created_at', 'hrs_per_shift', 'shift_start')}),
         ('Logic', {'fields': ('Coverage_Type', 'pattern')}),
     )

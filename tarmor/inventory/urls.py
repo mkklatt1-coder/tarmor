@@ -12,4 +12,6 @@ urlpatterns = [
     path('export_inventory_excel/', views.export_inventory_excel, name='export_inventory_excel'),
     path('manage_inventory/', views.manage_inventory, name='manage_inventory'),
     path('export_manage_inventory_excel/', views.export_manage_inventory_excel, name='export_manage_inventory_excel'),
+    path('consumption/', views.consumption_report, name='consumption_report'),
+    path('consumption/export/', views.export_consumption_excel, name='export_consumption_excel'),
 ]

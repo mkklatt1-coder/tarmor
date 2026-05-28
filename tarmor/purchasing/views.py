@@ -28,20 +28,31 @@ def purchases(request):
     return render(request, 'purchasing/purchases.html')
 
 def create_purchase(request):
-    next_url = request.GET.get('next')
     work_order_id = request.GET.get('work_order')
+    project_id = request.GET.get('proj_id') or request.POST.get('project_id_hidden')
+
+    if project_id in (None, '', 'None', 'null'):
+        project_id = None
+
+    next_url = request.GET.get('next')
     
     if request.method == 'POST':
         print("POST Data Keys:", request.POST.keys())
         form = PurchaseForm(request.POST)
         formset = PurchaseLineFormSet(request.POST, prefix='lines')
-        
+
         if form.is_valid() and formset.is_valid():
-            purchase = form.save()
+            purchase = form.save(commit=False)
+            if project_id:
+                purchase.project_id = project_id
+            purchase.save()
+
             formset.instance = purchase
             lines = formset.save(commit=False)
               
             for line in lines:
+                if not line.row_status:
+                    line.row_status = "Pending"
                 if line.part_number_input:
                     line.purchase = purchase
                 if line.inventory_item:
@@ -60,13 +71,18 @@ def create_purchase(request):
                 obj.delete()
                 
             purchase.update_grand_total()
-            
+            messages.success(request, f'Purchase {purchase.purchase_number} saved successfully.')
+
+            if project_id:
+                return redirect('projects:edit_project_id', pk=project_id)
+
             destination = request.POST.get('action_destination')
             next_url = request.GET.get('next')
-            messages.success(request, f'Purchase {purchase.purchase_number} saved successfully.')
+            
             if destination == 'return' and next_url:
                 return redirect(next_url)
             return redirect('purchasing:purchases')
+        
         else:
             print("Form Errors:", form.errors)
             print("Formset Errors:", formset.errors)
@@ -79,11 +95,17 @@ def create_purchase(request):
             
         form = PurchaseForm(initial=initial_data)
         formset = PurchaseLineFormSet(prefix='lines')
+
+        if project_id:
+            initial_data['project'] = project_id
         
+        form = PurchaseForm(initial=initial_data)
+
     return render(request, 'purchasing/create_purchase.html', {
         'form': form,
         'formset': formset,
         'next': next_url,
+        'project_id': project_id,
     })
     
 def purchase_detail(request, pk):
@@ -153,6 +175,7 @@ def get_part_details(request):
             'part_number': getattr(item, 'part_number', ''),
             'part_description': getattr(item, 'part_description', ''),
             'uom': getattr(item, 'uom', ''),
+            'qty_onhand': item.qty_onhand,
             'supplier_id': item.supplier.id if getattr(item, 'supplier', None) else '',
             'unit_price': str(getattr(item, 'unit_price', '0.00')),
         })
@@ -165,7 +188,9 @@ def get_part_options(request):
     if not part_no:
         return JsonResponse({'options': []})
     
-    main_items = InventoryItem.objects.filter(part_number__iexact=part_no).select_related('supplier')
+    main_items = InventoryItem.objects.filter(
+        part_number__iexact=part_no
+        ).select_related('supplier').prefetch_related('alternatives', 'alternatives__supplier')
     
     results = []
     seen_ids = set()
@@ -195,24 +220,31 @@ def serialize_item(item, is_alternative=False, original_part=None):
         'description': item.part_description,
         'uom': item.uom,
         'is_alt': is_alternative,
-        'linked_to': original_part
+        'linked_to': original_part,
+        'qty_onhand': item.qty_onhand
     }
     
 def edit_purchase(request, pk=None):
     purchase = None
+
     if pk is not None:
         purchase = get_object_or_404(Purchase, pk=pk)
+
     if request.method == 'POST':
         if not purchase:
             messages.error(request, 'No purchase selected.')
             return redirect('purchasing:edit_purchase')
+        
         form = PurchaseForm(request.POST, instance=purchase)
         formset = PurchaseLineFormSet(request.POST, instance=purchase, prefix='lines')
+
         if form.is_valid() and formset.is_valid():
             purchase = form.save()
             lines = formset.save(commit=False)
             
             for line in lines:
+                if not line.row_status:
+                    line.row_status = "Pending"
                 if line.part_number_input:
                     line.purchase = purchase
                 if line.inventory_item:
@@ -233,16 +265,22 @@ def edit_purchase(request, pk=None):
             purchase.update_grand_total()
             messages.success(request, f'Purchase {purchase.purchase_number} updated successfully.')
             return redirect('purchasing:purchases')
+        
         else:
             print("Form Errors:", form.errors)
             print("Formset Errors:", formset.errors)
+
     else:
         if purchase:
             form = PurchaseForm(instance=purchase)
             formset = PurchaseLineFormSet(instance=purchase, prefix='lines')
+
         else:
-            form = PurchaseForm()
+            form = PurchaseForm(initial={}) 
             formset = PurchaseLineFormSet(prefix='lines')
+            for line_form in formset.extra_forms:
+                line_form.initial['row_status'] = 'Pending'
+
     return render(request, 'purchasing/edit_purchase.html', {
         'form': form,
         'formset': formset,
@@ -251,17 +289,16 @@ def edit_purchase(request, pk=None):
     
 def purchase_search_options(request):
     term = request.GET.get('term', '').strip()
-    qs = Purchase.objects.all().order_by('-id')
-    if term:
-        qs = qs.filter(purchase_number__icontains=term)
-    results = [
-        {
-            'id': p.id,
-            'label': f'{p.purchase_number} - {p.wo_cc}',
-        }
-        for p in qs[:50]
+
+    results = Purchase.objects.filter(
+        Q(purchase_number__icontains=term)
+    ).order_by('-date')[:20]
+    
+    data = [
+        {'id': p.id, 'label': p.purchase_number}
+        for p in results
     ]
-    return JsonResponse({'results': results})
+    return JsonResponse({'results': data})
     
 def search_purchase_load(request):
     purchase_id = request.GET.get('purchase_id')
@@ -282,19 +319,15 @@ def print_purchase_pdf(request, pk):
     pdf.setTitle(f"{purchase.purchase_number}")
     
     def draw_template_elements(p):
-        # 1. Logo (Top Left)
         logo_path = "static/Images/TARMOR.png"
         if os.path.exists(logo_path):
-            # Adjust width/height (120x40) to fit your specific PNG aspect ratio
             p.drawImage(logo_path, 40, height - 65, width=160, height=40, mask='auto')
 
-        # 3. Barcode (Below Title)
         barcode_x = width - 200
         barcode_y = height - 65
         if purchase.barcode_image and os.path.exists(purchase.barcode_image.path):
             p.drawImage(purchase.barcode_image.path, barcode_x, barcode_y, width=160, height=45)
            
-    # 2. Ship To Section (Left)
         p.setFillColor(colors.black)
         p.setFont("Helvetica-Bold", 10)
         p.drawString(40, height - 80, "Ship to:")
@@ -306,22 +339,19 @@ def print_purchase_pdf(request, pk):
             p.drawString(40, ship_to_y, str(line))
             ship_to_y -= 12
             
-    # 3. Order Info Boxes (Right)
         box_x = 400
         p.setFont("Helvetica-Bold", 10)
         labels = [("Purchase Order", purchase.purchase_number), ("Date", str(purchase.date))]
         label_y = height - 80
         for label, value in labels:
             p.drawRightString(box_x - 10, label_y + 5, f"{label}")
-            p.rect(box_x, label_y, 150, 18) # Draw the data boxes
+            p.rect(box_x, label_y, 150, 18)
             p.drawString(box_x + 5, label_y + 5, str(value))
             label_y -= 25
             
-    # 4. Table Header
         table_y = height - 210
         p.setFont("Helvetica-Bold", 10)
-        # Column outlines
-        p.rect(40, 100, 515, height - 310) # Main table border
+        p.rect(40, 100, 515, height - 310)
         header_y = table_y + 5
         p.drawString(45, header_y, "Qty")
         p.drawString(85, header_y, "Part Number")
@@ -329,12 +359,11 @@ def print_purchase_pdf(request, pk):
         p.drawString(405, header_y, "Cost / Unit")
         p.drawString(485, header_y, "Total Cost")
         
-        # Table Grid Lines (Verticals)
         p.line(80, 100, 80, table_y + 20)
         p.line(180, 100, 180, table_y + 20)
         p.line(400, 100, 400, table_y + 20)
         p.line(480, 100, 480, table_y + 20)
-        p.line(40, table_y, 555, table_y) # Horizontal header line
+        p.line(40, table_y, 555, table_y)
         
         return table_y - 15
     
@@ -342,7 +371,7 @@ def print_purchase_pdf(request, pk):
     pdf.setFont("Helvetica", 9)
     
     for line in purchase.lines.all():
-        if y < 120: # Page break logic
+        if y < 120:
             pdf.showPage()
             y = draw_template_elements(pdf)
             pdf.setFont("Helvetica", 9)
@@ -352,15 +381,13 @@ def print_purchase_pdf(request, pk):
         pdf.drawString(185, y, str(line.part_description)[:45])
         pdf.drawRightString(475, y, f"{line.unit_price}")
         pdf.drawRightString(550, y, f"{line.total_price}")
-        y -= 20 # Row height matching the grid
+        y -= 20
         
-    # Grand Total Box
     pdf.rect(480, 80, 75, 20)
     pdf.setFont("Helvetica-Bold", 10)
     pdf.drawRightString(475, 85, "Total")
     pdf.drawString(485, 85, f"$ {purchase.grand_total}")
     
-    # Footer
     pdf.setFont("Helvetica", 8)
     pdf.drawString(40, 40, "Page 1 of 1")
     pdf.drawRightString(555, 40, "2026/02/12")
@@ -430,6 +457,16 @@ def search_purchases(request):
         '-status': '-row_status',
         'id': 'id',
         '-id': '-id',
+        'part_number_input': 'part_number_input',
+        '-part_number_input': '-part_number_input',
+        'manufacturer': 'manufacturer',
+        '-manufacturer': '-manufacturer',
+        'qty': 'qty',
+        '-qty': '-qty',
+        'unit_price': 'unit_price',
+        '-unit_price': '-unit_price',
+        'row_status': 'row_status',
+        '-row_status': '-row_status',
     }
     
     final_sort = sort_mapping.get(sort_by, '-purchase__id')

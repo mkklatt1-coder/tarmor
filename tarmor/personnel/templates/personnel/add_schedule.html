@@ -37,53 +37,78 @@
         {% endif %}
 
         <div style="display: flex; gap: 50px; align-items: flex-start;">
-            
-            
             <div style="flex: 1; padding: 20px; border-radius: 8px;">
-
                 <h4 >Deployment Details</h4>
-                
-                <label>Facility / Location:</label> {{ rotation_form.Location }} <br>
-                <br>
-                <label>Coverage Type:</label> {{ rotation_form.Coverage_Type }} <br>
-                <br>
-                <label>Schedule Start Date:</label> {{ rotation_form.Start_Date }} <br>
-                <br>
-                <label>Calendar Month:</label> {{ rotation_form.Calendar_Month }} <br>
-                <br>
-                <label>Province (for Holidays):</label> {{ rotation_form.province }} <br>
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Facility / Location</td>
+                        <td>{{ rotation_form.Location }}</td>
+                        <td>Coverage Type</td>
+                        <td>{{ rotation_form.Coverage_Type }}</td>
+                    </tr>
+                    <tr>
+                        <td>Hrs Per Shift</td>
+                        <td>{{ rotation_form.hrs_per_shift}}</td>
+                        <td>Shift Start</td>
+                        <td>{{ rotation_form.shift_start}}</td>
+                    </tr>
+                    <tr>
+                        <td>Schedule Start Date</td>
+                        <td>{{ rotation_form.Start_Date }}</td>
+                        <td>Calendar Month</td>
+                        <td>{{ rotation_form.Calendar_Month }}</td>
+                    </tr>
+                    <tr>
+                        <td>Province (for Holidays)</td>
+                        <td>{{ rotation_form.province }}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
             </div>
 
-            <!-- Section 2: Shift Pattern Logic -->
             <div style="flex: 1; padding: 20px; border-radius: 8px;">
-
                 <h4 >Rotation Logic (Cycle)</h4>
-
-                <div class="field-group">
-                    <label>Use Existing Pattern:</label><br>
-                    <select id="pattern-selector" class="input" onchange="fillPattern(this)">
-                        <option value="">-- Create New --</option>
-                        {% for p in existing_patterns %}
-                            <option value="{{ p.id }}" data-name="{{ p.name }}" data-seq="{{ p.pattern_sequence }}">{{ p.name }} ({{ p.pattern_sequence }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <br>
-
-                <div id="pattern-fields">
-                    <label>Pattern Name:</label> <input type="text" name="name" id="id_name" class="input">
-                    <label>Sequence:</label> <input type="text" name="pattern_sequence" id="id_pattern_sequence" class="input">
-                </div>
-                <br>
-                <small style="display: block; color: #666;">Enter comma-separated days: <strong>5,5,4,4</strong> 
-                    (Work 5, Off 5, Work 4, Off 4) </small>
-                
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Use Existing Pattern</td>
+                        <td>
+                            <select id="pattern-selector" class="input" onchange="fillPattern(this)">
+                                <option value="">-- Create New --</option>
+                                {% for p in existing_patterns %}
+                                    <option value="{{ p.id }}" data-name="{{ p.name }}" data-seq="{{ p.pattern_sequence }}">{{ p.name }} ({{ p.pattern_sequence }})</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Pattern Name</td>
+                        <td>
+                            <div id="pattern-name">
+                            <input type="text" name="name" id="id_name" class="input">
+                            <div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Sequence:</td>
+                        <td>
+                            <div id="pattern-fields">
+                            <input type="text" name="pattern_sequence" id="id_pattern_sequence" class="input">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4">
+                            <small style="display: block; color: #666;">Enter comma-separated days: <strong>5,5,4,4</strong> 
+                                (Work 5, Off 5, Work 4, Off 4) </small>
+                        </td>
+                    </tr>
+                </table>
             </div>
-
         </div>
     </form>
     <div id="coverage-preview">
-        <h2>Automated Coverage Preview</h2>
+        <h3>Automated Coverage Preview</h3>
         <br>
         <p style="font-size: 0.9rem; color: #586069;">Based on your settings, the following crew schedules will be generated:</p>
         <table class="table" style="width: 100%; margin-top: 10px; text-align: center;">

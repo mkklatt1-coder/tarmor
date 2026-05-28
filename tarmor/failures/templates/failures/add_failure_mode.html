@@ -56,7 +56,7 @@
             </form>
         </div>
 
-        <h2> &nbsp; Failure Mode &nbsp; &nbsp; &nbsp; <button class="button" type="button" id="add_failure_mode">Add FC</button></h2>
+        <h3> &nbsp; Failure Mode &nbsp; &nbsp; &nbsp; <button class="button" type="button" id="add_failure_mode">Add FC</button></h3>
         <br>
 
         <form class="form" id="create_failure_mode" method="POST" action=".">
@@ -71,39 +71,47 @@
                 
             <div class="form" id="form-container">
                 {% for form in formset %}
-                    <div class="failure-mode-form">
-                        {% if form.non_field_errors %}
-                            <div>
-                                {{ form.non_field_errors }}
-                            </div>
-                        {% endif %}
+                    {% if form.non_field_errors %}
                         <div>
-                            <label>Failure Mode:</label>
-                            {{ form.failure_mode }}
-                            {% if form.failure_mode %}
-                                <div>{{ form.failure_mode.errors }}</div>
-                            {% endif %}
+                            {{ form.non_field_errors }}
                         </div>
-                        <br>
-                        <div>
-                            <label>Failure Code:</label>
-                            {{ form.failure_code }}
-                            {% if form.failure_code.errors %}
-                                <div>{{ form.failure_code.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <br>
-                    </div>
+                    {% endif %}
+                    <table>
+                        <tr>
+                            <td>Failure Mode</td>
+                            <td>
+                                {{ form.failure_mode }}
+                                {% if form.failure_mode %}
+                                {{ form.failure_mode.errors }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Failure Code</td>
+                            <td>
+                                {{ form.failure_code }}
+                                {% if form.failure_code.errors %}
+                                {{ form.failure_code.errors }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                    <br>
                 {% endfor %}
             </div>
             <div id="empty-form" style="display:none;">
                 <div class="failure-mode-form">
-                    <h4> Next Item: </h4>
-                    <label>Failure Mode:</label>
-                    {{ formset.empty_form.failure_mode }}<br>
-                    <br>
-                    <label>Failure Code:</label>
-                    {{ formset.empty_form.failure_code }}
+                    <h4> Next Item </h4>
+                    <table>
+                        <tr>
+                            <td>Failure Mode</td>
+                            <td>{{ formset.empty_form.failure_mode }}</td>
+                        </tr>
+                        <tr>
+                            <td>Failure Code</td>
+                            <td>{{ formset.empty_form.failure_code }}</td>
+                        </tr>
+                    </table>
                     <br>
                 </div>
             </div>

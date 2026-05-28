@@ -1,6 +1,6 @@
 from django import forms
 from equipment.models import Equipment
-from .models import WorkOrder
+from .models import WorkOrder, WorkOrderAttachment
 
 class DateTimeLocalInput(forms.DateTimeInput):
     input_type = 'datetime-local'
@@ -19,6 +19,7 @@ class WorkOrderAddForm(forms.ModelForm):
             'machine_oos',
             'hours',
             'meter',
+            'project',
             'job_status',
             'date_created',
             'troubleshoot_description',
@@ -49,6 +50,11 @@ class WorkOrderAddForm(forms.ModelForm):
         widgets = {
             'date_created': DateTimeLocalInput(),
             'plan_start_date': DateTimeLocalInput(),
+            'ts_extended_description': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'ts_service_report': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'repair_extended_description': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'job_instructions': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'repair_service_report': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,12 +76,33 @@ class WorkOrderAddForm(forms.ModelForm):
             ]
         for name, field in self.fields.items():
             field.widget.attrs.update({'class': 'input'})
+
+        if self.initial.get('project') or (self.instance and self.instance.project):
+            self.fields['project'].widget.attrs['class'] = 'locked'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        if cleaned_data is not None:
+            potential_problem_fields = [
+                'project', 'equipment', 'fc_system', 
+                'fc_component', 'fc_failure_mode', 'fc_action'
+            ]
+            
+            for field in potential_problem_fields:
+                value = cleaned_data.get(field)
                 
+                if isinstance(value, str) and value.strip() in ('None', 'null', ''):
+                    cleaned_data[field] = None
+                    
+        return cleaned_data
+
 class WorkOrderEditForm(forms.ModelForm):
     class Meta:
         model = WorkOrder
         fields = [
             'attached_checklist',
+            'attached_parts_list',
             'equipment',
             'barcode_image',
             'work_type',
@@ -83,6 +110,7 @@ class WorkOrderEditForm(forms.ModelForm):
             'machine_oos',
             'hours',
             'meter',
+            'project',
             'job_status',
             'date_created',
             'date_closed',
@@ -116,6 +144,14 @@ class WorkOrderEditForm(forms.ModelForm):
             'date_closed': DateTimeLocalInput(),
             'plan_start_date': DateTimeLocalInput(),
             'attached_checklist': forms.FileInput(attrs={'id': 'id_attached_checklist', 'class': 'input', 'accept': '.pdf'}),
+            'attached_parts_list': forms.FileInput(attrs={'id': 'id_attached_parts_list', 'class': 'input', 'accept': '.pdf'}),
+            'ts_extended_description': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'ts_service_report': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'repair_extended_description': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'job_instructions': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'repair_service_report': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 100%'}),
+            'safety_instructions': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
+            'spec_requirements': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -137,3 +173,27 @@ class WorkOrderEditForm(forms.ModelForm):
             ]
         for name, field in self.fields.items():
             field.widget.attrs.update({'class': 'input'})
+        
+        if self.initial.get('project') or (self.instance and self.instance.project):
+            self.fields['project'].widget.attrs['class'] = 'locked'
+
+class AttachmentsForm(forms.ModelForm):
+    class Meta:
+        model = WorkOrderAttachment
+        fields = ['description', 'file']
+
+    widgets = {
+        'description': forms.TextInput(attrs={
+                'class': 'input', 
+                'placeholder': 'Enter name...',
+                'style': 'flex-grow: 1;'
+            }),
+        "file": forms.FileInput(attrs={"class": "input"}),
+    }
+
+AttachmentsFormSet = forms.modelformset_factory(
+    WorkOrderAttachment, 
+    form=AttachmentsForm, 
+    extra=0,
+    can_delete=True
+)
