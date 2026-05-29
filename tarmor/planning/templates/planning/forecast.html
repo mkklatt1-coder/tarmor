@@ -1,0 +1,88 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} QM Forecast {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li><a href="{% url 'planning:planning' %}"> Exit </a></li>
+            <li><a href="{% url 'planning:planning' %}"
+                onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Quality Maintenance Forecast</h2>
+    <br>
+
+    <!-- STEP 1: The Trigger Button -->
+    <div class="form-container">
+        <form method="GET" action="{% url 'planning:forecast' %}">
+            <p>Check for maintenance due between <strong>{{ today }}</strong> and <strong>{{ fortnight }}</strong>.</p>
+            <button type="submit" name="run_check" value="1" class="button">Preview</button>
+            {% if preview_items %}
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear" class="logo" style="cursor: pointer; margin-left: 15px;" 
+                     onclick="window.location.href='{% url 'planning:forecast' %}'">
+            {% endif %}
+        </form>
+    </div>
+
+    <br>
+
+    {% if preview_items %}
+    <form method="POST">
+        {% csrf_token %}
+        <h3>Preview: Ready to Generate</h3>
+        <p>Review the items below. Uncheck any items that look incorrect (e.g., meter typos).</p>
+        
+        <table class="table-bare-container">
+            <thead>
+                <tr>
+                    <th class="th"><input type="checkbox" id="select-all"></th>
+                    <th class="th">Equipment</th>
+                    <th class="th">QM Doc</th>
+                    <th class="th">Trigger Date</th>
+                    <th class="th">Due Date/Meter</th>
+                    <th class="th">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in preview_items %}
+                <tr>
+                    <td class="td"><input type="checkbox" name="selected_plans" value="{{ item.plan.id }}" class="plan-checkbox" checked></td>
+                    <td class="td">{{ item.plan.equipment.Equipment_Number }}</td>
+                    <td class="td">{{ item.plan.document.qm_number }}</td>
+                    <td class="td">{{ item.trigger_date }}</td>
+                    <td class="td">{{ item.due_date }} / {{ item.due_meter|default:"N/A" }}</td>
+                    <td class="td">{{ item.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <br>
+        <button type="submit" name="commit_forecast" class="button" style="background-color: #28a745;"
+                onclick="return confirm('This will create real Work Orders for all SELECTED items. Proceed?');">
+            Create WOs
+        </button>
+    </form>
+    {% elif request.GET.run_check %}
+        <p>No maintenance items found within the 14-day window.</p>
+    {% else %}
+        <p style="font-style: italic;">Click "Run Forecast Preview" to see upcoming maintenance.</p>
+    {% endif %}
+</div>
+<script>
+    document.getElementById('select-all').addEventListener('click', function(event) {
+        let checkboxes = document.querySelectorAll('.plan-checkbox');
+        checkboxes.forEach(checkbox => checkbox.checked = event.target.checked);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Meters
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'meters:new_reading' %}">New Reading</a> </li>
+            <li><a href="{% url 'meters:edit_reading' %}">Edit Mtr</a> </li>
+            <li><a href="{% url 'meters:search_readings' %}">Search Mtrs</a></li>
+            <br>
+            <li><a href="{% url 'meters:mass_upload' %}">Mass Upload</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Meters</h2>
+        <div>
+        <img class="image" src="{% static 'Images/meters.jpg' %}" >
+        </div>
+
+    </div>
+{% endblock %}

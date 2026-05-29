@@ -1,0 +1,152 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Search WOs{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="{% url 'work_orders:export_wos_excel' %}?{{ filter_url }}">Export</a></li>
+            <li><a href="{% url 'work_orders:work_orders' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2> Search Work Orders </h2>
+    <br>
+    
+    <h3> 
+        &nbsp; Search Criteria &nbsp;
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-wo" >
+            <a href="{% url 'work_orders:search_work_orders' %}">
+            <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+        </a>
+    </h3>
+    <form id="search-wo"  method="GET" action="{% url 'work_orders:search_work_orders' %}">
+        <table class="table-bare-container">
+            <tr>
+                <th>Work Order</th>
+                <th>
+                    <input type="text" name="work_order" value="{{ selected_wo }}" list="wo-suggestions" placeholder="Search or select WO..." class="input" autocomplete="off">
+                    <datalist id="wo-suggestions">
+                        {% for wo in all_work_orders %}
+                            <option value="{{ wo.work_order }}">{{ wo.work_order }} - {{ wo.troubleshoot_description }} </option>
+                        {% endfor %}
+                    </datalist>
+                </th>
+                <th>Equipment Number</th>
+                <th>
+                    <input type="text" name="equipment_number" value="{{ selected_eq_num }}" list="eq-suggestions" placeholder="Search or select Unit..." class="input" autocomplete="off">
+                    <datalist id="eq-suggestions">
+                        {% for eq in all_equipment %}
+                            <option value="{{ eq.Equipment_Number }}">{{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}</option>
+                        {% endfor %}
+                    </datalist>
+                </th>
+                <th>Equipment Descripton</th>
+                <th>
+                    <input type="text" name="equipment_description" value="{{ selected_eq_desc }}" placeholder="Eq Desc Snippet..." class="input">
+                </th>
+                <th>Status</th>
+                <th>
+                    <input type="text" name="job_status" value="{{ selected_status }}" list="status-suggestions" placeholder="Search or select Status..." class="input" autocomplete="off">
+                    <datalist id="status-suggestions">
+                        {% for st in all_statuses %}
+                            <option value="{{ st }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </th>
+
+            </tr>
+        </table>
+    </form>
+    <div>        
+        <h3> Search Results</h3>
+
+        <br>
+        <table class="table-container">
+            <thead>
+                <tr>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'work_order' %}-work_order{% else %}work_order{% endif %}" class="sort_header">
+                            Work Order {% if sort == 'work_order' %} ▲ {% elif sort == '-work_order' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_number' %}-equipment_number{% else %}equipment_number{% endif %}" class="sort_header">
+                            Equipment Number {% if sort == 'equipment_number' %} ▲ {% elif sort == '-equipment_number' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'equipment_description' %}-equipment_description{% else %}equipment_description{% endif %}" class="sort_header">
+                            Equipment Description {% if sort == 'equipment_description' %} ▲ {% elif sort == '-equipment_description' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'troubleshoot_description' %}-troubleshoot_description{% else %}troubleshoot_description{% endif %}" class="sort_header">
+                            Troubleshoot Descripton {% if sort == 'troubleshoot_description' %} ▲ {% elif sort == '-troubleshoot_description' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'repair_description' %}-repair_description{% else %}repair_description{% endif %}" class="sort_header">
+                            Repair Description {% if sort == 'repair_description' %} ▲ {% elif sort == '-repair_description' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'date_created' %}-date_created{% else %}date_created{% endif %}" class="sort_header">
+                            Date Created {% if sort == 'date_created' %} ▲ {% elif sort == '-date_created' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'plan_start_date' %}-plan_start_date{% else %}plan_start_date{% endif %}" class="sort_header">
+                            Planned Start Date {% if sort == 'plan_start_date' %} ▲ {% elif sort == '-plan_start_date' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'priority' %}-priority{% else %}priority{% endif %}" class="sort_header">
+                            Priority {% if sort == 'priority' %} ▲ {% elif sort == '-priority' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'job_status' %}-job_status{% else %}job_status{% endif %}" class="sort_header">
+                            Job Status {% if sort == 'job_status' %} ▲ {% elif sort == '-job_status' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">Edit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for work_order in work_orders %}
+                <tr>
+                    <td class="td">{{ work_order.work_order }}</td>
+                    <td class="td">{{ work_order.equipment_number }}</td>
+                    <td class="td">{{ work_order.equipment_description }}</td>
+                    <td class="td">{{ work_order.troubleshoot_description }}</td>
+                    <td class="td">{{ work_order.repair_description }}</td>
+                    <td class="td">{{ work_order.date_created }}</td>
+                    <td class="td">{{ work_order.plan_start_date }}</td>
+                    <td class="td">{{ work_order.priority }}</td>
+                    <td class="td">{{ work_order.job_status }}</td>
+                    <td class="td"><a href="{% url 'work_orders:edit_work_order' work_order.pk %}">Edit</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10">No work orders found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+
+</script>
+{% endblock %}

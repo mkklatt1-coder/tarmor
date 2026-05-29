@@ -1,0 +1,90 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Add Supplier
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="document.getElementById('SupplierForm').submit();">Save</a></li>
+        <li><a href="{% url 'suppliers:suppliers' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Add New Supplier</h2>
+    
+    <form id="SupplierForm" method="POST" action="{% url 'suppliers:add_supplier' %}">
+        {% csrf_token %}
+        {{ cert_formset.management_form }}
+        {% if new_sup_form.errors %}
+            <div class="errorlist">
+                <strong>Please fix the following:</strong><br>
+                {{ new_sup_form.non_field_errors }}
+                {% for field in new_sup_form %}
+                    {% if field.errors %}
+                        <div>{{ field.label }}: {{ field.errors }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <br>
+        {% endif %}
+        <div class="form-row" style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+            <table class="table-bare-container">
+                <tr>
+                    <td>Supplier Name</td>
+                    <td colspan="3">{{ new_sup_form.supplier_name }}</td>
+                    <td>Status</td>
+                    <td>{{ new_sup_form.status }}</td>
+                </tr>
+                <tr>
+                    <td>Street Address</td>
+                    <td colspan="3">{{ new_sup_form.street_address }}</td>
+                    <td>City</td>
+                    <td>{{ new_sup_form.city }}</td>
+                </tr>
+                <tr>
+                    <td>Prov / State</td>
+                    <td>{{ new_sup_form.province_state }}</td>
+                    <td>Country</td>
+                    <td>{{ new_sup_form.country }}</td>
+                    <td>Postal / Zip Code</td>
+                    <td>{{ new_sup_form.postal_zip }}</td>
+                </tr>
+                <tr>
+                    <td>Contact Name</td>
+                    <td>{{ new_sup_form.contact }}</td>
+                    <td>Phone Number</td>
+                    <td>{{ new_sup_form.phone }}</td>
+                    <td>Email</td>
+                    <td>{{ new_sup_form.email }}</td>
+                </tr>
+                <tr>
+                    <td>Supplier Discount</td>
+                    <td>{{ new_sup_form.supplier_discount }}</td>
+                    <td>Payment Method</td>
+                    <td>{{ new_sup_form.payment_method }}</td>
+                    <td>Supplier Currency</td>
+                    <td>{{ new_sup_form.supplier_currency }}</td>
+                </tr>
+            </table>
+            <br>
+        </div>
+        <label>Additional Information:</label><br>
+        {{ new_sup_form.additional_information }}
+        <br>
+    </form>
+</div>
+
+<script>
+
+</script>
+{% endblock %}

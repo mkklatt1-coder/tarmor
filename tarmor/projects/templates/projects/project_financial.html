@@ -1,0 +1,143 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Financial
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="submitFinancialForm()">Return
+                </a>
+            </li>
+            <li><a href="{% url 'projects:edit_project_id' project.id %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <h2> 
+            Financials for {{ project.project_number }} 
+        </h2>
+        <br>
+
+        <form method="post" id="FinancialForm">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            <table class="table-container" style="width: 98%; table-layout: fixed; border-collapse: collapse;" id="notes-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;"></th>
+                        <th class="th" style="width: 6.5%;">Jan</th>
+                        <th class="th" style="width: 6.5%;">Feb</th>
+                        <th class="th" style="width: 6.5%;">Mar</th>
+                        <th class="th" style="width: 6.5%;">Apr</th>
+                        <th class="th" style="width: 6.5%;">May</th>
+                        <th class="th" style="width: 6.5%;">Jun</th>
+                        <th class="th" style="width: 6.5%;">Jul</th>
+                        <th class="th" style="width: 6.5%;">Aug</th>
+                        <th class="th" style="width: 6.5%;">Sep</th>
+                        <th class="th" style="width: 6.5%;">Oct</th>
+                        <th class="th" style="width: 6.5%;">Nov</th>
+                        <th class="th" style="width: 6.5%;">Dec</th>
+                        <th class="th" style="background-color: #ff0000; width: 6.5%;">Carryover</th>
+                        <th class="th" style="width: 100px;">Total</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for form in formset %}
+                    <tr>
+                        <td class="td" style="background-color: #555555 !important; color: #e5e4e2;" colspan="15">
+                            <strong>Financial Year: {{ form.instance.year }}</strong>
+                            <input type="hidden" name="{{ form.prefix }}-year" value="{{ form.instance.year }}">
+                        </td>
+                    </tr>
+                {{ form.id }}
+                
+                    <tr>
+                        <td class="td"><strong>Planned</strong></td>
+                        <td class="td">{{ form.jan_p }}</td>
+                        <td class="td">{{ form.feb_p }}</td>
+                        <td class="td">{{ form.mar_p }}</td>
+                        <td class="td">{{ form.apr_p }}</td>
+                        <td class="td">{{ form.may_p }}</td>
+                        <td class="td">{{ form.jun_p }}</td>
+                        <td class="td">{{ form.jul_p }}</td>
+                        <td class="td">{{ form.aug_p }}</td>
+                        <td class="td">{{ form.sep_p }}</td>
+                        <td class="td">{{ form.oct_p }}</td>
+                        <td class="td">{{ form.nov_p }}</td>
+                        <td class="td">{{ form.dec_p }}</td>
+                        <td class="td">--</td>
+                        <td class="td" style="font-weight: bold;">${{ form.instance.planned_total }}</td>
+                    </tr>
+                    <tr>
+                        <td class="td"><strong>Cost</strong></td>
+                        <td class="td">${{ form.instance.jan_cost }}</td>
+                        <td class="td">${{ form.instance.feb_cost }}</td>
+                        <td class="td">${{ form.instance.mar_cost }}</td>
+                        <td class="td">${{ form.instance.apr_cost }}</td>
+                        <td class="td">${{ form.instance.may_cost }}</td>
+                        <td class="td">${{ form.instance.jun_cost }}</td>
+                        <td class="td">${{ form.instance.jul_cost }}</td>
+                        <td class="td">${{ form.instance.aug_cost }}</td>
+                        <td class="td">${{ form.instance.sep_cost }}</td>
+                        <td class="td">${{ form.instance.oct_cost }}</td>
+                        <td class="td">${{ form.instance.nov_cost }}</td>
+                        <td class="td">${{ form.instance.dec_cost }}</td>
+                        <td class="td">{{ form.cost_carryover }}</td>
+                        <td class="td" style="font-weight: bold;">${{ form.instance.cost_total }}</td>
+                    </tr>
+                    <tr>
+                        <td class="td"><strong>Cash</strong></td>
+                        <td class="td">${{ form.instance.jan_cash }}</td>
+                        <td class="td">${{ form.instance.feb_cash }}</td>
+                        <td class="td">${{ form.instance.mar_cash }}</td>
+                        <td class="td">${{ form.instance.apr_cash }}</td>
+                        <td class="td">${{ form.instance.may_cash }}</td>
+                        <td class="td">${{ form.instance.jun_cash }}</td>
+                        <td class="td">${{ form.instance.jul_cash }}</td>
+                        <td class="td">${{ form.instance.aug_cash }}</td>
+                        <td class="td">${{ form.instance.sep_cash }}</td>
+                        <td class="td">${{ form.instance.oct_cash }}</td>
+                        <td class="td">${{ form.instance.nov_cash }}</td>
+                        <td class="td">${{ form.instance.dec_cash }}</td>
+                        <td class="td">{{ form.cash_carryover }}</td>
+                        <td class="td" style="font-weight: bold;">${{ form.instance.cash_total }}</td>
+                    </tr>
+                    {% if project.execution_time <= 1 %}
+                        {% if form.instance.cost_carryover > 0 or form.instance.cash_carryover > 0 %}
+                        <tr>
+                            <td colspan="15" style="background-color: #fff3cd; color: #856404; text-align: center; padding: 10px;">
+                                <strong>⚠️ Warning:</strong> Carryover detected on a 1-year project. 
+                                Please update <strong>Time to Execute</strong> to 2 years in the Project Information screen to manage carryover.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+    <script>
+        function submitFinancialForm() {
+            const form = document.getElementById('FinancialForm');
+            if (form) {
+                form.submit();
+            } else {
+                console.error("Form 'FinancialForm' not found!");
+            }
+        }
+    </script>
+
+{% endblock %}

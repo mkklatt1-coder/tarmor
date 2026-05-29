@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %} Shop Plan {% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <a >Export</a>
+            </li>
+            <li>
+                <a href="{% url 'scheduling:schedule' %}?week={{ selected_week.week_number }}&garage={{ selected_garage.id }}">Return</a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    
+</style>
+<div class="main">
+    <h2>Shop Schedule Week {{ selected_week.week_number }}</h2>
+    <br>
+
+    <table class="shop-schedule-table">
+        <!-- Day Headers -->
+        <tr style="background-color: #00009c; color: #e5e4e2;">
+            <th rowspan="2" class="th">Equipment</th>
+            {% for day in day_names %}
+            <th colspan="2" class="th">{{ day }}</th>
+            {% endfor %}
+        </tr>
+        <!-- Shift Headers -->
+        <tr style="background-color: #fff9c4;">
+            {% for i in "1234567" %}
+            <td class="thsub">DS</td>
+            <td class="thsub">NS</td>
+            {% endfor %}
+        </tr>
+
+        <!-- Equipment Data -->
+        {% for row in shop_data %}
+        <tr>
+            <td class="td">
+                {{ row.equipment.Equipment_Number }}
+            </td>
+            {% for day_data in row.days %}
+            <td class="td">{{ day_data.ds }}</td>
+            <td class="td">{{ day_data.ns }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

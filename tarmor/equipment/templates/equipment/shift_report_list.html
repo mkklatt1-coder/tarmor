@@ -1,0 +1,56 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Shift Report Archive{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul class="leftnavbar">
+            <li><a href="{% url 'equipment:shift_report' %}">New Report</a></li>
+            <li><a href="{% url 'equipment:equipment' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>   
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <div>
+        <h2>Shift Report Archive</h2>
+    </div>
+    <br>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="th">Date</th>
+                    <th class="th">Shift</th>
+                    <th class="th">Mining Sup.</th>
+                    <th class="th">Maint Sup.</th>
+                    <th class="th">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in reports %}
+                <tr>
+                    <td class="td">{{ item.date }}</td>
+                    <td class="td">{{ item.get_shift_display }}</td>
+                    <td class="td">{{ item.mining_supervisor }}</td>
+                    <td class="td">{{ item.maint_supervisor }}</td>
+                    <td class="td">
+                        <a class = "btn-edit-link" href="{% url 'equipment:shift_report_edit' item.id %}">Edit</a>
+                        |
+                        <a class = "btn-excel-link" href="{% url 'equipment:export_shift_report_excel' item.id %}">Export Shift</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No saved reports found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

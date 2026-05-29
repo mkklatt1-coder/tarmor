@@ -1,0 +1,125 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Add Filter Rating
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="javascript:void(0)" onclick="submitForm('save')">Save</a></li>
+            <li><a href="{% url 'condition_monitoring:add_filters' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Add Filter Rating &nbsp; &nbsp; <button type="button" onclick="addFormRow()">Add</button></h2>
+    <br>
+    <form id="filterForm" method="POST">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table class="table-bare-container" id="formset-table">
+            {% for form in formset %}
+            <tbody class="form-row">
+                <tr>
+                    <td>Date</td>
+                    <td>{{ form.date }}</td>
+                    <td>Equipment #</td>
+                    <td>{{ form.equipment }}</td>
+                    <td>WO #</td>
+                    <td>{{ form.work_order }}</td>
+                    <td>Compartment</td>
+                    <td>{{ form.compartment }}</td>
+                </tr>
+                <tr>
+                    <td>Meter</td>
+                    <td>{{ form.meter }}</td>
+                    <td>Meter Reading</td>
+                    <td>{{ form.meter_reading }}</td>
+                    <td>Filter Rating</td>
+                    <td>{{ form.filter_rating }}</td>
+                    <td>Comments</td>
+                    <td>{{ form.comments }}</td>
+                </tr>
+                <tr class="spacer-row"><td colspan="8"><hr></td></tr>
+            </tbody>
+            {% endfor %}
+        </table>
+        <br>
+    </form>
+
+</div>
+
+<script>
+    function submitForm(action) {
+        if (action === 'save') {
+            document.getElementById('filterForm').submit();
+        }
+    }
+
+    function addFormRow() {
+        const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+        const currentFormCount = parseInt(totalForms.value);
+        
+        const rows = document.getElementsByClassName('form-row');
+        if (rows.length === 0) return;
+        
+        const cloneRow = rows[rows.length - 1].cloneNode(true);
+        
+        const regex = new RegExp(`form-\\d+-`, 'g');
+        cloneRow.innerHTML = cloneRow.innerHTML.replace(regex, `form-${currentFormCount}-`);
+        
+        const inputs = cloneRow.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'hidden') {
+                input.value = '';
+            }
+        });
+        
+        document.getElementById('formset-table').appendChild(cloneRow);
+        
+        totalForms.value = currentFormCount + 1;
+        
+        bindFilterEvent(cloneRow.querySelector('.eq-select'));
+    }
+
+    function bindFilterEvent(element) {
+        if (!element) return;
+        
+        element.addEventListener('change', function() {
+            const eqId = this.value;
+            const row = this.closest('.form-row');
+            const meterSelect = row.querySelector('.meter-select');
+            
+            if (!eqId) {
+                meterSelect.innerHTML = '<option value="">---------</option>';
+                return;
+            }
+            
+            fetch(`{% url "condition_monitoring:ajax_get_meters" %}?equipment_id=${eqId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="">---------</option>';
+                    data.forEach(item => {
+                        options += `<option value="${item.id}">${item.name}</option>`;
+                    });
+                    meterSelect.innerHTML = options;
+                })
+                .catch(err => console.error("Error fetching meters:", err));
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.eq-select').forEach(select => {
+            bindFilterEvent(select);
+        });
+    });
+</script>
+{% endblock %}

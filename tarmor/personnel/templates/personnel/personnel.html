@@ -1,0 +1,46 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Personnel
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'personnel:add_employee' %}">Add Emp</a> </li>
+            <li><a href="{% url 'personnel:search_employee' %}">Search Emp</a> </li>
+            <li><a href="{% url 'personnel:search_certifications' %}">Search Cert</a> </li>
+            <li><a href="{% url 'personnel:edit_employee' %}">Edit Emp</a> </li>
+            <br>
+            <p>&nbsp; Crew Scheds</p>
+            <li><a href="{% url 'personnel:shiftrotation_upload' %}">Add Sched</a></li>
+            <li><a href="{% url 'personnel:edit_schedule' %}">Edit Sched</a> </li> 
+            <li><a href="{% url 'personnel:crew_calendar' %}">12 Month</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Personnel</h2>
+        {% if messages %}
+            <div class="messages-container" style="margin: 20px;">
+                {% for message in messages %}
+                    <div class="alert {{ message.tags }}" style="padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div>
+        <img class="image" src="{% static 'Images/person.jpg' %}" >
+        </div>
+
+    </div>
+{% endblock %}

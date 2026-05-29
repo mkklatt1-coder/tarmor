@@ -1,0 +1,135 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Search Components
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'failures:components' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Search Components </h2>
+        <br>
+        <div>
+            <h3> 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'failures:search_components' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h3>
+            
+            <form id="search-form"  method="GET" action="{% url 'failures:search_components' %}">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Comb Comp Key</td>
+                        <td>
+                            <input type="text" name="combined_comp_key" value="{{ combined_comp_key_val }}" list="comb-comp-list" placeholder="Combined Component Key" class="input" autocomplete="off">
+                            <datalist id="comb-comp-list">
+                                {% for cck in all_comp_keys %}
+                                    <option value="{{ cck }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Component Name</td>
+                        <td>
+                            <input type="text" name="component_name" value="{{ component_name_val }}" list="comp-name-list" placeholder="Component Name" class="input" autocomplete="off">
+                            <datalist id="comp-name-list">
+                                {% for cn in all_comp_names %}
+                                    <option value="{{ cn }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Component Key</td>
+                        <td>
+                            <input type="text" name="component_key" value="{{ component_key_val }}" list="comp-key-list" placeholder="4-Char Key" class="input" autocomplete="off">
+                            <datalist id="comp-key-list">
+                                {% for ck in all_keys %}
+                                    <option value="{{ ck }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Comb Sys Key</td>
+                        <td>
+                            <input type="text" name="combined_sys_key" value="{{ combined_sys_key_val }}" list="sys-key-list" placeholder="System Key or Name" class="input" autocomplete="off">
+                            <datalist id="sys-key-list">
+                                {% for sys in all_system_suggestions %}
+                                    <option value="{{ sys.combined_sys_key }}" label="{{ sys.system_name }}">
+                                        {{ sys.combined_sys_key }} - {{ sys.system_name }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+
+        <div class="form">
+            <form class="form" id="sesarch_component_form" method="POST">
+                <h3> Search Results </h3>
+                <br>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'combined_comp_key' %}-combined_comp_key{% else %}combined_comp_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Comb Comp Key {% if sort == 'combined_comp_key' %} ▲ {% elif sort == '-combined_comp_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'component_name' %}-component_name{% else %}component_name{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Component Name {% if sort == 'component_name' %} ▲ {% elif sort == '-component_name' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'component_key' %}-component_key{% else %}component_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Component Key {% if sort == 'component_key' %} ▲ {% elif sort == '-component_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'combined_sys_key' %}-combined_sys_key{% else %}combined_sys_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Comb Sys Key {% if sort == 'combined_sys_key' %} ▲ {% elif sort == '-combined_sys_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    <thead>
+                    <tbody>
+                        {% for comp in component %}
+                            <tr>
+                                <td class="td">{{ comp.combined_comp_key }}</td>
+                                <td class="td">{{ comp.component_name }}</td>
+                                <td class="td">{{ comp.component_key }}</td>
+                                <td class="td">{{ comp.combined_sys_key }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No components found matching those criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+    <script>
+        function exportExcel() {
+            const currentParams = window.location.search;
+            window.location.href = "{% url 'failures:export_components_excel' %}" + currentParams;
+        }
+        </script>
+{% endblock %}

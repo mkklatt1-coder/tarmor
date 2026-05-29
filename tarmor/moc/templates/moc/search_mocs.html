@@ -1,0 +1,88 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Search MOCs
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="?{{ request.GET.urlencode }}&export=excel">Export</a></li>
+        <li><a href="{% url 'moc:mocs' %}">Return</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2> Search MOCs</h2>
+    <br>
+
+    <form method="GET" class="search-form" id="search-mocs">
+        <h5> &nbsp; Search Criteria
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo'>
+                <a href="{% url 'moc:search_mocs' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+        </h5>
+        <br>
+
+        MOC Number <input list="moc_nums" name="moc_num" placeholder="MOC #" class="input">
+        <datalist id="moc_nums">
+            {% for num in all_moc_nums %}<option value="{{ num }}">{% endfor %}
+        </datalist>
+        &nbsp;
+        Keyword <input list="titles" name="title_keyword" placeholder="Keyword in Title" class="input">
+        <datalist id="titles">
+            {% for title in all_titles %}<option value="{{ title }}">{% endfor %}
+        </datalist>
+    </form>
+    <br>
+
+    <h3> Search Results </h3>
+    <br>
+
+    <div  class="table-container">
+        <table class="table" id="moc-search">
+            <thead>
+                <tr>
+                    <th class="th"><a class="sort_header" href="?sort=moc_number&dir={% if direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        MOC {% if sort_by == 'moc_number' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=title&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Title {% if sort_by == 'title' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=date_created&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Created {% if sort_by == 'date_created' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=date_completed&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Completed {% if sort_by == 'date_completed' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=status&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Status {% if sort_by == 'status' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"> Action </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for moc in mocs %}
+                <tr>
+                    <td class="td">{{ moc.moc_number }}</td>
+                    <td class="td">{{ moc.title }}</td>
+                    <td class="td">{{ moc.date_created }}</td>
+                    <td class="td">{{ moc.date_completed|default:"-" }}</td>
+                    <td class="td">{{ moc.status }}</td>
+                    <td class="td"><a href="{% url 'moc:edit_moc' moc.moc_number %}">Edit</a></td>
+                </tr>
+                {% empty %}
+                <tr><td  class="td" colspan="5">No MOCs found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+
+</script>
+{% endblock %}

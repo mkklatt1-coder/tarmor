@@ -1,0 +1,112 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Project Tasks
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="submitTasksForm()">Return
+                </a>
+            </li>
+            <li><a href="{% url 'projects:edit_project_id' project.id %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <style>
+            .td textarea {
+                width: 100%;
+                min-width: 200px;
+                resize: vertical;
+            }
+        </style>
+        <h2> 
+            Team Member Tasks for {{ project.project_number }} &nbsp; &nbsp;
+            <input type="checkbox" id="toggleComplete" onchange="filterRows()"> Show Complete &nbsp; 
+            <button type="button" onclick="addRow()">Add</button> 
+        </h2>
+        <br>
+
+        <form method="post" id="TasksForm">
+            {% csrf_token %}
+            {{ formset.management_form }}
+
+            <table class="table-container" style="width: 98%;" id="tasks-table">
+                <thead>
+                    <tr>
+                        <th class="th">Date</th>
+                        <th class="th">Step</th>
+                        <th class="th">Task</th>
+                        <th class="th">Assigned To</th>
+                        <th class="th">Due Date</th>
+                        <th class="th">Progress</th>
+                        <th class="th">Comp Date</th>
+                        <th class="th">Complete</th>
+                        <th class="th">Delete</th>
+                    </tr>
+                </thead>
+                <tbody id="tasks-tbody">
+                    {% for form in formset %}
+                    <tr class="action-row" data-complete="{{ form.complete.value }}">
+                        {{ form.id }}
+                        <td class="td">{{ form.date }}</td>
+                        <td class="td">{{ form.step }}</td>
+                        <td class="td">{{ form.tasks }}</td>
+                        <td class="td">{{ form.assignee }}</td>
+                        <td class="td">{{ form.due_date }}</td>
+                        <td class="td">{{ form.progress }}</td>
+                        <td class="td">{{ form.completed_date }}</td>
+                        <td class="td">{{ form.complete }}</td>
+                        <td class="td">{{ form.DELETE }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+    <script>
+        function addRow() {
+            const tbody = document.getElementById('tasks-tbody');
+            const totalForms = document.getElementById('id_tasks-TOTAL_FORMS');
+            const currentCount = parseInt(totalForms.value);
+            const newRow = tbody.children[0].cloneNode(true);
+
+            newRow.innerHTML = newRow.innerHTML.replace(/tasks-0-/g, `tasks-${currentCount}-`);
+            
+            newRow.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.type !== 'hidden') input.value = '';
+            });
+
+            tbody.appendChild(newRow);
+            totalForms.value = currentCount + 1;
+        }
+
+        function filterRows() {
+            const showAll = document.getElementById('toggleComplete').checked;
+            document.querySelectorAll('.action-row').forEach(row => {
+                const completeVal = row.querySelector('[name$="-complete"]').value;
+                row.style.display = (completeVal === 'Yes' && !showAll) ? 'none' : '';
+            });
+        }
+        function submitTasksForm() {
+            const form = document.getElementById('TasksForm');
+            if (form) {
+                form.submit();
+            } else {
+                console.error("Form 'TasksForm' not found!");
+            }
+        }
+    </script>
+
+{% endblock %}

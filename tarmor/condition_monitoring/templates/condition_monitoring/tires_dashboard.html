@@ -1,0 +1,183 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Tires Dashboard {% endblock %}
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'condition_monitoring:tire_information' %}">Profiles</a></li>
+        <li><a href="{% url 'condition_monitoring:search_tire_changes' %}">Changes</a></li>
+        <li><a href="{% url 'condition_monitoring:rim_inspections' %}">Rim Insp</a></li>
+        <br>
+        <li><a href="{% url 'condition_monitoring:tires' %}">Return</a></li>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .dashboard-grid { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; margin-bottom: 25px; }
+    .dash-card { padding: 15px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); flex: 1; min-width: 48%; }
+    .full-card { min-width: 100%; }
+    .status-badge-red { color: #d73a49; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    .status-badge-amber { color: #b78103; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    .chart-box { position: relative; height: 320px; width: 100%; }
+</style>
+
+<div class="main">
+    <h2>Tire and Rim Management Dashboard</h2>
+    <br>
+
+    <!-- Top Row: Financial Performance Charts -->
+    <div class="dashboard-grid">
+        <div class="dash-card full-card">
+            <h4>Capital Investment vs Scrap Value Waste Losses by Machine</h4>
+            <div class="chart-box" style="height: 380px;">
+                <canvas id="financialChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Row: Scrap Distribution Breakdown Pie Graphs -->
+    <div class="dashboard-grid">
+        <div class="dash-card">
+            <h4>Scrap Tires Distribution (Failure Modes)</h4>
+            <div class="chart-box">
+                <canvas id="tireScrapChart"></canvas>
+            </div>
+        </div>
+        <div class="dash-card">
+            <h4>Scrap Rims Distribution (Failure Reasons)</h4>
+            <div class="chart-box">
+                <canvas id="rimScrapChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row: Realtime Wear Profiles & Structural Safety Lists -->
+    <div class="dashboard-grid">
+        <!-- Wear Profile List -->
+        <div class="dash-card">
+            <h4>Top Accelerated Tire Wear Profiles (32nds / 1000 Hrs)</h4>
+            <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+                <table class="table" style="width:100%">
+                    <thead>
+                        <tr><th class="th">Tire ID</th><th class="th">Machine</th><th class="th">Pos</th><th class="th">Wear Rate</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for row in wear_profiles %}
+                        <tr>
+                            <td class="td">{{ row.tire_id }}</td>
+                            <td class="td">{{ row.equipment }}</td>
+                            <td class="td">{{ row.position }}</td>
+                            <td class="td" style="color: #d73a49; font-weight: bold;">{{ row.rate }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="td" colspan="4">No valid wear metric calculations registered yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Overdue Rims -->
+        <div class="dash-card">
+            <h4>CRITICAL: Overdue Rim NDT Inspections</h4>
+            <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+                <table class="table" style="width:100%">
+                    <thead>
+                        <tr><th class="th">Rim ID</th><th class="th">Last Inspected</th><th class="th">Date Due</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for rim in rims_overdue %}
+                        <tr>
+                            <td class="td">{{ rim.rim_id }}</td>
+                            <td class="td">{{ rim.date_tested }}</td>
+                            <td class="td"><span class="status-badge-red">{{ rim.next_test_date }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="td" colspan="3" style="color: green; font-weight: bold;">🟢 Zero rims currently overdue.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Upcoming Rims -->
+        <div class="dash-card full-card">
+            <h4>Warning: Upcoming Rim Inspections (< 6 Months Baseline Window)</h4>
+            <div class="table-container" style="max-height: 250px; overflow-y: auto;">
+                <table class="table" style="width:100%">
+                    <thead>
+                        <tr><th class="th">Rim ID</th><th class="th">Last Inspected</th><th class="th">Pass/Fail Status</th><th class="th">Next Due Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for rim in rims_upcoming %}
+                        <tr>
+                            <td class="td">{{ rim.rim_id }}</td>
+                            <td class="td">{{ rim.date_tested }}</td>
+                            <td class="td">{{ rim.pass_fail }}</td>
+                            <td class="td"><span class="status-badge-amber">{{ rim.next_test_date }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="td" colspan="4">Zero rims tracking within the 6-month attention horizon.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load Chart.js CDN Core -->
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Safe Native Context Data JSON Extractions
+        const finLabels = {{ financial_labels|safe }};
+        const spendData = {{ spend_data|safe }};
+        const lossData = {{ loss_data|safe }};
+        
+        const tireLabels = {{ tire_scrap_labels|safe }};
+        const tireCounts = {{ tire_scrap_counts|safe }};
+        
+        const rimLabels = {{ rim_scrap_labels|safe }};
+        const rimCounts = {{ rim_scrap_counts|safe }};
+
+        const globalColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#4287f5', '#11b062', '#e07110'];
+
+        // 1. COMBINED FINANCIAL INVESTMENT VS LOSS BAR CHART
+        new Chart(document.getElementById('financialChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: finLabels,
+                datasets: [
+                    { label: 'Total Capital Spent ($)', data: spendData, backgroundColor: '#36A2EB', borderColor: '#36A2EB', borderWidth: 1 },
+                    { label: 'Scrap Discarded Value Loss ($)', data: lossData, backgroundColor: '#FF6384', borderColor: '#FF6384', borderWidth: 1 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Value ($ USD)' } } } }
+        });
+
+        // 2. SCRAP TIRES PIE CHART
+        new Chart(document.getElementById('tireScrapChart').getContext('2d'), {
+            type: 'pie',
+            data: { labels: tireLabels, datasets: [{ data: tireCounts, backgroundColor: globalColors }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // 3. SCRAP RIMS PIE CHART
+        new Chart(document.getElementById('rimScrapChart').getContext('2d'), {
+            type: 'pie',
+            data: { labels: rimLabels, datasets: [{ data: rimCounts, backgroundColor: globalColors }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    });
+</script>
+{% endblock %}

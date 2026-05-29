@@ -1,0 +1,184 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+	Search Eq
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+
+        <ul class="leftnavbar">
+            <li><a class="nav-link" href="{% url 'equipment:export_eq' %}?{{ request.GET.urlencode }}">Export</a> </li>
+            <li><a href="{% url 'equipment:equipment' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li>   
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <h2> Search Equipment </h2>
+        <br>
+
+        <div >
+            <h3> 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'equipment:search_eq' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h3>
+            <form id="search-form"  method="GET" action=".">
+                <table  class="table-bare-container">
+                    <tr>
+                        <td>Equipment</td>
+                        <td> <input type="text" name="Equipment_Number" list="eq-num-list" class="input" value="{{ eq_num_val }}" autocomplete="off" placeholder="Number or Desc...">
+                            <datalist id="eq-num-list">
+                                {% for eq in all_equipment_suggestions %}
+                                    <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                        {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Asset Type</td>
+                        <td>
+                            <input type="text" name="Asset_Type" list="asset-type-list" class="input" value="{{ asset_type_val }}" autocomplete="off" placeholder="All Asset Types...">
+                            <datalist id="asset-type-list">
+                                {% for asset in all_asset_types %}
+                                    <option value="{{ asset }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Equipment Type</td>
+                        <td>
+                            <input type="text" name="Equipment_Type" list="eq-type-list" class="input" value="{{ eq_type_val }}" autocomplete="off" placeholder="All Eq Types...">
+                            <datalist id="eq-type-list">
+                                {% for eq_type in all_eq_types %}
+                                    <option value="{{ eq_type }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Equipment Status</td>
+                        <td>
+                            <input type="text" name="Equipment_Status" list="status-list" class="input" value="{{ status_val }}" autocomplete="off" placeholder="All Statuses...">
+                            <datalist id="status-list">
+                                {% for status in all_statuses %}
+                                    <option value="{{ status }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Make</td>
+                        <td>
+                            <input type="text" name="Make" list="make-list" class="input" value="{{ make_val }}" autocomplete="off" placeholder="All Makes...">
+                            <datalist id="make-list">
+                                {% for mk in all_makes %}
+                                    <option value="{{ mk }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Model</td>
+                        <td>
+                            <input type="text" name="Model" list="model-list" class="input" value="{{ model_val }}" autocomplete="off" placeholder="All Models...">
+                            <datalist id="model-list">
+                                {% for md in all_models %}
+                                    <option value="{{ md }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+            <br>
+        </div>
+
+        <div >
+            <h3> Search Results </h3>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Equipment_Number' %}-Equipment_Number{% else %}Equipment_Number{% endif %}" class="sort_header">
+                                    Equipment {% if sort == 'Equipment_Number' %} ▲ {% elif sort == '-Equipment_Number' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Asset_Type' %}-Asset_Type{% else %}Asset_Type{% endif %}" class="sort_header">
+                                    Asset Type {% if sort == 'Asset_Type' %} ▲ {% elif sort == '-Asset_Type' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Equipment_Type' %}-Equipment_Type{% else %}Equipment_Type{% endif %}" class="sort_header">
+                                    Equipment Type {% if sort == 'Equipment_Type' %} ▲ {% elif sort == '-Equipment_Type' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Equipment_Status' %}-Equipment_Status{% else %}Equipment_Status{% endif %}" class="sort_header">
+                                    Status {% if sort == 'Equipment_Status' %} ▲ {% elif sort == '-Equipment_Status' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Equipment_Description' %}-Equipment_Description{% else %}Equipment_Description{% endif %}" class="sort_header">
+                                    Equipment Description {% if sort == 'Equipment_Description' %} ▲ {% elif sort == '-Equipment_Description' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Commissioning_Date' %}-Commissioning_Date{% else %}Commissioning_Date{% endif %}" class="sort_header">
+                                    Commission Date {% if sort == 'Commissioning_Date' %} ▲ {% elif sort == '-Commissioning_Date' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Decommissioning_Date' %}-Decommissioning_Date{% else %}Decommissioning_Date{% endif %}" class="sort_header">
+                                    Decommission Date {% if sort == 'Decommissioning_Date' %} ▲ {% elif sort == '-Decommissioning_Date' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Make' %}-Make{% else %}Make{% endif %}" class="sort_header">
+                                    Make {% if sort == 'Make' %} ▲ {% elif sort == '-Make' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Model' %}-Model{% else %}Model{% endif %}" class="sort_header">
+                                    Model {% if sort == 'Model' %} ▲ {% elif sort == '-Model' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Serial_Number' %}-Serial_Number{% else %}Serial_Number{% endif %}" class="sort_header">
+                                    Serial Number {% if sort == 'Serial_Number' %} ▲ {% elif sort == '-Serial_Number' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in equipment_list %}
+                            <tr>
+                                <td class="td">{{item.Equipment_Number}}</td>
+                                <td class="td">{{item.Asset_Type}}</td>
+                                <td class="td">{{item.Equipment_Type}}</td>
+                                <td class="td">{{item.Equipment_Status}}</td>
+                                <td class="td">{{item.Equipment_Description}}</td>
+                                <td class="td">{{item.Commissioning_Date}}</td>
+                                <td class="td">{{item.Decommissioning_Date}}</td>
+                                <td class="td">{{item.Make}}</td>
+                                <td class="td">{{item.Model}}</td>
+                                <td class="td">{{item.Serial_Number}}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="10">No records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

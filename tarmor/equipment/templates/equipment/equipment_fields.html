@@ -1,0 +1,109 @@
+<div class="container-wrapper" style="width: 100%;">
+    <table class="table-bare-container">
+        <tr>
+            <td>Eq Number</td>
+            <td colspan="2" id="eq-number-field">{{ equploadform.Equipment_Number }}</td>
+            <td>Asset Type</td>
+            <td colspan="2">
+                <select name="Asset_Type" 
+                    hx-get="{% url 'equipment:load_options' %}" 
+                    hx-target="#equipment-table-wrapper" 
+                    hx-include="closest form" 
+                    class="input">
+                    {% for value, text in equploadform.fields.Asset_Type.choices %}
+                        <option value="{{ value }}" {% if equploadform.Asset_Type.value == value %}selected{% endif %}>{{ text }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+        </tr>
+
+        <tr>
+            <td>Eq Type</td>
+            <td>
+                <select name="Equipment_Type" 
+                    hx-get="{% url 'equipment:load_options' %}" 
+                    hx-target="#equipment-table-wrapper"
+                    hx-include="closest form"
+                    class="input">
+                    {% for value, text in equploadform.fields.Equipment_Type.choices %}
+                        <option value="{{ value }}" {% if equploadform.Equipment_Type.value == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>Purchase Order</td>
+            <td>{{equploadform.PO_Number}}</td>
+            <td>Eq Status</td>
+            <td>{{equploadform.Equipment_Status}}</td>
+        </tr>
+
+        <tr>
+            <td>Eq Description</td>
+            <td colspan="5">{{equploadform.Equipment_Description}}</td>
+        </tr>
+
+        <tr>
+            <td>Make</td>
+            <td>{{equploadform.Make}}</td>
+            <td>Model</td>
+            <td>{{equploadform.Model}}</td>
+            <td>Serial Number</td>
+            <td>{{equploadform.Serial_Number}}</td>
+        </tr>
+
+        <tr>
+            <td>Resp Garage</td>
+            <td>{{equploadform.Garage}}</td>
+            <td>Warranty Start</td>
+            <td>{{equploadform.Warranty_Start_Date}}</td>
+            <td>Warranty End</td>
+            <td>{{equploadform.Warranty_End_Date}}</td>
+        </tr>
+
+        <tr>
+            
+            <td>Eq Value</td>
+            <td>{{equploadform.Equipment_Value}}</td>
+            <td>Commission Date</td>
+            <td>{{equploadform.Commissioning_Date}}</td>
+            <td>Decommission Date</td>
+            <td>{{equploadform.Decommissioning_Date}}</td>
+        </tr>
+
+        <tr>
+            <td>Overhaul Period</td>
+            <td>{{equploadform.Overhaul_Period}}</td>
+            <td>Overhaul Value</td>
+            <td>{{equploadform.Overhaul_Value}}</td>
+            <td>End Of Life</td>
+            <td>{{equploadform.End_of_Life}}</td>
+        </tr>
+
+        {% if not equploadform.Engine_HP_Rating.is_hidden %}
+        <tr>
+            <td>Engine HP</td>
+            <td>{{equploadform.Engine_HP_Rating}}</td>
+            {% if not equploadform.CANMET_Number.is_hidden %}
+                <td>CANMET Number</td>
+                <td>{{equploadform.CANMET_Number}}</td>
+                <td>Ventilation Rating</td>
+                <td>{{equploadform.Ventilation_Rating}}</td>
+            {% endif %} 
+        </tr>
+        {% endif %}
+
+        {% if not equploadform.Eng_Tier.is_hidden %}
+        <tr>
+            <td>Eng_Tier</td>
+            <td>{{ equploadform.Eng_Tier }}</td>
+            {% if not equploadform.Cab_Style.is_hidden %}
+                <td>Cab Style</td>
+                <td>{{ equploadform.Cab_Style }}</td>
+            {% endif %}
+            {% if not equploadform.Box_Type.is_hidden %}
+                <td>Box Style</td>
+                <td>{{ equploadform.Box_Type }}</td>
+            {% endif %}
+        </tr>
+        {% endif %}
+    </table>
+</div>

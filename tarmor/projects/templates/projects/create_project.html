@@ -1,0 +1,72 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Create Proj
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="javascript:void(0)" onclick="submitForm('save')">Save</a></li>
+            <li><a href="{% url 'projects:projects' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Create New Project</h2>
+    <br>
+    <form method="POST" id="project-form" action="{% url 'projects:create_project' %}">
+        {% csrf_token %}
+        <h3>Project Information</h3>
+            <br>
+        <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+            <table class="table-bare-container">
+                <tr>
+                    <td>Project Number</td>
+                    <td>{{ form.project_number }}</td>
+                    <td>Project Description</td>
+                    <td>{{ form.description }}</td>
+                    <td>% Complete</td>
+                    <td>{{ proj.completion_percentage }}</td>
+                </tr>
+                <tr>
+                    <td>Time to Execute</td>
+                    <td>{{ form.execution_time }}</td>
+                    <td>uom</td>
+                    <td>{{ form.uom }}</td>
+                    <td>Status</td>
+                    <td>{{ form.status }}</td>
+                </tr>
+            </table>
+        </div>
+        <div>
+            <br>
+            <div class="container-wrapper">
+                <div class="container" style="width: 45%; margin-right: 10px;">
+                    Project Scope<br>
+                    {{ form.scope }}<br>
+                </div>
+                <br>
+                <div class="container" style="width: 45%; margin-left: 10px;">
+                    Justification<br>
+                    {{ form.justification }}<br>
+                </div>
+            </div>
+            <br>
+        </div>
+    </form>
+</div>
+
+<script>
+    function submitForm(action) {
+        document.getElementById('project-form').submit();
+    }
+</script>
+{% endblock %}

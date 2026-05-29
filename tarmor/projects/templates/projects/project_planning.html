@@ -1,0 +1,110 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Project Planning
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="document.getElementById('planning-form').submit();">Save</a></li>
+        <li><a href="{% url 'projects:projects' %}">Return</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <form method="GET" id="filter-form" >
+        <div>
+            <h2>Project Portfolio Dashboard &nbsp; &nbsp; &nbsp;
+                <select name="year" onchange="this.form.submit()" class="input">
+                    <option value="">All Years</option>
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if selected_year == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select> &nbsp; &nbsp; &nbsp;
+                <select name="status" onchange="this.form.submit()" class="input">
+                    <option value="">All Statuses</option>
+                    {% for code, name in statuses %}
+                        <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select> &nbsp; &nbsp; &nbsp;
+                <label><input type="checkbox" name="show_complete" value="true" {% if show_complete %}checked{% endif %} onchange="this.form.submit()"> Show Complete</label>
+            </h2>
+        </div>
+    </form>
+        <br>
+    
+    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div class="container" style="flex: 1; text-align: center; border-left: 5px solid #00009c;">
+            <small>Company Budget For {{ selected_year }}</small><br>
+            <form method="POST" action="{% url 'projects:project_planning' %}?year={{ selected_year }}&status={{ selected_status }}">
+                {% csrf_token %}
+                <input type="number" name="set_comp_budget" value="{{ comp_budget }}" 
+                    class="input" style="width: 300px; height: 50px; text-align: center; font-size: x-large;"
+                    {% if not selected_year %}readonly{% endif %}>
+                <button type="submit" style="display:none;"></button>
+            </form>
+        </div>
+
+        <div class="container" style="flex: 1; text-align: center; border-left: 5px solid #28a745; border-right: 5px solid #00009c;">
+            <small>Total Budget Assigned for {{ selected_year }}</small><br>
+            <strong style="font-size: 1.4em; color: {% if total_assigned > comp_budget %}red{% else %}green{% endif %};">
+                ${{ total_assigned|floatformat:2 }}
+            </strong>
+        </div>
+    </div>
+    
+    <form method="post" id="planning-form">
+    {% csrf_token %}
+    {{ formset.management_form }}
+        <div>
+            <h3>Projects Summary</h3>
+            <hr>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="th">Project Number</th>
+                        <th class="th">Description</th>
+                        <th class="th">MOC Number</th>
+                        <th class="th">Budget</th>
+                        <th class="th">Time to Execute</th>
+                        <th class="th">S&H Score</th>
+                        <th class="th">Value v Effort</th>
+                        <th class="th">Status</th>
+                        <th class="th">Assigned To</th>
+                        <th class="th">Assigned Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in formset %}
+                    {{ form.id }}
+                        <tr>
+                            <td class="td">{{ form.instance.project_number }}</td>
+                            <td class="td">{{ form.instance.description|truncatechars:30 }}</td>
+                            <td class="td">{{ form.instance.moc_number }}</td>
+                            <td class="td">${{ form.instance.budget }}</td>
+                            <td class="td">{{ form.instance.execution_time }} {{ form.instance.uom }}</td>
+                            <td class="td">{{ form.instance.risk_total_value|default:"-" }}</td> 
+                            <td class="td">{{ form.instance.ve_ratio }}</td>
+                            <td class="td">{{ form.status }}</td>
+                            <td class="td">{{ form.assigned_to }}</td>
+                            <td class="td">{{ form.start_year }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+<script>
+
+</script>
+{% endblock %}
