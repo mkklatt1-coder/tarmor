@@ -3,4 +3,5 @@ builder = "NIXPACKS"
 
 [deploy]
 startCommand = "gunicorn tarmor_config.wsgi:application --bind 0.0.0.0:$PORT"
+preDeployCommand = "python manage.py migrate_schemas --shared"
 restartPolicyType = "ON_FAILURE"
