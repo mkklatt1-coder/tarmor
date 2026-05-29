@@ -1,0 +1,32 @@
+
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	Purchasing
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'purchasing:purchases' %}">Purchases</a> </li>
+            <li><a href="{% url 'inventory:inventory' %}">Inventory</a> </li>
+            <li><a href="{% url 'suppliers:suppliers' %}">Suppliers</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>Purchasing</h2>
+        <div>
+        <img class="image" src="{% static 'Images/purchasing_flow.jpeg' %}">
+        </div>
+
+    </div>
+{% endblock %}

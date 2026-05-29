@@ -1,0 +1,103 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Create QM Plan {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('plan-form').submit();" class="button">Save</a>
+            </li>
+            <li><a href="{% url 'planning:planning' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+        
+    <h2> Create Quality Maintenance Plan</h2>
+    <br>
+    
+    <div class="form">
+        <form method="post" id="plan-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.errors %}
+                <div style="color: red; border: 1px solid red; padding: 10px; margin-bottom: 20px;">
+                    <strong>Please fix the following:</strong>
+                    {{ form.errors }}
+                </div>
+            {% endif %}
+            <div style="display: flex; align-items: flex-start; gap: 30px; width: 75%;">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>QM Number</td>
+                        <td>
+                            {{ form.document }}
+                            <datalist id="document-suggestions">
+                                {% for doc in all_documents %}
+                                    <option value="{{ doc.qm_number }}" label="{{ doc.description|default:'' }}">
+                                        {{ doc.qm_number }} - {{ doc.description|default:'No Description' }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Equipment Number</td>
+                        <td>
+                            {{ form.equipment }}
+                            <datalist id="equipment-suggestions">
+                                {% for eq in all_equipment %}
+                                    <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                        {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Active</td>
+                        <td>{{ form.active }}</td>
+                    </tr>
+                    <tr>
+                        <td>Start Date</td>
+                        <td>{{ form.start_date }}</td>
+                        <td>Meter</td>
+                        <td>{{ form.meter_start }}</td>
+                        <td>Meter Type</td>
+                        <td>
+                            {{ form.meter_type }}
+                            <div id="meter-type-datalist-wrapper">
+                                {% block meter_datalist_partial %}
+                                <datalist id="meter-type-suggestions">
+                                    {% for mtr in current_meters %}
+                                        <option value="{{ mtr }}"></option>
+                                    {% empty %}
+                                        <option value="Hours"></option>
+                                        <option value="Kilometers"></option>
+                                    {% endfor %}
+                                </datalist>
+                                {% endblock meter_datalist_partial %}
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+<script src="{% static 'js/htmx.min.js' %}"></script>
+<script>
+    document.body.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+    });
+
+</script>
+{% endblock %}

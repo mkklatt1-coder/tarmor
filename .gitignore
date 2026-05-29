@@ -1,0 +1,18 @@
+# --- PRIVATE DATA & PASSWORDS ---
+.env
+
+# --- PYTHON SYSTEM CACHE ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# --- WINDOWS & IDE SPECIFIC FILES ---
+.project
+.pydevproject
+.vscode/
+.idea/
+Thumbs.db
+db.sqlite3

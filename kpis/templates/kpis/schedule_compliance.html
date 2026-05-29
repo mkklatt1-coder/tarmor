@@ -1,0 +1,245 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Schedule Compliance
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'kpis:kpis' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+        <h2>Schedule Compliance </h2>
+        <br>
+        <div>
+            <h3> 
+                &nbsp; Search Criteria &nbsp;
+                <button type="submit" form="search-form" style="border: none; background: none; padding: 0; cursor: pointer;">
+                    <img src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo'>
+                </button>
+
+                <a href="{% url 'kpis:schedule_compliance_report' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h3>
+            
+            <form class="form" id="search-form"  method="GET" action="{% url 'kpis:schedule_compliance_report' %}">
+                
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Week</td>
+                        <td>
+                            <input type="text" name="week" value="{{ week_val }}" list="week-list" placeholder="Select Week..." class="input" autocomplete="off" style="min-width: 250px;">
+                            <datalist id="week-list">
+                                {% for w in weeks %}
+                                    <option value="Week {{ w.week_number }}" label="[{{ w.start_date|date:'Y-m-d' }} to {{ w.end_date|date:'Y-m-d' }}]"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Start Date</td>
+                        <td><input type="date" name="start_date" class="input" value="{{ start_date_val }}"></td>
+                        <td>End Date</td>
+                        <td><input type="date" name="end_date" class="input" value="{{ end_date_val }}"></td>
+                        <td>Asset Type</td>
+                        <td>
+                            <input type="text" name="asset_type" value="{{ asset_type_val }}" list="asset-type-list" placeholder="All Assets..." class="input" autocomplete="off"
+                                hx-get="/kpis/get-compliance-linked-eq-types/" hx-trigger="input changed delay:200ms, change" hx-target="#eq-type-datalist-wrapper">
+                            <datalist id="asset-type-list">
+                                {% for at in asset_types %}
+                                    <option value="{{ at.name }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Eq. Type</td>
+                        <td>
+                            <input type="text" name="equipment_type" value="{{ eq_type_val }}" list="eq-type-list" placeholder="Select Asset First..." class="input" autocomplete="off">
+                            <div id="eq-type-datalist-wrapper">
+                                <datalist id="eq-type-list">
+                                    {% for et in equipment_types %}
+                                        <option value="{{ et.Equipment_Type }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </td>
+                        <td>Eq. Number</td>
+                        <td colspan="3">
+                            <input type="text" name="equipment_number" value="{{ eq_num_val }}" list="eq-num-list" placeholder="Number or Desc..." class="input" autocomplete="off" style="width: 100%;">
+                            <datalist id="eq-num-list">
+                                {% for eq in all_equipment_suggestions %}
+                                    <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                        {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+
+        <h3>Schedule Compliance &nbsp; &nbsp; Target= <input class="input" type="number" name="target" value="{{ target }}" placeholder="Target %"></h3>
+        <br>
+
+        <div style="width: 90%; height:500px; margin: auto;">
+            <canvas id="complianceChart"></canvas>
+        </div>
+
+        <h3> Workorder Breakdown:</h3>
+        <br>
+
+        <table class="table-container">
+            <thead>
+                <tr>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'work_order' %}-work_order{% else %}work_order{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Work Order {% if sort == 'work_order' %} ▲ {% elif sort == '-work_order' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'equipment' %}-equipment{% else %}equipment{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Equipment {% if sort == 'equipment' %} ▲ {% elif sort == '-equipment' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'work_type' %}-work_type{% else %}work_type{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Work Type {% if sort == 'work_type' %} ▲ {% elif sort == '-work_type' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'job_status' %}-job_status{% else %}job_status{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Status {% if sort == 'job_status' %} ▲ {% elif sort == '-job_status' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'plan_start' %}-plan_start{% else %}plan_start{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Plan Start {% if sort == 'plan_start' %} ▲ {% elif sort == '-plan_start' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'date_closed' %}-date_closed{% else %}date_closed{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Date Closed {% if sort == 'date_closed' %} ▲ {% elif sort == '-date_closed' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'delta' %}-delta{% else %}delta{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Delta (Days) {% if sort == 'delta' %} ▲ {% elif sort == '-delta' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in table_data %}
+                <tr {% if not item.is_compliant %}style="background-color: #fde8e8;"{% endif %}>
+                    <td class="td"><strong>{{ item.work_order }}</strong></td>
+                    <td class="td">{{ item.equipment }}</td>
+                    <td class="td">{{ item.work_type }}</td>
+                    <td class="td">{{ item.job_status }}</td>
+                    <td class="td">{{ item.plan_start|date:"Y-m-d" }}</td>
+                    <td class="td">{{ item.date_closed|date:"Y-m-d"|default:"---" }}</td>
+                    <td class="td" style="font-weight: bold; 
+                        {% if item.delta > 0 %} color: #9b1c1c;{% elif item.delta < 0 %}color: #1e4620;{% else %}color: #00009c;{% endif %}">
+                        {{ item.delta }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td class="td" colspan="7" style="text-align: center;">No schedule snapshots matching those criteria.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="{% static 'js/chart.umd.min.js' %}"></script>
+    <script src="{% static 'js/htmx.min.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('complianceChart').getContext('2d');
+            
+            const data = {
+                labels: {{ labels|safe }},
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Actual Compliance %',
+                        data: {{ bar_data|safe }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        order: 2 
+                    },
+                    {
+                        type: 'line',
+                        label: 'Target Compliance ({{ target }}%)',
+                        data: {{ line_data|safe }},
+                        borderColor: '#ff4d4d',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#ff4d4d',
+                        fill: false,
+                        tension: 0.1,
+                        order: 1
+                    }
+                ]
+            };
+
+            const config = {
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Percentage (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Scheduled Week'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            new Chart(ctx, config);
+        });
+
+        function exportExcel() {
+            const form = document.getElementById('search-form');
+            const formData = new URLSearchParams(new FormData(form));
+            window.location.href = "{% url 'kpis:export_compliance_excel' %}?" + formData.toString();
+        }
+
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
+{% endblock %}

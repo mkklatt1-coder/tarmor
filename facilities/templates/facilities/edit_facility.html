@@ -1,0 +1,111 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Edit Facility {% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+<div class="leftnavbar">
+    <ul>
+
+        <li> <a href="javascript:void(0)" onclick="document.getElementById('form').submit();">Save</a> </li>
+        <li> <a href="{% url 'facilities:facilities' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a> </li>
+        <li> <a href="{% url 'core:home' %}">Main</a> </li>
+
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2> Edit Facilities </h2>
+    <br>
+
+   <div class="form">
+        <form method="GET" action="{% url 'facilities:edit_facility' %}">
+            <h3> 
+                Search Facilities: &nbsp;
+                <input class="input" type="text" name="Facility_Name" placeholder="Facility" value="{{ Facility_Name }}"> &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo'>
+            </h3>
+        </form>
+        <br>
+        {% if messages %}
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
+        {% if matches %}
+            <h4>Matching Facilities</h4>
+            <ul>
+                {% for facility in matches %}
+                    <li>
+                        <a href="{% url 'facilities:edit_facility' facility.pk %}">
+                            {{ facility.Facility_Name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" id="form" enctype="multipart/form-data">
+
+            {% csrf_token %}
+            {% if instance %}
+                
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Facility Code</td>
+                        <td>{{ form.Facility_Code }}</td>
+                        <td colspan="2">(4 digit code for shift rotation information)</td>
+                        <td>Facility Name</td>
+                        <td>{{ form.Facility_Name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Cost Center</td>
+                        <td>{{ form.Cost_Centre }}</td>
+                        <td>Shop Rate</td>
+                        <td>{{ form.Shop_Rate }}</td>
+                        <td>Status</td>
+                        <td>{{ form.Status }}</td>
+                    </tr>
+                    <tr>
+                        <td>Street Address </td>
+                        <td colspan="3">{{ form.Street_Address }}</td>
+                        <td>City</td>
+                        <td>{{ form.City }}</td>
+                    </tr>
+                    <tr>
+                        <td>Province / State</td>
+                        <td>{{ form.Province_State }}</td>
+                        <td>Country</td>
+                        <td>{{ form.Country }}</td>
+                        <td>Postal / Zip Code</td>
+                        <td>{{ form.Postal_Zip_Code }}</td>
+                    </tr>
+                    <tr>
+                        <td>Contact Name </td>
+                        <td>{{ form.Contact_Name }}</td>
+                        <td>Contact Phone Number</td>
+                        <td>{{ form.Contact_Phone_Number }}</td>
+                        <td>Email Address</td>
+                        <td>{{ form.Email_Address }}</td>
+                    </tr>
+                </table>
+                Additional Information <br> 
+                {{ form.Additional_Information }}
+
+            {% else %}
+                <p style="color:red; padding:20px;">
+                    Enter a Facility above and click the magnifying glass to load data.
+                </p>
+            {% endif %}
+        </form>
+    </div>
+
+</div>
+{% endblock %}

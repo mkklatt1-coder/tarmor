@@ -1,0 +1,302 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %} Tire Change {% endblock %}
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="javascript:void(0)" onclick="submitForm('save')">Save</a></li>
+            <li><a href="{% url 'condition_monitoring:tires' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Tire Change &nbsp; &nbsp; <button type="button" onclick="addFormRow()">Add</button></h2>
+    <br>
+    <p><i>In order to track costs properly, a purchase number must be created for each tire repair / replacement, then that number selected in the dropdown for each tire.</i></p>
+    <form id="TireChangeForm" method="POST">
+        {% csrf_token %}
+        <table class="table-bare-container">
+            <tbody class="form-info">
+                <tr>
+                    <td>Date</td><td>{{ form.date }}</td>
+                    <td>Equipment #</td><td>{{ form.equipment }}</td>
+                    <td>WO #</td><td>{{ form.work_order }}</td>
+                </tr>
+                <tr>
+                    <td>Meter</td><td>{{ form.meter }}</td>
+                    <td>Meter Reading</td><td>{{ form.meter_reading }}</td>
+                    <td>Comments</td><td>{{ form.comments }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        
+        {{ formset.management_form }}
+        
+        <div id="tire-entries-container">
+            {% for reading_form in formset %}
+                {{ reading_form.id }}
+
+                <div class="tire-entry-card">
+                    
+                    <div style="align-items: center;">
+                        <h3>
+                            Tire Information Set &nbsp; &nbsp; &nbsp;
+                            <span style="display: none;">{{ reading_form.DELETE }}</span> 
+                            <button type="button" class="remove_button" onclick="triggerRowDelete(this)"><strong>Delete</strong></button>
+                        </h3>
+                    </div>
+                    <br>
+                    
+                    <div>
+                        <h4>Tire Removed</h4>
+                        <table class="table-bare-container">
+                            <tbody>
+                                <tr>
+                                    <td>Tire ID</td><td>{{ reading_form.tire_id_off }}</td>
+                                    <td>Position</td><td>{{ reading_form.position }}</td>
+                                    <td>Tread Depth</td><td>{{ reading_form.tread_depth_off }}</td>
+                                    <td>Rim ID</td><td>{{ reading_form.rim_id_off }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div>
+                        <h4>Tire Installed</h4>
+                        <table class="table-bare-container">
+                            <tbody>
+                                <tr>
+                                    <td>Tire ID</td><td>{{ reading_form.tire_id_on }}</td>
+                                    <td>Tread Depth</td><td>{{ reading_form.tread_depth_on }}</td>
+                                    <td>Inflation Pressure</td><td>{{ reading_form.inflation_pressure }}</td>
+                                    <td>Rim ID</td><td>{{ reading_form.rim_id_on }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4>Post Change Information</h4>
+                    <table class="table-bare-container">
+                        <tbody>
+                            <tr class="form-row">
+                                <td>Failure Reason</td><td>{{ reading_form.reason_for_failure }}</td>
+                                <td>Scrapped?</td><td>{{ reading_form.scrapped }}</td>
+                                <td>Recapped?</td><td>{{ reading_form.recapped }}</td>
+                                <td>Scrap Reason</td><td>{{ reading_form.scrap_reason }}</td>
+                            </tr>
+                            <tr>
+                                <td>Purchase Order</td><td>{{ reading_form.purchase_order }}</td>
+                                <td>Cost</td>
+                                <td>
+                                    <div style="display: none;">{{ reading_form.tire_cost }}</div>
+                                    <span style="font-family: Cascadia Code, monospace; font-size: 15px; font-weight: 600; color: #00009c;">
+                                        ${{ reading_form.instance.tire_cost|floatformat:2|intcomma|default:"0.00" }}
+                                    </span>
+                                </td>
+                                <td colspan="4"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div id="empty-form-template" style="display:none;">
+            <div class="tire-entry-card">
+                <div style="align-items:">
+                    <h3>
+                        Tire Information Set &nbsp; &nbsp; &nbsp;
+                        <span style="display: none;">{{ reading_form.DELETE }}</span> 
+                        <button type="button" class="remove_button" onclick="triggerRowDelete(this)"><strong>Delete</strong></button>
+                    </h3>
+                </div>
+                <br>
+                <div>
+                    <h4>Tire Removed</h4>
+                    <table class="table-bare-container">
+                        <tbody>
+                            <tr>
+                                <td>Tire ID</td><td>{{ formset.empty_form.tire_id_off }}</td>
+                                <td>Position</td><td>{{ formset.empty_form.position }}</td>
+                                <td>Tread Depth</td><td>{{ formset.empty_form.tread_depth_off }}</td>
+                                <td>Rim ID</td><td>{{ formset.empty_form.rim_id_off }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h4>Tire Installed</h4>
+                    <table class="table-bare-container">
+                        <tbody>
+                            <tr>
+                                <td>Tire ID</td><td>{{ formset.empty_form.tire_id_on }}</td>
+                                <td>Tread Depth</td><td>{{ formset.empty_form.tread_depth_on }}</td>
+                                <td>Inflation Pressure</td><td>{{ formset.empty_form.inflation_pressure }}</td>
+                                <td>Rim ID</td><td>{{ formset.empty_form.rim_id_on }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h4>Post Change Information</h4>
+                <table class="table-bare-container">
+                    <tbody>
+                        <tr class="form-row">
+                            <td>Failure Reason</td><td>{{ formset.empty_form.reason_for_failure }}</td>
+                            <td>Scrapped?</td><td>{{ formset.empty_form.scrapped }}</td>
+                            <td>Recapped?</td><td>{{ formset.empty_form.recapped }}</td>
+                            <td>Scrap Reason</td><td>{{ formset.empty_form.scrap_reason }}</td>
+                        </tr>
+                        <tr>
+                            <td>Purchase Order</td><td>{{ formset.empty_form.purchase_order }}</td>
+                            <td>Cost</td>
+                            <td>
+                                <div style="display: none;">{{ reading_form.tire_cost }}</div>
+                                <span style="font-family: Cascadia Code, monospace; font-size: 15px; font-weight: 600; color: #00009c;">
+                                    ${{ reading_form.instance.tire_cost|floatformat:2|intcomma|default:"0.00" }}
+                                </span>
+                            </td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // 1. SAVE FORM ACTION
+    function submitForm(action) {
+        if (action === 'save') {
+            document.getElementById('TireChangeForm').submit();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Universal work order selection catcher
+        const woInput = document.getElementById('id_work_order') || 
+                        document.querySelector('input[name="work_order"]') ||
+                        document.querySelector('select[name="work_order"]');
+        
+        const mainContainer = document.getElementById('tire-entries-container');
+        
+        if (woInput) {
+            // Function to handle fetching PO choices for all dropdowns on the page
+            function updateAllPODropdowns() {
+                const woNumber = woInput.value;
+                const poSelects = document.querySelectorAll('select[name$="-purchase_number"]');
+                
+                if (!woNumber) {
+                    poSelects.forEach(select => { select.innerHTML = '<option value="">---------</option>'; });
+                    return;
+                }
+
+                const targetUrl = "{% url 'condition_monitoring:ajax_get_pos_by_wo' %}?work_order_num=" + encodeURIComponent(woNumber);
+                fetch(targetUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        poSelects.forEach(select => {
+                            const currentValue = select.value;
+                            select.innerHTML = '<option value="">---------</option>';
+                            
+                            data.forEach(item => {
+                                const option = document.createElement('option');
+                                option.value = item.id;
+                                option.textContent = item.purchase_number;
+                                if (item.id == currentValue) option.selected = true;
+                                select.appendChild(option);
+                            });
+                        });
+                    })
+                    .catch(error => console.error('Error fetching PO choices:', error));
+            }
+
+            woInput.addEventListener('change', updateAllPODropdowns);
+            woInput.addEventListener('input', updateAllPODropdowns);
+
+            // Populate on load if work order exists
+            if (woInput.value) {
+                updateAllPODropdowns();
+            }
+            
+            window.refreshPODropdowns = updateAllPODropdowns;
+        }
+
+        if (mainContainer) {
+            // Live financial cost injection when selecting a dropdown option
+            mainContainer.addEventListener('change', function(event) {
+                if (event.target && event.target.name && event.target.name.endsWith('-purchase_order')) {
+                    const poSelectElement = event.target;
+                    const selectedPoId = poSelectElement.value;
+                    
+                    const inputFieldName = poSelectElement.name;
+                    const fieldPrefix = inputFieldName.substring(0, inputFieldName.lastIndexOf('-'));
+                    const costInputId = 'id_' + fieldPrefix + '-tire_cost';
+                    const targetCostInput = document.getElementById(costInputId);
+
+                    if (!targetCostInput) return;
+                    if (!selectedPoId) { targetCostInput.value = '0.00'; return; }
+
+                    const costUrl = "{% url 'condition_monitoring:ajax_get_po_cost' %}?po_id=" + selectedPoId;
+                    fetch(costUrl)
+                        .then(response => response.json())
+                        .then(data => { targetCostInput.value = data.cost; })
+                        .catch(error => console.error(error));
+                }
+            });
+        }
+    });
+
+    // 2. FIXED CLONING MACHINE: Copies your full card blocks containing all headers
+    function addFormRow() {
+        const totalForms = document.getElementById('id_readings-TOTAL_FORMS');
+        if (!totalForms) return;
+
+        const formIndex = parseInt(totalForms.value);
+        const emptyBlueprintHtml = document.getElementById('empty-form-template').innerHTML.replaceAll('__prefix__', formIndex);
+        
+        const tempContainerNode = document.createElement('div');
+        tempContainerNode.innerHTML = emptyBlueprintHtml;
+        
+        // This copies the entire card block with all inner headings and styling preserved
+        const newCardBlock = tempContainerNode.querySelector('.tire-entry-card');
+        document.getElementById('tire-entries-container').appendChild(newCardBlock);
+        
+        totalForms.value = formIndex + 1;
+
+        // Force dropdown lists to populate immediately for the new elements
+        if (window.refreshPODropdowns) {
+            window.refreshPODropdowns();
+        }
+    }
+
+    // 3. SECURE CARD DELETION HANDLER
+    function triggerRowDelete(buttonElement) {
+        const cardGroup = buttonElement.closest('.tire-entry-card');
+        const hiddenCheckbox = cardGroup.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+        if (hiddenCheckbox) {
+            hiddenCheckbox.checked = true;
+            cardGroup.style.opacity = '0.4';
+            cardGroup.style.pointerEvents = 'none';
+            buttonElement.textContent = "Marked for Deletion";
+            buttonElement.disabled = true;
+        } else {
+            cardGroup.remove();
+            const totalForms = document.getElementById('id_readings-TOTAL_FORMS');
+            if (totalForms) {
+                totalForms.value = parseInt(totalForms.value) - 1;
+            }
+        }
+    }
+</script>
+{% endblock %}

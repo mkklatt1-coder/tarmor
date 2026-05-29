@@ -1,0 +1,143 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+   Search Mag Plug Ratings
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="{% url 'condition_monitoring:export_mag_plugs_excel' %}?{{ filter_url }}&sort={{ sort }}">Export</a></li>
+            <li><a href="{% url 'condition_monitoring:mag_plugs' %}">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Search Magnetic Plug Rating</h2>
+    <br>
+
+    <div>
+        <h3> 
+            &nbsp; Search Criteria &nbsp;
+                <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                <a href="{% url 'condition_monitoring:search_mag_plugs' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h3>
+        <form id="search-form"  method="GET" action=".">
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+            <table class="table-bare-container">
+                <tr>
+                    <td>Date</td>
+                    <td>{{ search_form.date }}</td>
+                    <td>Equipment #</td>
+                    <td>
+                        {{ search_form.equipment }}
+                        <datalist id="equipment-list">
+                            {% for eq in all_equipment %}
+                                <option value="{{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}">
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>WO #</td>
+                    <td>
+                        {{ search_form.work_order }}
+                        <datalist id="workorder-list">
+                            {% for wo in all_work_orders %}
+                                <option value="{{ wo.work_order }} - {{ wo.troubleshoot_description }}">
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>Compartment</td>
+                    <td>{{ search_form.compartment }}</td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <h3>Search Results</h3>
+    <br>
+    <form id="magPlugForm" method="POST">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table class="table-container" id="formset-table">
+            
+            <thead>
+                <tr>
+                    <th class="th">
+                        <a href="?{{ filter_url }}&sort={% if sort == 'date' %}-date{% else %}date{% endif %}" class="sort_header">
+                            Date {% if sort == 'date' %} ▲ {% elif sort == '-date' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{{ filter_url }}&sort={% if sort == 'equipment__Equipment_Number' %}-equipment__Equipment_Number{% else %}equipment__Equipment_Number{% endif %}" class="sort_header">
+                            Equipment # {% if sort == 'equipment__Equipment_Number' %} ▲ {% elif sort == '-equipment__Equipment_Number' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{{ filter_url }}&sort={% if sort == 'work_order__work_order' %}-work_order__work_order{% else %}work_order__work_order{% endif %}" class="sort_header">
+                            WO # {% if sort == 'work_order__work_order' %} ▲ {% elif sort == '-work_order__work_order' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{{ filter_url }}&sort={% if sort == 'compartment' %}-compartment{% else %}compartment{% endif %}" class="sort_header">
+                            Compartment {% if sort == 'compartment' %} ▲ {% elif sort == '-compartment' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{{ filter_url }}&sort={% if sort == 'meter__meter_type' %}-meter__meter_type{% else %}meter__meter_type{% endif %}" class="sort_header">
+                            Meter {% if sort == 'meter__meter_type' %} ▲ {% elif sort == '-meter__meter_type' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{{ filter_url }}&sort={% if sort == 'meter_reading' %}-meter_reading{% else %}meter_reading{% endif %}" class="sort_header">
+                            Meter Reading {% if sort == 'meter_reading' %} ▲ {% elif sort == '-meter_reading' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{{ filter_url }}&sort={% if sort == 'plug_rating' %}-plug_rating{% else %}plug_rating{% endif %}" class="sort_header">
+                            Plug Rating {% if sort == 'plug_rating' %} ▲ {% elif sort == '-plug_rating' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">Comments</th>
+                    <th class="th">Action</th>
+                </tr> 
+                </tr>   
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr class="form-row">
+                    <td class="td">{{ record.date }}</td>
+                    <td class="td">{{ record.equipment.Equipment_Number }}</td>
+                    <td class="td">{{ record.work_order.work_order|default:"-" }}</td>
+                    <td class="td">{{ record.get_compartment_display }}</td>
+                    <td class="td">{{ record.meter.meter_type|default:"-" }}</td>
+                    <td class="td">{{ record.meter_reading|default:"-" }}</td>
+                    <td class="td">{{ record.get_plug_rating_display }}</td>
+                    <td class="td">{{ record.comments|default:"" }}</td>
+                    <td class="td">
+                        <a href="{% url 'condition_monitoring:edit_mag_plugs' record.id %}">Edit</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="td" style="text-align: center; padding: 20px;">No matching records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+    </form>
+</div>
+
+<script>
+    
+</script>
+{% endblock %}

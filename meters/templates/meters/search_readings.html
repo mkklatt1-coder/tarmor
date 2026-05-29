@@ -1,0 +1,211 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+	Search Mtr Readings
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block extra_css %}
+<link href="jsdelivr.net" rel="stylesheet">
+<style>
+    .ts-wrapper.input { padding: 0 !important; border: none !important; width: 100%; min-width: 180px; }
+</style>
+{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+
+        <ul class="leftnavbar">
+            <li><a class="nav-link" href="{% url 'meters:export' %}?{{ request.GET.urlencode }}">Export</a> </li>
+            <li><a href="{% url 'meters:meters' %}">Return</a> </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a> </li>   
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <h2> Search Meter Readings </h2>
+        <br>
+
+        <div >
+            <h3> 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="meter-search-form" >
+                    <a href="{% url 'meters:search_readings' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h3>
+            <br>
+            <form id="meter-search-form"  method="GET" action=".">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Equipment Number</td>
+                        <td>
+                            <input type="text" 
+                                name="Equipment_Number" 
+                                value="{{ eq_num|default:'' }}" 
+                                list="eq-num-suggestions" 
+                                class="input" 
+                                autocomplete="off" 
+                                placeholder="Number or Desc...">
+                            <datalist id="eq-num-suggestions">
+                                {% for eq in all_equipment %}
+                                    <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                        {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Asset Type</td>
+                        <td>
+                            <input type="text" 
+                                name="Asset_Type" 
+                                value="{{ asset_type|default:'' }}" 
+                                list="asset-type-suggestions" 
+                                class="input" 
+                                autocomplete="off" 
+                                placeholder="All Asset Types...">
+                            <datalist id="asset-type-suggestions">
+                                {% for at in all_asset_types %}
+                                    <option value="{{ at.name }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Equipment Type</td>
+                        <td>
+                            <input type="text" 
+                                name="Equipment_Type" 
+                                value="{{ eq_type|default:'' }}" 
+                                list="eq-type-suggestions" 
+                                class="input" 
+                                autocomplete="off" 
+                                placeholder="All Equipment Types...">
+                            <datalist id="eq-type-suggestions">
+                                {% for et in all_eq_types %}
+                                    <option value="{{ et.Equipment_Type }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Equipment Status</td>
+                        <td>
+                            <input type="text" 
+                                name="Equipment_Status" 
+                                value="{{ status|default:'' }}" 
+                                list="status-suggestions" 
+                                class="input" 
+                                autocomplete="off" 
+                                placeholder="All Statuses...">
+                            <datalist id="status-suggestions">
+                                {% for st in all_statuses %}
+                                    <option value="{{ st }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Make</td>
+                        <td>
+                            <input type="text" 
+                                name="Make" 
+                                value="{{ make|default:'' }}" 
+                                list="make-suggestions" 
+                                class="input" 
+                                autocomplete="off" 
+                                placeholder="All Makes...">
+                            <datalist id="make-suggestions">
+                                {% for mk in all_makes %}
+                                    <option value="{{ mk }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Model</td>
+                        <td>
+                            <input type="text" 
+                                name="Model" 
+                                value="{{ model|default:'' }}" 
+                                list="model-suggestions" 
+                                class="input" 
+                                autocomplete="off" 
+                                placeholder="All Models...">
+                            <datalist id="model-suggestions">
+                                {% for md in all_models %}
+                                    <option value="{{ md }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+            <br>
+        </div>
+
+        <div >
+            <h3> Search Results </h3>
+            <br>
+            <div class="table-container">
+                <table  class="table">
+                    <thead>
+                        <tr>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Equipment_Number' %}-Equipment_Number{% else %}Equipment_Number{% endif %}" class="sort_header">
+                                    Equipment Number {% if sort == 'Equipment_Number' %} ▲ {% elif sort == '-Equipment_Number' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Date' %}-Date{% else %}Date{% endif %}" class="sort_header">
+                                    Date {% if sort == 'Date' %} ▲ {% elif sort == '-Date' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Meter_Type' %}-Meter_Type{% else %}Meter_Type{% endif %}" class="sort_header">
+                                    Meter Type {% if sort == 'Meter_Type' %} ▲ {% elif sort == '-Meter_Type' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Meter_Reading' %}-Meter_Reading{% else %}Meter_Reading{% endif %}" class="sort_header">
+                                    Meter Reading {% if sort == 'Meter_Reading' %} ▲ {% elif sort == '-Meter_Reading' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Reading_Difference' %}-Reading_Difference{% else %}Reading_Difference{% endif %}" class="sort_header">
+                                    Difference {% if sort == 'Reading_Difference' %} ▲ {% elif sort == '-Reading_Difference' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Total_Meter_Value' %}-Total_Meter_Value{% else %}Total_Meter_Value{% endif %}" class="sort_header">
+                                    Total Meter Value {% if sort == 'Total_Meter_Value' %} ▲ {% elif sort == '-Total_Meter_Value' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Meter_Replaced' %}-Meter_Replaced{% else %}Meter_Replaced{% endif %}" class="sort_header">
+                                    Meter Replaced {% if sort == 'Meter_Replaced' %} ▲ {% elif sort == '-Meter_Replaced' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in equipment_list %}
+                            <tr>
+                                <td class="td">{{ item.Equipment.Equipment_Number }}</td>
+                                <td class="td">{{ item.Date }}</td>
+                                <td class="td">{{ item.Meter_Type.meter_type }}</td>
+                                <td class="td">{{ item.Meter_Reading }}</td>
+                                <td class="td">{{ item.Reading_Difference }}</td>
+                                <td class="td">{{ item.Total_Meter_Value }}</td>
+                                <td class="td">{{ item.Meter_Replaced }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7">No records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

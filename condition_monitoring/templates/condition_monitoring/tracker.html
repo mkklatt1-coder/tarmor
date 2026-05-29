@@ -1,0 +1,174 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Add Comp
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="javascript:void(0)" onclick="document.getElementById('hiddenSubmit').click();">Save</a>
+            </li>
+            <li>
+                <a href="{% url 'condition_monitoring:condition_monitoring' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel</a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class=main>
+        <h2> 
+            Short Term Monitoring Action Item List &nbsp;
+            <a href="javascript:void(0)" onclick="addNewRow();" class="button" style="display: inline-block; vertical-align: middle;">
+                Add
+            </a>
+            &nbsp; &nbsp;
+            <input type="checkbox" id="toggleComplete" onchange="filterRows()"> Show Completed Items
+        </h2>
+        <br>
+
+        <form method="post" id="ActionItemForm">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            <button type="submit" id="hiddenSubmit" style="display: none;"></button>
+
+            <table class="table-container" id="actionTable" border="1">
+                <thead>
+                    <tr>
+                        <th class="th">Date</th>
+                        <th class="th">Equipment</th>
+                        <th class="th">Equipment Desc</th>
+                        <th class="th">WO</th>
+                        <th class="th">Troubleshoot Desc</th>
+                        <th class="th">Repair Desc</th>
+                        <th class="th">Problem</th>
+                        <th class="th">Action</th>
+                        <th class="th">Due Date</th>
+                        <th class="th">Progress</th>
+                        <th class="th">Comp Date</th>
+                        <th class="th">Complete</th>
+                        <th class="th">Delete</th>
+                    </tr>
+                </thead>
+                <tbody id="formset-tbody">
+                    {% for form in formset %}
+                    <tr class="action-row" data-complete="{{ form.complete.value }}">
+                        {{ form.id }}
+                        <td class="td">{{ form.date }}</td>
+                        <td class="td">{{ form.equipment }}</td>
+                        <td class="td">{{ form.equipment_desc }}</td>
+                        <td class="td">{{ form.work_order }}</td>
+                        <td class="td">{{ form.troubleshoot_desc }}</td>
+                        <td class="td">{{ form.repair_desc }}</td>
+                        <td class="td">{{ form.problem }}</td>
+                        <td class="td">{{ form.corrective_action }}</td>
+                        <td class="td">{{ form.due_date }}</td>
+                        <td class="td">{{ form.progress }}</td>
+                        <td class="td">{{ form.completed_date }}</td>
+                        <td class="td">{{ form.complete }}</td>
+                        {% if formset.can_delete %}
+                            <td class="td">{{ form.DELETE }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <template id="empty-row-blueprint">
+                <tr class="action-row" data-complete="">
+                    {{ formset.empty_form.id }}
+                    <td class="td">{{ formset.empty_form.date }}</td>
+                    <td class="td">{{ formset.empty_form.equipment }}</td>
+                    <td class="td">{{ formset.empty_form.equipment_desc }}</td>
+                    <td class="td">{{ formset.empty_form.work_order }}</td>
+                    <td class="td">{{ formset.empty_form.troubleshoot_desc }}</td>
+                    <td class="td">{{ formset.empty_form.repair_desc }}</td>
+                    <td class="td">{{ formset.empty_form.problem }}</td>
+                    <td class="td">{{ formset.empty_form.corrective_action }}</td>
+                    <td class="td">{{ formset.empty_form.due_date }}</td>
+                    <td class="td">{{ formset.empty_form.progress }}</td>
+                    <td class="td">{{ formset.empty_form.completed_date }}</td>
+                    <td class="td">{{ formset.empty_form.complete }}</td>
+                    {% if formset.can_delete %}
+                        <td class="td">{{ formset.empty_form.DELETE }}</td>
+                    {% endif %}
+                </tr>
+            </template>
+        </form>
+    </div>
+    <script>
+        function addNewRow() {
+            const tbody = document.getElementById('formset-tbody');
+            const blueprint = document.getElementById('empty-row-blueprint');
+            const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+            
+            if (!tbody || !blueprint || !totalFormsInput) return;
+
+            const currentFormIndex = parseInt(totalFormsInput.value);
+            let templateHtml = blueprint.innerHTML;
+            const cleanHtmlRow = templateHtml.replace(/__prefix__/g, currentFormIndex);
+
+            tbody.insertAdjacentHTML('beforeend', cleanHtmlRow);
+            totalFormsInput.value = currentFormIndex + 1;
+            filterRows();
+        }
+
+        function filterRows() {
+            const showAll = document.getElementById('toggleComplete').checked;
+            const rows = document.querySelectorAll('.action-row');
+
+            rows.forEach(row => {
+                const completeSelect = row.querySelector('[name$="-complete"]');
+                const isComplete = completeSelect && completeSelect.value === 'Yes';
+                
+                if (isComplete && !showAll) {
+                    row.style.display = 'none';
+                } else {
+                    row.style.display = '';
+                }
+            });
+        }
+
+        document.addEventListener('change', function(e) {
+            const row = e.target.closest('tr');
+            if (!row) return;
+
+            if (e.target.name.endsWith('-equipment')) {
+                const eqId = e.target.value;
+                const descField = row.querySelector('[name$="-equipment_desc"]');
+                if (eqId) {
+                    fetch(`/condition_monitoring/api/equipment/${eqId}/`)
+                        .then(res => res.json())
+                        .then(data => {
+                            descField.value = data.Equipment_Description || ''; 
+                        });
+                }
+            }
+            if (e.target.name.endsWith('-work_order')) {
+                const woId = e.target.value;
+                const troubleField = row.querySelector('[name$="-troubleshoot_desc"]');
+                const repairField = row.querySelector('[name$="-repair_desc"]');
+                if (woId) {
+                    fetch(`/condition_monitoring/api/workorder/${woId}/`)
+                        .then(res => res.json())
+                        .then(data => {
+                            troubleField.value = data.troubleshoot_description || '';
+                            repairField.value = data.repair_description || '';
+                        });
+                }
+            }
+            if (e.target.name.endsWith('-complete')) {
+                filterRows();
+            }
+        });
+        window.onload = filterRows;
+    </script>
+
+{% endblock %}

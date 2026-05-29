@@ -1,0 +1,116 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}
+    Edit Cylidner Temps
+{% endblock %}
+{% block top_navigation %}{% endblock %}
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0)" onclick="submitForm()">Save</a></li>
+        <li>
+            <a href="{% url 'condition_monitoring:search_cylinder_temps' %}" 
+                onclick="return confirm('Changes will be lost! Proceed?');">Cancel</a>
+        </li>
+        <li><a href="javascript:void(0)" onclick="deleteCylTemps()" style="color: red;">Delete</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+    <form id="deleteCylinderTempForm"
+          method="POST"
+          action="{% url 'condition_monitoring:delete_cylinder_temps' cyl_temp.id %}"
+          style="display: none;">
+        {% csrf_token %}
+    </form>
+</div>
+{% endblock %}
+{% block content %}
+<div class="main">
+    <h2>Edit Cylinder Temps &nbsp;&nbsp;
+        <button type="button" onclick="addFormRow()">Add</button>
+    </h2>
+    <br>
+    <form id="cylinderTempForm" method="POST">
+        {% csrf_token %}
+        <table class="table-bare-container">
+            <tbody class="form-info">
+                <tr>
+                    <td>Date</td>
+                    <td>{{ form.date }}</td>
+                    <td>Equipment #</td>
+                    <td>{{ form.equipment }}</td>
+                    <td>WO #</td>
+                    <td>{{ form.work_order }}</td>
+                </tr>
+                <tr>
+                    <td>Meter</td>
+                    <td>{{ form.meter }}</td>
+                    <td>Meter Reading</td>
+                    <td>{{ form.meter_reading }}</td>
+                    <td>Comments</td>
+                    <td>{{ form.comments }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        {{ formset.management_form }}
+        <table class="table-bare-container" id="formset-table">
+            <thead>
+                <tr>
+                    <th>Cyl #</th>
+                    <th>Reading</th>
+                    <th>uom</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody id="formset-body">
+                {% for reading_form in formset %}
+                    {{ reading_form.id }}
+                    <tr class="form-row">
+                        <td>{{ reading_form.cylinder_number }}</td>
+                        <td>{{ reading_form.temp_reading }}</td>
+                        <td>{{ reading_form.uom }}</td>
+                        <td>
+                            {% if reading_form.DELETE %}
+                                {{ reading_form.DELETE }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="empty-form" style="display:none;">
+            <table>
+                <tbody>
+                    <tr class="form-row">
+                        <td>{{ formset.empty_form.cylinder_number }}</td>
+                        <td>{{ formset.empty_form.temp_reading }}</td>
+                        <td>{{ formset.empty_form.uom }}</td>
+                        <td>{{ formset.empty_form.DELETE }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+<script>
+    function submitForm() {
+        document.getElementById('cylinderTempForm').submit();
+    }
+    function deleteCylTemps() {
+        if (confirm('Are you sure you want to delete this entire cylinder temp set? This cannot be undone.')) {
+            document.getElementById('deleteCylinderTempForm').submit();
+        }
+    }
+    function addFormRow() {
+        const totalForms = document.getElementById('id_cyl_temp_readings-TOTAL_FORMS');
+        const formIndex = parseInt(totalForms.value);
+        const emptyFormHtml = document.getElementById('empty-form').innerHTML.replaceAll('__prefix__', formIndex);
+        const tempDiv = document.createElement('tbody');
+        tempDiv.innerHTML = emptyFormHtml;
+        const newRow = tempDiv.querySelector('tr');
+        document.getElementById('formset-body').appendChild(newRow);
+        totalForms.value = formIndex + 1;
+    }
+</script>
+{% endblock %}

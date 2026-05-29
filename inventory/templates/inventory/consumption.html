@@ -1,0 +1,152 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Parts Consumption{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<ul>
+    <li><a href="{% url 'inventory:export_consumption_excel' %}?part_number_input={{ part_number_input|default:'' }}&supplier={{ supplier|default:'' }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}">
+            Export</a></li>
+    <li><a href="{% url 'inventory:inventory' %}">Return</a></li>
+    <br>
+    <li><a href="{% url 'core:home' %}">Main</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Parts Consumption</h2>
+    <br>
+    
+    <form method="get">
+        <h3> &nbsp; Filter List
+            <button type="submit" style="border:none;background:none;padding:0;vertical-align:middle;">
+                <img src="{% static 'images/mag_glass.jpg' %}" alt="Search">
+            </button>
+            <a href="{% url 'inventory:consumption_report' %}">
+                <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            </a>
+        </h3>
+
+        <div>
+            <table class="table-bare-container">
+                <tr>
+                    <td>Part Number</td>
+                    <td>
+                        <input type="text" 
+                            name="part_number_input" 
+                            value="{{ part_number_input|default:'' }}" 
+                            list="part-report-suggestions" 
+                            placeholder="Part Number or Desc..." 
+                            class="input" 
+                            autocomplete="off">
+                            
+                        <datalist id="part-report-suggestions">
+                            {% for item in part_number_options %}
+                                <option value="{{ item.part_number_input }}" label="{{ item.part_description }}">
+                                    {{ item.part_number_input }} - {{ item.part_description }}
+                                </option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>Supplier</td>
+                    <td>
+                        <input type="text" name="supplier" class="input" value="{{ supplier }}" list="supplier-list">
+                        <datalist id="supplier-list">
+                            {% for item in supplier_options %}
+                                <option value="{{ item }}">
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>From</td>
+                    <td><input type="date" name="from_date" class="input" value="{{ from_date|default:'' }}"></td>
+                    <td>To</td>
+                    <td><input type="date" name="to_date" class="input" value="{{ to_date|default:'' }}"></td>
+                </tr>
+            </table>
+        </div>
+    </form>
+
+    <h3>Search Results</h3>
+    <br>
+    <table class="table-container" cellpadding="4" cellspacing="0">
+        <thead>
+            <tr>
+                <th class="th">
+                    <a href="?sort={% if sort == 'part_number_input' %}-part_number_input{% else %}part_number_input{% endif %}&part_number_input={{ part_number_input|default:'' }}&supplier={{ supplier|default:'' }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Part Number
+                        {% if sort == 'part_number_input' %} ▲ {% elif sort == '-part_number_input' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?sort={% if sort == 'manufacturer' %}-manufacturer{% else %}manufacturer{% endif %}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Manufacturer
+                        {% if sort == 'manufacturer' %} ▲ {% elif sort == '-manufacturer' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">Description</th>
+                <th class="th">
+                    <a href="?sort={% if sort == 'supplier' %}-supplier{% else %}supplier{% endif %}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Supplier
+                        {% if sort == 'supplier' %} ▲ {% elif sort == '-supplier' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?sort={% if sort == 'qty' %}-qty{% else %}qty{% endif %}&part_number_input={{ part_number_input|default:'' }}&supplier={{ supplier|default:'' }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Qty
+                        {% if sort == 'qty' %} ▲ {% elif sort == '-qty' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">UOM</th>
+                <th class="th">
+                    <a href="?sort={% if sort == 'unit_price' %}-unit_price{% else %}unit_price{% endif %}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Unit Price
+                        {% if sort == 'unit_price' %} ▲ {% elif sort == '-unit_price' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?sort={% if sort == 'spent' %}-spent{% else %}spent{% endif %}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Total Spent
+                        {% if sort == 'spent' %} ▲ {% elif sort == '-spent' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?sort={% if sort == 'order_count' %}-order_count{% else %}order_count{% endif %}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Annual Count
+                        {% if sort == 'order_count' %} ▲ {% elif sort == '-order_count' %} ▼ {% endif %}
+                    </a>
+                </th>
+                <th class="th">
+                    <a href="?sort={% if sort == 'last_purch_date' %}-last_purch_date{% else %}last_purch_date{% endif %}&part_number_input={{ part_number_input }}&supplier={{ supplier }}&from_date={{ from_date|default:'' }}&to_date={{ to_date|default:'' }}" class="sort_header">
+                        Last Purchase Date
+                        {% if sort == 'last_purch_date' %} ▲ {% elif sort == '-last_purch_date' %} ▼ {% endif %}
+                    </a>
+                </th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in report_data %}
+            <tr>
+                <td class="td">{{ item.part_number_input }}</td>
+                <td class="td" style="text-align:left;">{{ item.manufacturer|default:"N/A" }}</td>
+                <td class="td" style="text-align:left;">{{ item.part_description }}</td>
+                <td class="td" style="text-align:left;">{{ item.supplier__supplier_name|default:"No Supplier" }}</td>
+                <td class="td">{{ item.total_qty }}</td>
+                <td class="td">{{ item.uom }}</td>
+                <td class="td" style="text-align:right;">${{ item.inventory_item__unit_price|default:"0.00"|floatformat:2 }}</td>
+                <td class="td" style="text-align:right;">${{ item.total_spent|floatformat:2 }}</td>
+                <td class="td" style="text-align:center;">{{ item.order_count }}</td>
+                <td class="td">{{ item.last_purch_date|date:"Y-m-d" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="td">No consumption data matching these filters.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

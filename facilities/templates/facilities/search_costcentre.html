@@ -1,0 +1,103 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %} Search Cost Centres {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="{% url 'facilities:export_costcentre_excel' %}?{{ filter_url }}" class="btn btn-success btn-sm">Export</a> </li>
+            <li> <a href="{% url 'facilities:facilities' %}">Return</a> </li>
+            <li> <a href="{% url 'core:home' %}">Main</a> </li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+
+    <h2> Search Cost Centre </h2>
+    <br>
+    <h3> 
+        &nbsp; Search Criteria &nbsp;
+            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+            <a href="{% url 'facilities:search_costcentre' %}">
+            <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+        </a>
+    </h3>
+    
+    <form id="search-form"  method="GET" action=".">
+        <table class="table-bare-container">
+            <tr>
+                <td>Cost Centre</td>
+                <td>
+                    <input type="text" name="Cost_Centre" value="{{ cost_centre_val }}" list="cc-num-list" placeholder="Number or Desc..." class="input" autocomplete="off">
+                    <datalist id="cc-num-list">
+                        {% for cc in all_cc_records %}
+                            <option value="{{ cc.Cost_Centre }}" label="{{ cc.Cost_Centre_Description|default:'' }}">
+                                {{ cc.Cost_Centre }} - {{ cc.Cost_Centre_Description|default:'No Description' }}
+                            </option>
+                        {% endfor %}
+                    </datalist>
+                </td>
+                <td>Cost Centre Description</td>
+                <td>
+                    <input type="text" name="Cost_Centre_Description" value="{{ cost_centre_description_val }}" list="cc-desc-list" placeholder="All Descriptions..." class="input" autocomplete="off">
+                    <datalist id="cc-desc-list">
+                        {% for desc in all_descriptions %}
+                            <option value="{{ desc }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </td>
+                <td>Status</td>
+                <td>
+                    <input type="text" name="Status" value="{{ status_val }}" list="cc-status-list" placeholder="All Statuses..." class="input" autocomplete="off">
+                    <datalist id="cc-status-list">
+                        {% for st in all_statuses %}
+                            <option value="{{ st }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <h3> Search Results </h3>
+    <br>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Cost_Centre' %}-Cost_Centre{% else %}Cost_Centre{% endif %}" class="sort_header">
+                            Cost Centre {% if sort == 'Cost_Centre' %} ▲ {% elif sort == '-Cost_Centre' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Cost_Centre_Description' %}-Cost_Centre_Description{% else %}Cost_Centre_Description{% endif %}" class="sort_header">
+                            Cost Centre Description {% if sort == 'Cost_Centre_Description' %} ▲ {% elif sort == '-Cost_Centre_Description' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'sort' %}{{ key }}={{ value }}&{% endif %}{% endfor %}sort={% if sort == 'Status' %}-Status{% else %}Status{% endif %}" class="sort_header">
+                            Status {% if sort == 'Status' %} ▲ {% elif sort == '-Status' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in costcentre_list %}
+                <tr>
+                    <td class=td>{{item.Cost_Centre}}</td>
+                    <td class=td>{{item.Cost_Centre_Description}}</td>
+                    <td class=td>{{item.Status}}</td>
+                </tr>
+                {% empty %}
+                    <tr><td colspan="10">No records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

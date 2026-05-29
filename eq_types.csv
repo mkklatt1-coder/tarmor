@@ -1,0 +1,85 @@
+﻿Equipment_Type,Prefix,Asset_Type
+Building,BLD,Surface Fixed
+Elevator,ELE,Surface Fixed
+Garage,SFG,Surface Fixed
+Fresh Air Raise,FAR,Surface Fixed
+Return Air Raise,RAR,Surface Fixed
+Headframe,HDF,Surface Fixed
+Tailings,TAL,Surface Fixed
+Rod Mill,RDM,Surface Fixed
+Ball Mill,BLM,Surface Fixed
+Jaw Crusher,JCR,Surface Fixed
+Hammer Crusher,HCR,Surface Fixed
+Dewatering,DWT,Surface Fixed
+Floatation,FLT,Surface Fixed
+Kiln,KIL,Surface Fixed
+Pouring,POR,Surface Fixed
+Leaching,LCH,Surface Fixed
+Anodizing,ANO,Surface Fixed
+Surface Rail,SRL,Surface Fixed
+Roads,RDS,Surface Fixed
+Yard,YRD,Surface Fixed
+Network,SNW,Surface Fixed
+Fire Suppression,SFS,Surface Fixed
+Warehouse,SWH,Surface Fixed
+Fueling,SFB,Surface Fixed
+Washbay,SWB,Surface Fixed
+Ventilation,VNT,Underground Fixed
+Slurry Plant,SLP,Underground Fixed
+Network,UNW,Underground Fixed
+Fire Suppression,UFS,Underground Fixed
+Garage,UGG,Underground Fixed
+Refuge Station,RST,Underground Fixed
+Rail,UGR,Underground Fixed
+Ramp,RMP,Underground Fixed
+Sump,SMP,Underground Fixed
+Powder Magazine,PMG,Underground Fixed
+Fuse Magazine,FMG,Underground Fixed
+Blasting,BLS,Underground Fixed
+Warehouse,UWH,Underground Fixed
+Fuel Bay,UFB,Underground Fixed
+Electrical Room,UEL,Underground Fixed
+Washbay,UWB,Underground Fixed
+Wheel Loader,SWL,Surface Mobile
+Skidsteer,SSS,Surface Mobile
+Excavator,SEX,Surface Mobile
+Grader,SGR,Surface Mobile
+Telehandler,STH,Surface Mobile
+Forklift,SFL,Surface Mobile
+Pickup Truck,SLV,Surface Mobile
+Dump Truck,SDT,Surface Mobile
+Flatbed Truck,SFT,Surface Mobile
+Vacuum Truck,SVT,Surface Mobile
+Dozer,SDZ,Surface Mobile
+Plow Truck,SPT,Surface Mobile
+Articulating Haul Truck,SAT,Surface Mobile
+Rigid Frame Haul Truck,SRT,Surface Mobile
+Water Truck,SWT,Surface Mobile
+Auxillary Equipment,SAE,Surface Mobile
+Locomotive,SLC,Surface Mobile
+Rail Car,SRC,Surface Mobile
+LHD,LHD,Underground Mobile
+Dump Haul Truck,HTD,Underground Mobile
+Ejector Haul Truck,THE,Underground Mobile
+Platform Bolter,PFB,Underground Mobile
+BoomBolter,BMB,Underground Mobile
+Mounted ITH,IHM,Underground Mobile
+Boom ITH,IHB,Underground Mobile
+Single Boom Jumbo,JSB,Underground Mobile
+Two Boom Jumbo,JDB,Underground Mobile
+Three Boom Jumbo,JTB,Underground Mobile
+Wheel Loader,UWL,Underground Mobile
+Skidsteer,USS,Underground Mobile
+Excavator,UEX,Underground Mobile
+Grader,UGR,Underground Mobile
+Telehandler,UTH,Underground Mobile
+Forklift,UFL,Underground Mobile
+Water Truck,UWT,Underground Mobile
+Boom Truck,BMT,Underground Mobile
+Fuel Truck,UFT,Underground Mobile
+Lube Truck,LBT,Underground Mobile
+Cassette Truck,CST,Underground Mobile
+Personnel Carrier,UPC,Underground Mobile
+Utility Vehicle,UTV,Underground Mobile
+Locomotive,ULC,Underground Mobile
+Rail Car,URC,Underground Mobile

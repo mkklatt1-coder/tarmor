@@ -1,0 +1,272 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Change Component{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+
+    <div class="leftnavbar">
+        <ul >
+            <li>
+                <a href="javascript:void(0)" onclick="const f = document.getElementById('CompChangeForm');
+                    if(f) { console.log('Form found, submitting...'); f.submit(); } else { alert('Form NOT found!'); }">Save
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'equipment:equipment' %}" 
+                    onclick="return confirm('Canceling now will not save any information entered! Are you sure you want to proceed?');">Cancel
+                </a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+
+{% endblock %}
+
+{% block content %}
+
+    <div class="main"><h2>Change Component</h2>
+        <br>
+
+        <div class="form">
+            <form class="search-container"> 
+                <h3>Change Component for:&nbsp;
+                    <input class="input" list="eq_numbers" type="text" id="eq_search_input" placeholder="Equipment Number" autocomplete="off"> &nbsp;
+                    <datalist id="eq_numbers">
+                        {% for eq in all_equipment %}
+                            <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                            </option>
+                        {% endfor %}
+                    </datalist>
+                    <input class="input" list="comp_numbers" type="text" id="comp_search_input" placeholder="Select Equipment First" style="width: 250px;" autocomplete="off">
+                    <datalist id="comp_numbers">
+                        <!-- JavaScript will dynamically populate option elements here -->
+                    </datalist>
+                    <img id="search-btn" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" style="cursor: pointer;">
+                </h3>
+            </form>
+        </div>
+
+        <br>
+
+        <div >
+            <form id="CompChangeForm" method="POST" action="." enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ compchangeform.Equipment }}
+                {{ compchangeform.Component}}
+                {% if compchangeform %}
+                    <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+                        <div class="container-wrapper" style="width: 60%;">
+                            <table class="table-bare-container">
+                                <tr>
+                                    <td>Component Number</td>
+                                    <td>{{ compchangeform.Component_Number }}</td>
+                                    <td>Component Desc</td>
+                                    <td colspan="3">{{ compchangeform.Component_Description }}</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Work Order Number</td>
+                                    <td>{{compchangeform.Work_Order_Number}} </td>
+                                    <td>Meter Description</td>
+                                    <td>{{ compchangeform.Meter_Description }}</td>
+                                    <td>Meter Reading</td>
+                                    <td>{{ compchangeform.Meter_Reading }}</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Change Type</td>
+                                    <td>{{compchangeform.Change_Type}} </td>
+                                    <td>Change Date</td>
+                                    <td>{{compchangeform.Change_Date}} </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr colspan="7">
+                                    <td></td>
+                                </tr>
+                                <tr colspan="7">
+                                    <td><h4>Update Information</h4></td>
+                                </tr>
+                                <tr>
+                                    <td>PO Number</td>
+                                    <td>{{ compchangeform.New_PO }} </td>
+                                    <td>Exp Lifespan</td>
+                                    <td>{{ compchangeform.New_Lifespan }}</td>
+                                    <td>{{ compchangeform.New_UoM }}</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Make</td>
+                                    <td>{{ compchangeform.New_Make }}</td>
+                                    <td>Model</td>
+                                    <td>{{ compchangeform.New_Model }}</td>
+                                    <td>Serial / XM</td>
+                                    <td>{{ compchangeform.New_Serial }}</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Warranty Start</td>
+                                    <td>{{ compchangeform.New_Wty_Start }}</td>
+                                    <td>Warranty End</td>
+                                    <td>{{ compchangeform.New_Wty_End }}</td>
+                                    <td>Warranty Duration</td>
+                                    <td>{{ compchangeform.New_Wty_Dur }}</td>
+                                    <td>{{ compchangeform.New_Wty_UoM }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="container-wrapper" style="flex: 0 0 350px; margin: 0;">
+                                <div id="image-preview-zone" onclick="triggerImageClick();">
+                                    <div id="placeholder-text" style="{% if item.Component_Image %}display: none;{% endif %}">
+                                        <p style="font-size: 50px; margin: 0;">+</p>
+                                        <p>Click to Change Image</p>
+                                    </div>
+                                    <img id="preview-img" 
+                                        src="{% if item.Component_Image %}{{ item.Component_Image.url }}{% endif %}" 
+                                        style="{% if item.Component_Image %}display: block;{% else %}display: none;{% endif %} max-width: 100%;">
+                                </div>
+                                <div style="display: none;">
+                                    {{ compchangeform.Component_Image }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <br>
+                        <label>Additional Information:</label><br>
+                        {{compchangeform.Additional_Information}}<br>
+
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const eqInput = document.getElementById('eq_search_input');
+            const compInput = document.getElementById('comp_search_input');
+            const compDatalist = document.getElementById('comp_numbers');
+            
+            let typingTimer;
+            const doneTypingInterval = 500;
+
+            eqInput.addEventListener('input', function() {
+                clearTimeout(typingTimer);
+                const query = eqInput.value.trim();
+                
+                if (query.length >= 3) {
+                    typingTimer = setTimeout(() => {
+                        fetchComponents(query);
+                    }, doneTypingInterval);
+                }
+            });
+
+            function fetchComponents(query) {
+                fetch(`/equipment/get-equipment-components/?eq_num=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            compDatalist.innerHTML = '';
+                            compInput.placeholder = "Type Component Number or Desc...";
+                            
+                            data.components.forEach(c => {
+                                let opt = document.createElement('option');
+                                opt.value = c.Component_Number;
+                                opt.label = c.Component_Description;
+                                opt.setAttribute('data-id', c.id);
+                                
+                                compDatalist.appendChild(opt);
+                            });
+                            eqInput.style.backgroundColor = "#e1ffdf";
+                        } else {
+                            eqInput.style.backgroundColor = ""; 
+                            compDatalist.innerHTML = '';
+                            compInput.placeholder = "Select Equipment First";
+                        }
+                    });
+            }
+
+            compInput.addEventListener('input', function() {
+                const currentTypedVal = this.value;
+                const matchingOption = compDatalist.querySelector(`option[value="${currentTypedVal}"]`);
+                
+                if (!matchingOption) return;
+                const compId = matchingOption.getAttribute('data-id');
+
+                fetch(`/equipment/get-component-details-by-id/?comp_id=${compId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('id_Equipment').value = data.equipment_id;
+                        document.getElementById('id_Component').value = data.id;
+
+                        document.getElementById('id_Component_Number').value = data.number;
+                        document.getElementById('id_Component_Description').value = data.description;
+
+                        const previewImg = document.getElementById('preview-img');
+                        const placeholder = document.getElementById('placeholder-text');
+
+                        if (data.image_url) {
+                            previewImg.src = data.image_url;
+                            previewImg.style.display = 'block';
+                            placeholder.style.display = 'none';
+                        } else {
+                            previewImg.style.display = 'none';
+                            placeholder.style.display = 'block';
+                        }
+
+                        const fields = {
+                            'id_New_Make': data.make,
+                            'id_New_Model': data.model,
+                            'id_New_Serial': data.serial,
+                            'id_New_PO': data.po,
+                            'id_New_Lifespan': data.lifespan,
+                            'id_New_UoM': data.uom,
+                            'id_New_Wty_Dur': data.wty_dur,
+                            'id_New_Wty_UoM': data.wty_uom,
+                            'id_New_Wty_Start': data.wty_start,
+                            'id_New_Wty_End': data.wty_end
+                        };
+
+                        for (const [id, value] of Object.entries(fields)) {
+                            const el = document.getElementById(id);
+                            if (el) el.value = value || "";
+                        }
+
+                        compInput.style.backgroundColor = "#e1ffdf";
+                    });
+            });
+        });
+
+        function triggerImageClick() {
+            const input = document.getElementById('id_Component_Image');
+            if (input) input.click();
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'id_Component_Image') {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const previewImg = document.getElementById('preview-img');
+                        const placeholder = document.getElementById('placeholder-text');
+                        
+                        previewImg.src = event.target.result;
+                        previewImg.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    </script>
+
+{% endblock %}

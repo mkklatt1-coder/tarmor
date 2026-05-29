@@ -1,0 +1,91 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}3-Week Forecast{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+        <ul>
+            <li>
+                <a href="{% url 'scheduling:export_forecast_excel' %}?garage={{ selected_garage.pk }}">Export</a>
+            </li>
+            <li>
+                <a href="{% url 'scheduling:scheduling' %}" >Return</a>
+            </li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>
+        <div style="display: flex; ">
+            Three-Week Forecast &nbsp; &nbsp; &nbsp; &nbsp;
+            
+            <form method="get">
+                <label style="font-weight: bold;">Select Garage: </label>
+                <select class="input" name="garage" onchange="this.form.submit()">
+                    {% if not selected_garage %}
+                        <option value="" selected disabled>Choose a Garage</option>
+                    {% endif %}
+                    {% for g in garages %}
+                        <option value="{{ g.pk }}" {% if g.pk == selected_garage.pk %}selected{% endif %}>
+                            {{ g.Facility_Name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </h2>
+    <br>
+    <form method="post">
+        {% csrf_token %}
+        
+        {% for item in forecast_data %}
+        <table class="forecast-header" style="width: 100%; border-radius: 5px; border: 1px solid #00009c; background-color: #555555; color: #e5e4e2;">
+            <tr>
+                <th style="padding: 10px; text-align: left; width: 25%;">Week {{ item.week.week_number }} ({{ item.week.start_date }} to {{ item.week.end_date }})</th>
+                <th style="padding: 10px; text-align: right;">Available Hrs:</th>
+                <td style="padding: 10px; width: 10%;">{{ item.available_hours|floatformat:1 }}</td>
+                <th style="padding: 10px; text-align: right;">Planned Hrs:</th>
+                <td style="padding: 10px; width: 10%;">{{ item.estimated_hours|floatformat:1 }}</td>
+                <th style="padding: 10px; text-align: right;">Schedule Load:</th>
+                <td style="padding: 10px; width: 10%;">{{ item.sched_load }}%</td>
+            </tr>
+        </table>
+
+        <table id="wo-table-{{ f.id }}" style="width: 100%; margin-bottom: 20px;">
+            <tr>
+                <th class="th">Work Order</th>
+                <th class="th">Equipment #</th>
+                <th class="th">Equip. Description</th>
+                <th class="th">Work Type</th>
+                <th class="th">Description</th>
+                <th class="th">Status</th>
+                <th class="th">Planned Start</th>
+                <th class="th">Estimated Hours</th>
+            </tr>
+            
+            {% for wo in item.work_orders %}
+            <tr data-id="{{ wo.id }}">
+                <td class="td">{{ wo.work_order }}</td>
+                <td class="td">{{ wo.equipment.Equipment_Number }}</td>
+                <td class="td">{{ wo.equipment.Equipment_Description }}</td>
+                <td class="td">{{ wo.work_type }}</td>
+                <td class="td">{{ wo.repair_description }}</td>
+                <td class="td">{{ wo.job_status.status_choice }}</td>
+                <td class="td">{{ wo.plan_start_date|date:'Y-m-d' }}</td>
+                <td class="td">{{ wo.est_work_hours|floatformat:1 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td class="td" colspan="8" style="text-align: center;">No work orders planned for this week.</td></tr>
+            {% endfor %}
+        </table>
+        <hr> 
+        {% endfor %}
+        
+    </form>
+</div>
+{% endblock %}

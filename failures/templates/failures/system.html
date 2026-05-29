@@ -1,0 +1,32 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{%block title %}
+	System Codes
+{% endblock %}
+
+{% block top_navigation %}
+    {% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar" >
+        <ul>
+            <li><a href="{% url 'failures:system_list' %}">Add Sys</a> </li>
+            <li><a href="{% url 'failures:search_system' %}">Search Sys</a> </li>
+            <li><a href="{% url 'failures:edit_system' %}">Edit Sys</a> </li>
+            <br>
+            <li><a href="{% url 'failures:failure_codes' %}">Return</a> </li>
+            <li><a href="{% url 'core:home' %}">Main</a> </li> 
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    
+    <div class=main> <h2>System Failure Codes</h2>
+        <div>
+        <img class="image" src="{% static 'Images/system.jpg' %}" >
+        </div>
+
+    </div>
+{% endblock %}

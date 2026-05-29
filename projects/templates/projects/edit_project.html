@@ -1,0 +1,281 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Edit Proj
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="javascript:void(0)" onclick="submitForm('save_continue')">Save/Cont</a></li>
+            <li><a href="javascript:void(0)" onclick="submitForm('save_exit')">Save/Exit</a></li>
+            <br>
+            <li><a href="{% url 'projects:projects' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    
+    <div>
+        <h2>Edit Project</h2>
+        <br>
+        
+        
+        <h3 style="margin: 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>Project #</span>
+                <form method="POST" action="{% url 'projects:edit_project' %}" style="display: flex; align-items: center; margin: 0;">
+                    {% csrf_token %}
+                    <input class="input" type="text" name="lookup_number" placeholder="Enter Proj Number" required 
+                        style="height: 25px; padding: 2px 5px;">
+                    
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" 
+                        style="height: 25px; margin-left: 5px; cursor: pointer;">
+                </form>
+            </div>
+        </h3>
+        
+    </div>
+    <form method="POST" id="project-form" action="" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.errors %}
+            <div style="color: red; border: 1px solid red; padding: 10px;">
+                {{ form.errors }}
+            </div>
+        {% endif %}
+        <input type="hidden" name="form_action" id="form_action" value="save_continue">
+
+        <div style="display: flex; align-items: flex-start; gap: 30px; width: 90%;">
+            <table class="table-bare-container">
+                <tr>
+                    <td>Project Number</td>
+                    <td>{{ form.project_number }}</td>
+                    <td>Project Description</td>
+                    <td>{{ form.description }}</td>
+                    <td>% Complete</td>
+                    <td>{{ proj.completion_percentage }}</td>
+                </tr>
+                <tr>
+                    <td>Time to Execute</td>
+                    <td>{{ form.execution_time }}</td>
+                    <td>uom</td>
+                    <td>{{ form.uom }}</td>
+                    <td>Status</td>
+                    <td>{{ form.status }}</td>
+                </tr>
+            
+                {{ budget_formset.management_form }}
+                {% for b_form in budget_formset %}
+                <tr>
+                    {{ b_form.id }}
+                    <td>
+                        {{ b_form.instance.year }} Budget
+                        <input type="hidden" name="{{ b_form.year.html_name }}" value="{{ b_form.instance.year }}">
+                    </td>
+                    <td>{{ b_form.allocated_budget }}</td>
+                    <td>Spend</td>
+                    <td>
+                        {% if b_form.instance.pk %}
+                            ${{ b_form.instance.yearly_spend }}
+                        {% else %}$0{% endif %}
+                    </td>
+                    <td>Remaining</td>
+                    <td style="font-weight: bold;">
+                        {% if b_form.instance.pk %}
+                            ${{ b_form.instance.yearly_remaining }}
+                        {% else %}$0{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="container-wrapper">
+            <div class="container" style="width: 45%; margin-right: 10px;">
+                Project Scope<br>
+                {{ form.scope }}<br>
+            </div>
+            <div class="container" style="width: 45%; margin-left: 10px;">
+                Justification<br>
+                {{ form.justification }}<br>
+            </div>
+        </div>
+            <br>
+        </div>
+        {% if proj %}
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <h3>Project Detail</h3>
+            <br>
+            <a href="{% url 'projects:project_tasks' proj.id %}" class="button">Tasks</a> &nbsp; 
+            <a href="{% url 'projects:project_notes' proj.id %}" class="button">Project Notes</a> &nbsp; 
+            <a href="{% url 'projects:project_financials' proj.id %}" class="button">Financial</a> &nbsp; 
+            <a href="{% url 'projects:project_lessons' proj.id %}" class="button">Lessons</a> &nbsp; 
+            <a href="{% url 'moc:add_moc' %}?proj_id={{ proj.id }}" class="button">Create MOC</a> &nbsp; 
+            <div style="display: flex; align-items: center; gap: 5px; margin-left: 10px;">
+                {{ form.moc_number }}
+                
+                {% if proj.moc_number %}
+                    <a href="{% url 'moc:edit_moc' proj.moc_number %}?proj_id={{ proj.id }}" 
+                    title="View MOC Details"
+                    style="text-decoration: none; font-size: 1.2em;">
+                    🔗
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <br>
+        <div>
+            <h4>Project Steps &nbsp; 
+                <button type="button" onclick="addRow('steps')">Add</button> &nbsp; 
+                <a href="{% url 'projects:project_gantt' proj.id %}" class="button">Gantt</a>
+            </h4>
+            
+            {{ steps_formset.management_form }}
+            <div id="steps-list">
+                {% for step_form in steps_formset %}
+                    <div class="steps-row" style="margin-bottom: 10px;">
+                        {{ step_form.id }}
+                        <label>Step</label>{{ step_form.step_number }}  &nbsp;
+                        <label>Description</label>{{ step_form.description }} &nbsp;
+                        <label>Time to Implement</label>{{ step_form.time_to_implement }} uom{{ step_form.uom }} &nbsp;
+                        <label>Start Date</label>{{ step_form.start_date }} &nbsp;
+                        <label>Status</label>{{ step_form.status }} &nbsp;
+                        {% if steps_formset.can_delete %}
+                            <span style="color: red; font-size: 0.8em;">Delete? {{ step_form.DELETE }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <br>
+            </div>
+        </div>
+        <div>
+            <h4>Delays &nbsp; <button>Add</button></h4>
+
+             {{ delays_formset.management_form }}
+            <div id="delays-list">
+                {% for delay_form in delays_formset %}
+                    <div class="delays-row" style="margin-bottom: 10px;">
+                        {{ delay_form.id }}
+                        <label>Step</label>{{ delay_form.step }}  &nbsp;
+                        <label>Delay Type</label>{{ delay_form.delay_type }} &nbsp;
+                        <label>Cause</label>{{ delay_form.cause }} &nbsp;
+                        <label>Time Requirement</label>{{ delay_form.time_requirement }} uom{{ delay_form.uom }} &nbsp;
+                        {% if delays_formset.can_delete %}
+                            <span style="color: red; font-size: 0.8em;">Delete? {{ delay_form.DELETE }}</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <br>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 30px; width: 98%;">
+            <div style="display: flex; flex-direction: column; width: 48%; margin-right: 10px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <h4>Attachments &nbsp; &nbsp; &nbsp; <button type="button" onclick="addRow('attach')">Add</button></h4>
+                </div>
+                {{ attachments_formset.management_form }}
+                <div id="attach-list">
+                    {% for attach in attachments_formset %}
+                        <div class="attach-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 5px;">
+                            {{ attach.id }}
+                            <label style="white-space: nowrap;">Name</label> {{ attach.name }} &nbsp;
+
+                            <span class="file-area">
+                                {% if attach.instance.file %} 
+                                    <a href="{{ attach.instance.file.url }}" target="_blank" class="button"
+                                    style="background-color: #28a745; color: white; padding: 4px 8px; border-radius: 8px; font-size: 0.8em;">
+                                    ✓ View File
+                                    </a>
+                                {% else %}
+                                    {{ attach.file }}
+                                {% endif %}
+                            </span>
+                            {% if attachments_formset.can_delete %}
+                                <span style="font-size: 0.7em; color: red;">Delete? {{ attach.DELETE }}</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; width: 25%;">
+                <div style="display: flex; justify-content: space-between; margin-right: 10px; margin-left: 10px;">
+                    <h4>WOs &nbsp; <a href="{% url 'work_orders:add_work_order' %}?proj_id={{ proj.id }}" class="button">Add</a></h4>
+                </div>
+                <div>
+                    {% for wo in proj.work_orders.all %}
+                        <strong>{{ wo.work_order }}</strong>, {{ wo.troubleshoot_description|truncatechars:20 }}, {{ wo.job_status }}
+                    {% empty %}
+                        <span>No WOs linked.</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; width: 25%;">
+                <div style="display: flex; justify-content: space-between; margin-left: 10px;">
+                    <h4>POs &nbsp; <a href="{% url 'purchasing:create_purchase' %}?proj_id={{ proj.id }}" class="button">Add</a></h4>
+                </div>
+                <div>
+                    {% for po in proj.purchase_orders.all %}
+                        <strong>{{ po.purchase_number }}</strong>, ${{ po.grand_total }}, {{ po.status }}
+                    {% empty %}
+                        <span>No POs found.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+            <div style="padding: 20px; border: 1px dashed #ccc; text-align: center; color: #666;">
+                Please search for a Project Number above to view details.
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+    function submitForm(actionValue) {
+        const form = document.getElementById('project-form');
+        const actionInput = document.getElementById('form_action');
+        if (actionInput) {
+            actionInput.value = actionValue;
+        }
+
+        const hiddenSubmit = document.createElement('button');
+        hiddenSubmit.type = 'submit';
+        hiddenSubmit.style.display = 'none';
+        form.appendChild(hiddenSubmit);
+        hiddenSubmit.click();
+    }
+
+    function addRow(prefix) {
+        const totalForms = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+        const currentCount = parseInt(totalForms.value);
+        
+        const container = document.getElementById(`${prefix}-list`);
+        const rows = container.getElementsByClassName(`${prefix}-row`);
+        const newRow = rows[0].cloneNode(true);
+        
+        const nameRegex = new RegExp(`${prefix}-0-`, 'g');
+        newRow.innerHTML = newRow.innerHTML.replace(nameRegex, `${prefix}-${currentCount}-`);
+        
+        const inputs = newRow.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'hidden') {
+                input.value = '';
+                if (input.type === 'file') {
+                    const link = input.parentElement.querySelector('a');
+                    if (link) link.remove();
+                }
+            }
+        });
+
+        container.appendChild(newRow);
+        totalForms.value = currentCount + 1;
+    }
+</script>
+
+{% endblock %}

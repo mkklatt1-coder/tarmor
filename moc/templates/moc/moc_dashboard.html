@@ -1,0 +1,120 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    MOC Effort/Value Rank
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="{% url 'moc:export_rankings' %}" class="button">Export</a></li>
+        <li><a href="{% url 'moc:mocs' %}">Return</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2> Effort Versus Value Ranking for MOCs</h2>
+    <br>
+
+    <div class="container" style="width: 98%; height: 500px;">
+        <canvas id="portfolioChart" width="400" height="200"></canvas>
+    </div>
+    <br>
+
+    <h3> MOC Rank List </h3>
+    <br>
+    <div  class="table-container">
+        <table class="table" id="dashboard-rank">
+            <thead>
+                <tr>
+                    <th class="th"><a class="sort_header" href="?sort=moc_number&dir={% if direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        MOC {% if sort_by == 'moc_number' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=title&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Title {% if sort_by == 'title' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=status&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Status {% if sort_by == 'status' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                     <th class="th"><a class="sort_header" href="?sort=created_at&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Created {% if sort_by == 'created_at' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=effort&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Effort {% if sort_by == 'effort' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=value&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Value {% if sort_by == 'value' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=ratio&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        V/E Ratio {% if sort_by == 'ratio' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th"><a class="sort_header" href="?sort=forloop.counter&dir={% if request.GET.dir == 'asc' %}desc{% else %}asc{% endif %}">
+                        Rank {% if sort_by == 'forloop.counter' %}{% if direction == 'asc' %}▲{% else %}▼{% endif %}{% endif %}</a></th>
+                    <th class="th">Category</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in dashboard_data %}
+                <tr>
+                    <td class="td">{{ item.moc.moc_number }}</td>
+                    <td class="td">{{ item.moc.title }}</td>
+                    <td class="td">{{ item.moc.status }}</td>
+                    <td class="td">{{ item.moc.created_at|default:"-" }}</td>
+                    <td class="td">{{ item.effort }}</td>
+                    <td class="td">{{ item.value }}</td>
+                    <td class="td">{{ item.ratio|default:"N/A" }}</td>
+                    <td class="td">{{ forloop.counter }}</td>
+                    <td class="td">
+                        {% if item.ratio > 1.5 %}
+                            <span style="color: green;">High Value / Low Effort</span>
+                        {% elif item.ratio < 0.8 %}
+                            <span style="color: red;">High Effort / Low Value</span>
+                        {% else %}
+                            <span>Balanced</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+<script>
+    const ctx = document.getElementById('portfolioChart').getContext('2d');
+    const portfolioChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'MOC Portfolio (Value vs Effort)',
+                data: [
+                    {% for item in dashboard_data %}
+                    { 
+                        x: {{ item.effort|default:0 }}, 
+                        y: {{ item.value|default:0 }}, 
+                        label: "{{ item.moc.moc_number }}" 
+                    },
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(54, 162, 235, 1)',
+                pointRadius: 8
+            }]
+        },
+        options: {
+            scales: {
+                x: { title: { display: true, text: 'Effort (Complexity/Risk)' } },
+                y: { title: { display: true, text: 'Value (Safety/Benefit)' } }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw.label + ': (Effort: ' + context.raw.x + ', Value: ' + context.raw.y + ')';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

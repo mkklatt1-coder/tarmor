@@ -1,0 +1,135 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{%block title %}
+    Search System
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'failures:system' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+
+        <h2>Search System </h2>
+        <br>
+        <div>
+            <h3> 
+                &nbsp; Search Criteria &nbsp;
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-form" >
+                    <a href="{% url 'failures:search_system_name' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h3>
+            
+            <form id="search-form"  method="GET" action="{% url 'failures:search_system' %}">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Asset Key</td>
+                        <td>
+                            <input type="text" name="asset_key" value="{{ asset_key_val }}" list="asset-key-list" placeholder="All Keys..." class="input" autocomplete="off">
+                            <datalist id="asset-key-list">
+                                {% for ak in all_asset_keys %}
+                                    <option value="{{ ak }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>System Name</td>
+                        <td>
+                            <input type="text" name="system_name" value="{{ system_name_val }}" list="system-name-list" placeholder="System Name or Key..." class="input" autocomplete="off">
+                            <datalist id="system-name-list">
+                                {% for sys in all_system_suggestions %}
+                                    <option value="{{ sys.system_name }}" label="{{ sys.combined_sys_key }}">
+                                        {{ sys.system_name }} - {{ sys.combined_sys_key }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>System Key</td>
+                        <td>
+                            <input type="text" name="system_key" value="{{ system_key_val }}" list="system-key-list" placeholder="All System Keys..." class="input" autocomplete="off">
+                            <datalist id="system-key-list">
+                                {% for sk in all_system_keys %}
+                                    <option value="{{ sk }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Comb Sys Key</td>
+                        <td>
+                            <input type="text" name="combined_sys_key" value="{{ combined_sys_key_val }}" list="combined-key-list" placeholder="All Combo Keys..." class="input" autocomplete="off">
+                            <datalist id="combined-key-list">
+                                {% for ck in all_combined_keys %}
+                                    <option value="{{ ck }}"></option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+
+        <div class="form">
+            <form class="form" id="sesarch_system_form" method="POST">
+                <h3> Search Results </h3>
+                <br>
+                <table class="table-container">
+                    <thead>
+                        <tr>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'asset_key' %}-asset_key{% else %}asset_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Asset Key {% if sort == 'asset_key' %} ▲ {% elif sort == '-asset_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'system_name' %}-system_name{% else %}system_name{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    System Name {% if sort == 'system_name' %} ▲ {% elif sort == '-system_name' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'system_key' %}-system_key{% else %}system_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    System Key {% if sort == 'system_key' %} ▲ {% elif sort == '-system_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                            <th class="th">
+                                <a href="?sort={% if sort == 'combined_sys_key' %}-combined_sys_key{% else %}combined_sys_key{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                                    Comb Sys Key {% if sort == 'combined_sys_key' %} ▲ {% elif sort == '-combined_sys_key' %} ▼ {% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sys in system %}
+                            <tr>
+                                <td class="td">{{ sys.asset_key }}</td>
+                                <td class="td">{{ sys.system_name }}</td>
+                                <td class="td">{{ sys.system_key }}</td>
+                                <td class="td">{{ sys.combined_sys_key }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No systems found matching those criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+    <script>
+        function exportExcel() {
+            const currentParams = window.location.search;
+            window.location.href = "{% url 'failures:export_systems_excel' %}" + currentParams;
+        }
+        </script>
+{% endblock %}

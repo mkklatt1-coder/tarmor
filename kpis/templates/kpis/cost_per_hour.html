@@ -1,0 +1,221 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load kpi_extras %}
+
+{%block title %}
+    Cost Per Hour
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li> <a href="javascript:void(0)" onclick="exportExcel()">Export</a></li>
+            <li><a href="{% url 'kpis:kpis' %}">Return</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="main">
+        <h2>Cost Per Hour </h2>
+        <br>
+        <div>
+            <h3> 
+                &nbsp; Search Criteria &nbsp;
+                <button type="submit" form="search-form" style="border: none; background: none; padding: 0; cursor: pointer;">
+                    <img src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo'>
+                </button>
+                <a href="{% url 'kpis:cost_per_hour_report' %}">
+                    <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+                </a>
+            </h3>
+            
+            <form class="form" id="search-form"  method="GET" action="{% url 'kpis:cost_per_hour_report' %}">
+                <table class="table-bare-container">
+                    <tr>
+                        <td>Start Date</td>
+                        <td><input type="date" name="start_date" class="input" value="{{ start_date_val }}"></td>
+                        <td>End Date</td>
+                        <td><input type="date" name="end_date" class="input" value="{{ end_date_val }}"></td>
+                        <td>Asset Type</td>
+                        <td>
+                            <input type="text" name="asset_type" value="{{ asset_type_val }}" list="asset-type-list" placeholder="All Assets..." class="input" autocomplete="off"
+                                hx-get="/kpis/get-compliance-linked-eq-types/" hx-trigger="input changed delay:200ms, change" hx-target="#eq-type-datalist-wrapper">
+                            <datalist id="asset-type-list">
+                                {% for at in asset_types %}
+                                    <option value="{{ at.name }}"></option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>Eq. Type</td>
+                        <td>
+                            <input type="text" name="equipment_type" value="{{ eq_type_val }}" list="eq-type-list" placeholder="Select Asset First..." class="input" autocomplete="off">
+                            <div id="eq-type-datalist-wrapper">
+                                <datalist id="eq-type-list">
+                                    {% for et in equipment_types %}
+                                        <option value="{{ et.Equipment_Type }}"></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                        </td>
+                        <td>Eq. Number</td>
+                        <td colspan="3">
+                            <input type="text" name="equipment_number" value="{{ eq_num_val }}" list="eq-num-list" placeholder="Number or Desc..." class="input" autocomplete="off" style="width: 100%;">
+                            <datalist id="eq-num-list">
+                                {% for eq in all_equipment_suggestions %}
+                                    <option value="{{ eq.Equipment_Number }}" label="{{ eq.Equipment_Description }}">
+                                        {{ eq.Equipment_Number }} - {{ eq.Equipment_Description }}
+                                    </option>
+                                {% endfor %}
+                            </datalist>
+                            <input type="hidden" name="sort" value="{{ sort }}">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        
+        <h3>Cost Per Hour:</h3>
+        <br>
+
+        <div style="width: 90%; height:500px; margin: auto;">
+            <canvas id="costperhrChart"></canvas>
+        </div>
+        <br>
+
+        <h3> Equipment Breakdown:</h3>
+        <br>
+
+        <table class="table-container">
+            <thead>
+                <tr>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'equipment_num' %}-equipment_num{% else %}equipment_num{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Equipment # {% if sort == 'equipment_num' %} ▲ {% elif sort == '-equipment_num' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'description' %}-description{% else %}description{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Description {% if sort == 'description' %} ▲ {% elif sort == '-description' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'labour_cost' %}-labour_cost{% else %}labour_cost{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Labour Cost {% if sort == 'labour_cost' %} ▲ {% elif sort == '-labour_cost' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'parts_cost' %}-parts_cost{% else %}parts_cost{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Parts Cost {% if sort == 'parts_cost' %} ▲ {% elif sort == '-parts_cost' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'total_cost' %}-total_cost{% else %}total_cost{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Total Cost {% if sort == 'total_cost' %} ▲ {% elif sort == '-total_cost' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'total_hours' %}-total_hours{% else %}total_hours{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Total Hours {% if sort == 'total_hours' %} ▲ {% elif sort == '-total_hours' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                    <th class="th">
+                        <a href="?sort={% if sort == 'cost_per_hr' %}-cost_per_hr{% else %}cost_per_hr{% endif %}{% if filter_url %}&{{ filter_url }}{% endif %}" class="sort_header">
+                            Cost / Hr {% if sort == 'cost_per_hr' %} ▲ {% elif sort == '-cost_per_hr' %} ▼ {% endif %}
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in table_data %}
+                <tr>
+                    <td class="td">{{ item.equipment_num }}</td>
+                    <td class="td">{{ item.description }}</td>
+                    <td class="td">${{ item.labour_cost|floatformat:2 }}</td>
+                    <td class="td">${{ item.parts_cost|floatformat:2 }}</td>
+                    <td class="td">${{ item.total_cost|floatformat:2 }}</td>
+                    <td class="td">{{ item.total_hours|floatformat:2 }}</td>
+                    <td class="td" style="font-weight:bold;">${{ item.cost_per_hr|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td class="td" colspan="7" style="text-align: center;">No closed work order lines compiled for this selection range.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="{% static 'js/chart.umd.min.js' %}"></script>
+    <script src="{% static 'js/htmx.min.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('costperhrChart').getContext('2d');
+            
+            new Chart(ctx, {
+                data: {
+                    labels: {{ labels|safe }},
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Avg Cost Per Hour ($/hr)',
+                            data: {{ cost_hr_series|safe }},
+                            borderColor: '#ff4d4d',
+                            yAxisID: 'y1',
+                            fill: false,
+                            order: 1
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Labour Cost',
+                            data: {{ labour_series|safe }},
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            stack: 'cost',
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Parts Cost',
+                            data: {{ parts_series|safe }},
+                            backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                            stack: 'cost',
+                            yAxisID: 'y',
+                            order: 2
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Total Daily Spend ($)' },
+                            stacked: true
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Cost Per Hour ($/hr)' },
+                            grid: { drawOnChartArea: false },
+                            beginAtZero: true
+                        },
+                        x: { stacked: true }
+                    }
+                }
+            });
+        });
+
+        function exportExcel() {
+            const form = document.getElementById('search-form');
+            const formData = new URLSearchParams(new FormData(form));
+            window.location.href = "{% url 'kpis:export_cost_report_excel' %}?" + formData.toString();
+        }
+
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Add Cylinder Temps
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+    <div class="leftnavbar">
+        <ul>
+            <li><a href="javascript:void(0)" onclick="submitForm('save')">Save</a></li>
+            <li><a href="{% url 'condition_monitoring:cylinder_temps' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+            <br>
+            <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+        </ul>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    <h2>Add Cylinder Temps &nbsp; &nbsp; <button type="button" onclick="addFormRow()">Add</button></h2>
+    <br>
+    <form id="tempsForm" method="POST">
+        {% csrf_token %}
+        <table class="table-bare-container">
+            <tbody class="form-info">
+                <tr>
+                    <td>Date</td>
+                    <td>{{ form.date }}</td>
+                    <td>Equipment #</td>
+                    <td>{{ form.equipment }}</td>
+                    <td>WO #</td>
+                    <td>{{ form.work_order }}</td>
+                </tr>
+                <tr>
+                    <td>Meter</td>
+                    <td>{{ form.meter }}</td>
+                    <td>Meter Reading</td>
+                    <td>{{ form.meter_reading }}</td>
+                    <td>Comments</td>
+                    <td>{{ form.comments }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <br>
+        {{ formset.management_form }}
+        <table class="table-bare-container" id="formset-table">
+            <thead>
+                <tr>
+                    <th>Cyl #</th>
+                    <th>Reading</th>
+                    <th>UOM</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody id="formset-body">
+                {% for reading_form in formset %}
+                <tr class="form-row">
+                    <td>{{ reading_form.cylinder_number }}</td>
+                    <td>{{ reading_form.temp_reading }}</td>
+                    <td>{{ reading_form.uom }}</td>
+                    <td>
+                        {% if reading_form.DELETE %}
+                            {{ reading_form.DELETE }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="empty-form" style="display:none;">
+            <table>
+                <tbody>
+                    <tr class="form-row">
+                        <td>{{ formset.empty_form.cylinder_number }}</td>
+                        <td>{{ formset.empty_form.temp_reading }}</td>
+                        <td>{{ formset.empty_form.uom }}</td>
+                        <td>{{ formset.empty_form.DELETE }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+<script>
+    function submitForm(action) {
+        if (action === 'save' || !action) {
+            document.getElementById('tempsForm').submit();
+        }
+    }
+
+    function addFormRow() {
+        const totalForms = document.getElementById('id_readings-TOTAL_FORMS');
+        
+        if (!totalForms) {
+            console.error("Management form tracker 'id_readings-TOTAL_FORMS' could not be found on the page.");
+            return;
+        }
+
+        const formIndex = parseInt(totalForms.value);
+        
+        const emptyFormHtml = document.getElementById('empty-form').innerHTML;
+        
+        const updatedRowHtml = emptyFormHtml.replaceAll('__prefix__', formIndex);
+        
+        const tempDiv = document.createElement('tbody');
+        tempDiv.innerHTML = updatedRowHtml;
+        
+        const newRow = tempDiv.querySelector('.form-row');
+        if (newRow) {
+            document.getElementById('formset-body').appendChild(newRow);
+            
+            totalForms.value = formIndex + 1;
+        }
+    }
+</script>
+{% endblock %}

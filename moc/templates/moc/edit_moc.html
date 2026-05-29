@@ -1,0 +1,279 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}
+    Edit MOC
+{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<div class="leftnavbar">
+    <ul>
+        <li><a href="javascript:void(0);" onclick="submitEditMOCForm();">Save</a></li>
+        <li><a href="{% url 'moc:mocs' %}" onclick="return confirm('Information will be lost! Proceed?');">Cancel</a></li>
+        <br>
+        <li><a href="{% url 'core:home' %}">Main Menu</a></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+    {% if moc_form.errors or considerations_form.errors or pros_formset.errors or cons_formset.errors or attachments_formset.errors %}
+        <div style="background-color: #ffcccc; border: 1px solid red; padding: 10px; margin-bottom: 20px;">
+            <p><strong>There were errors saving the form:</strong></p>
+            {{ moc_form.errors }}
+            {{ considerations_form.errors }}
+            {{ pros_formset.non_form_errors }}
+            {{ cons_formset.non_form_errors }}
+            {{ attachments_formset.non_form_errors }}
+        </div>
+    {% endif %}
+    <div>
+        <h2>Edit Management of Change</h2>
+        <br>
+        {% if not moc %}
+        <h3 style="margin: 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>MOC #</span>
+                
+                <form method="POST" action="{% url 'moc:edit_moc_base' %}" style="display: flex; align-items: center; margin: 0;">
+                    {% csrf_token %}
+                    <input class="input" type="text" name="lookup_number" placeholder="Enter MOC Number" required 
+                        style="height: 25px; padding: 2px 5px;">
+                    
+                    <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Search" class="logo" 
+                        style="height: 25px; margin-left: 5px; cursor: pointer;">
+                </form>
+            </div>
+        </h3>
+        {% else %}
+    </div>
+   <form method="POST" id="edit-moc-form" action="{% url 'moc:edit_moc' moc.moc_number %}{% if project_id and project_id != 'None' %}?proj_id={{ project_id }}{% endif %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div>
+            MOC # <input class="locked" type="text" value="{{ moc.moc_number }}" readonly> &nbsp;
+            Date Created <input class="locked" type="text" value="{{ moc.date_created }}" readonly> &nbsp;
+            Date Completed {{ moc_form.date_completed }} &nbsp;
+            Status {{ moc_form.status }} <br>
+            <br>
+            <div>
+                MOC Title {{ moc_form.title }}
+            </div>
+            <br>
+            <a href="{% url 'moc:safety_health' moc.moc_number %}" class="button"> Safety </a> &nbsp; 
+            <a href="{% url 'moc:moc_question_resp' moc.moc_number 'documentation' %}" class="button"> Documentation </a> &nbsp; 
+            <a href="{% url 'moc:moc_question_resp' moc.moc_number 'education' %}" class="button"> Education </a> &nbsp; 
+            <a href="{% url 'moc:moc_question_resp' moc.moc_number 'procurement' %}" class="button"> Procurement </a> &nbsp; 
+            <a href="{% url 'moc:moc_question_resp' moc.moc_number 'data_tech' %}" class="button"> Data & Tech </a> &nbsp; 
+            <a href="{% url 'moc:moc_question_resp' moc.moc_number 'test_imp' %}" class="button"> Test & Imp </a> &nbsp; 
+            <a href="{% url 'moc:moc_question_resp' moc.moc_number 'social' %}" class="button"> Social </a> &nbsp;
+            <br>
+        </div>
+        <div class="container-wrapper">
+            <div class="container" style="width: 45%;">
+                Define Change<br>
+                {{ moc_form.define_change }}<br>
+                <br>
+                Anticipated Outcome<br>
+                {{ moc_form.anticipated_outcome }}<br>
+            </div>
+            <div class="container" style="width: 45%; height: 350px;">
+                <canvas id="effvalChart"></canvas>
+            </div>
+        </div>
+        <br>
+        <div class="container-wrapper">
+            <div class="container" style="width: 45%;" id="pros-container">
+                <h3>Pros &nbsp; <button type="button" onclick="addRow('pros')">Add</button> </h3>
+                <br>
+                {{ pros_formset.management_form }}
+                {% for pro in pros_formset %}
+                    <div class="pro-row formset-row">{{ pro.id }}{{ pro.text }}
+                        {% if pros_formset.can_delete %}
+                            <label class="delete-label">Delete: {{ pro.DELETE }}</label>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <div class="container" style="width: 45%;" id="cons-container">
+                <h3>Cons &nbsp; <button type="button" onclick="addRow('cons')">Add</button> </h3>
+                <br>
+                {{ cons_formset.management_form }}
+                {% for con in cons_formset %}
+                    <div class="con-row formset-row">{{ con.id }}{{ con.text }}
+                        {% if cons_formset.can_delete %}
+                        <label class="delete-label">Delete: {{ con.DELETE }}</label>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <br>
+        <h3> Considerations </h3>
+        <br>
+        <div class="container-wrapper">
+            <div class="container" style="width: 30%;">
+                <table class="table-container">
+                    <tr><th style="text-align: left">Questions</th>
+                    <tr><td>How long will it take to set up and test (months)? </td><td style="text-align: center">{{ considerations_form.setup_months }}</td></tr>
+                    <tr><td>How long will it take to implement (months)? </td><td style="text-align: center">{{ considerations_form.implementation_months }}</tr>
+                    <tr><td>What is the projected total equipment downtime (weeks)? </td><td style="text-align: center">{{ considerations_form.eq_downtime }}</tr>
+                    <tr><td>Are external contractors required? Approximately how many hours?</td> <td style="text-align: center">{{ considerations_form.contractor_hours }}</td></tr>
+                    <tr><td>Is there a change to warranty? What is the impact?</td> <td style="text-align: center">{{ considerations_form.warranty_impact }}</td></tr>
+                </table>
+            </div>&nbsp; &nbsp; &nbsp; 
+            <div class="container" style="width: 30%;">
+                <table class="table-container">
+                    <tr><th style="text-align: left">Questions</th><th>CAD</th>
+                    <tr><td>What is the total cost of the project? </td><td style="text-align: center">{{ considerations_form.project_cost }}</td></tr>
+                    <tr><td>What is the projected savings per year (confirmed cost)? </td><td style="text-align: center">{{ considerations_form.savings_confirmed }}</td></tr>
+                    <tr><td>What is the projected savings per year (soft cost)? </td><td style="text-align: center">{{ considerations_form.savings_soft }}</td></tr>
+                    <tr><td>What is the projected inventory cost above the project cost? </td><td style="text-align: center">{{ considerations_form.inventory_cost }}</td></tr>
+                    
+                </table>
+            </div>&nbsp; &nbsp; &nbsp; 
+            <div class="container" style="width: 30%;">
+                <table class="table-container">
+                    <tr><th style="text-align: left">Questions</th>
+                    <tr><td>What are the projected production gains (availability)? </td><td style="text-align: center">{{ considerations_form.production_gain }}</td></tr>
+                    <tr><td>What are the safety & health or environmental gains? </td><td style="text-align: center">{{ considerations_form.safety_gain }}</td></tr>
+                    <tr><td>What is the projected positive social impact? </td><td style="text-align: center">{{ considerations_form.social_impact }}</td></tr>
+                    <tr><td>How long will it take to recover the investment (ROI)? </td><td style="text-align: center">{{ considerations_form.roi_months }}</td></tr>
+                </table>
+            </div>
+        </div>
+        <br>
+        <div id="attachments-container">
+            <h3> Attachments &nbsp; &nbsp; &nbsp; &nbsp; <button type="button" onclick="addRow('attachments')">Add</button> &nbsp; &nbsp; &nbsp; &nbsp; <button onclick="uploadFile(this, '{{ moc.moc_number }}')">Upload</button></h3>
+            <p>Include any pictures, specifications, layouts, designs, etc.</p>
+            <p>Attachments List:</p>
+            {{ attachments_formset.management_form }}
+            {% for attach in attachments_formset %}
+                <div class="attach-row formset-row">
+                    {{ attach.id }}
+                    <span>Name:</span> {{ attach.description }} 
+                    <div class="file-area">
+                        {% if attach.instance.file %} 
+                            <a href="{{ attach.instance.file.url }}" target="_blank" class="button"
+                            style="text-decoration: none; background-color: #28a745; color: white; padding: 5px; margin-left: 10px; border-radius: 8px;">
+                            ✓ View File</a>
+                        {% else %}
+                            {{ attach.file }}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </form>
+    <div id="empty-form-templates" style="display:none;">
+        <div id="pros-template">
+            <div class="pro-row formset-row">
+                {{ pros_formset.empty_form.text }}
+                <label class="delete-label">Delete: {{ pros_formset.empty_form.DELETE }}</label>
+            </div>
+        </div>
+        <div id="cons-template">
+            <div class="con-row formset-row">
+                {{ cons_formset.empty_form.text }}
+                <label class="delete-label">Delete: {{ cons_formset.empty_form.DELETE }}</label>
+            </div>
+        </div>
+        <div id="attachments-template">
+            <div class="attach-row formset-row" style="margin-bottom: 10px;">
+                <span>Name:</span> {{ attachments_formset.empty_form.description }}
+                <div class="file-area">
+                    {{ attachments_formset.empty_form.file }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{% static 'js/chart.umd.min.js' %}"></script>
+<script>
+    fetch("{% url 'moc:moc_effval_api' moc.moc_number %}")
+    .then(response => response.json())
+    .then(data => {
+        const ctx = document.getElementById("effvalChart").getContext("2d");
+        new Chart(ctx, {
+            type: "scatter",
+            data: {
+            datasets: [{
+                label: "Effort vs Value",
+                data: [{
+                x: data.effort,
+                y: data.value
+                }],
+                backgroundColor: "rgba(54, 162, 235, 0.7)",
+                borderColor: "rgba(54, 162, 235, 1)",
+                borderWidth: 2,
+                pointRadius: 8
+            }]
+            },
+            options: {
+            responsive: true,
+            scales: {
+                x: {
+                title: { display: true, text: "Effort" },
+                beginAtZero: true
+                },
+                y: {
+                title: { display: true, text: "Value" },
+                beginAtZero: true
+                }
+            }
+            }
+        });
+    });
+
+    function addRow(prefix) {
+        const container = document.getElementById(`${prefix}-container`);
+        const totalForms = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
+        const currentCount = parseInt(totalForms.value);
+        
+        const templateHtml = document.getElementById(`${prefix}-template`).innerHTML;
+        
+        const newRow = document.createElement('div');
+        newRow.className = `${prefix.slice(0, -1)}-row`;
+        newRow.innerHTML = templateHtml.replace(/__prefix__/g, currentCount);;
+        
+        container.appendChild(newRow);
+        totalForms.value = currentCount + 1;
+    }
+
+    async function uploadFile(btn, mocNumber) {
+    const row = btn.closest('.attach-row');
+    const fileInput = row.querySelector('input[type="file"]');
+    const descInput = row.querySelector('input[name*="description"]');
+    
+    if (!fileInput.files[0]) return alert("Select a file first");
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('description', descInput.value);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    try {
+        const response = await fetch(`/moc/upload/${mocNumber}/`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+            if (data.success) {
+                const fileArea = row.querySelector('.file-area');
+                fileArea.innerHTML = `<a href="${data.url}" target="_blank" class="button">View</a>`;
+            }
+        } catch (err) {
+            console.error("Upload failed", err);
+        }
+    }
+
+    function submitEditMOCForm() {
+        document.getElementById("edit-moc-form").submit();
+    }
+</script>
+{% endif %}
+{% endblock %}
