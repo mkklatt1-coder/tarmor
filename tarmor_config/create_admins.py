@@ -31,16 +31,14 @@ try:
         if tenant.schema_name == 'public':
             continue
             
-        with tenant_context(tenant):
-            # Verify and register Administrator Account 1
-            if not User.objects.filter(username='mklatt').exists():
-                User.objects.create_superuser('admin_main', 'mkklatt1@gmail.com', 'Password123!')
-                print(f"--- ADMIN 1 SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")
-                
-            # Verify and register Administrator Account 2
-            if not User.objects.filter(username='jmaber').exists():
-                User.objects.create_superuser('admin_partner', 'joel.maber@gmail.com', 'Password456!')
-                print(f"--- ADMIN 2 SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")
+        if not User.objects.filter(username='jmaber').exists():
+                    User.objects.create_superuser('jmaber', 'joel.maber@gmail.com', 'Password123!')
+                    print(f"--- USER jmaber SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")
+                    
+                # Verify and register Account for B. Magro
+        if not User.objects.filter(username='bmagro').exists():
+            User.objects.create_superuser('bmagro', 'bmagro@gmail.com', 'Password456!')
+            print(f"--- USER bmagro SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")
                 
 except Exception as e:
     print(f"Error executing cloud seed script: {e}")
