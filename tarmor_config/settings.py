@@ -113,14 +113,15 @@ ASGI_APPLICATION = 'tarmor_config.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+IS_RAILWAY_SERVER = os.environ.get('RAILWAY_ENVIRONMENT') is not None
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
         'NAME': os.environ.get('DB_NAME'),
         'USER': os.environ.get('DB_USER'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
+        'HOST': os.environ.get('DB_HOST') if IS_RAILWAY_SERVER else 'switchback.proxy.rlwy.net', 
+        'PORT': os.environ.get('DB_PORT') if IS_RAILWAY_SERVER else '50714',
     }
 }
 
