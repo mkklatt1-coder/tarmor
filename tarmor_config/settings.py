@@ -27,7 +27,12 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['.localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'tarmor-production.up.railway.app',
+    '://tarmorglobal.com',
+    'localhost',
+    '127.0.0.1',
+]
 
 
 # Application definition
@@ -117,11 +122,13 @@ IS_RAILWAY_SERVER = os.environ.get('RAILWAY_ENVIRONMENT') is not None
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST') if IS_RAILWAY_SERVER else 'switchback.proxy.rlwy.net', 
-        'PORT': os.environ.get('DB_PORT') if IS_RAILWAY_SERVER else '50714',
+        'NAME': os.environ.get('DB_NAME') if IS_RAILWAY_SERVER else 'tenant_program_db',
+        'USER': os.environ.get('DB_USER') if IS_RAILWAY_SERVER else 'postgres',
+        
+        'PASSWORD': os.environ.get('DB_PASSWORD') if IS_RAILWAY_SERVER else 'RedneckU#101',
+        
+        'HOST': os.environ.get('DB_HOST') if IS_RAILWAY_SERVER else 'localhost',
+        'PORT': os.environ.get('DB_PORT') if IS_RAILWAY_SERVER else '5432',
     }
 }
 
@@ -184,3 +191,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 LOGIN_URL = '/admin/login/'
 LOGIN_REDIRECT_URL = '/' 
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://railway.app',
+    'https://tarmorglobal.com',
+]
