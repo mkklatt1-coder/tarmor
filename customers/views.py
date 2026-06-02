@@ -31,6 +31,7 @@ def tenant_login_view(request):
                 return redirect('home')
             else:
                 error_message = "Invalid User Login ID or Password for this organization."
+                return render(request, 'registration/login.html', {'error_message': error_message})
             
     return render(request, 'registration/login.html', {'error_message': error_message})
 
