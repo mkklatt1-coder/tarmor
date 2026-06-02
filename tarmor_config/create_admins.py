@@ -15,8 +15,8 @@ def run():
         if not User.objects.filter(username='admin').exists():
             User.objects.create_superuser(
                 username='admin',
-                email='admin@tarmorglobal.com',
-                password='YourSecurePassword123!' # <-- Change to your secure password
+                email='markklatt@tarmorglobal.com',
+                password='Password123!' # <-- Change to your secure password
             )
             print("Superuser successfully created in test_company_a")
         else:
@@ -25,11 +25,11 @@ def run():
     # Safe public schema fallback pass
     try:
         with schema_context('public'):
-            if not User.objects.filter(username='global_admin').exists():
+            if not User.objects.filter(username='admin').exists():
                 User.objects.create_superuser(
-                    username='global_admin',
-                    email='master@tarmorglobal.com',
-                    password='YourGlobalSecurePassword123!' # <-- Change to your secure password
+                    username='admin',
+                    email='markklatt@tarmorglobal.com',
+                    password='Password123!' # <-- Change to your secure password
                 )
                 print("Superuser successfully created in public schema")
     except Exception as e:
