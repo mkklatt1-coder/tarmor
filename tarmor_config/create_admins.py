@@ -1,37 +1,30 @@
-import os
-import django
+from django.core.management.base import BaseCommand
+from django.contrib.auth.models import User
+from django_tenants.utils import schema_context
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tarmor_config.settings')
-django.setup()
+class Command(BaseCommand):
+    help = 'Safely provisions superuser accounts across public and tenant schemas'
 
-from django.contrib.auth import get_user_model
-from django_tenants.utils import tenant_context
-from customers.models import Company, CompanyDomain
+    def handle(self, *args, **options):
+        with schema_context('test_company_a'):
+            if not User.objects.filter(username='admin').exists():
+                User.objects.create_superuser(
+                    username='admin',
+                    email='markklatt@tarmorglobal.com',
+                    password='Password123!'
+                )
+                self.stdout.write(self.style.SUCCESS("Superuser created in test_company_a"))
+            else:
+                self.stdout.write("Admin already exists in test_company_a")
 
-try:
-    if not Company.objects.filter(schema_name='public').exists():
-        public_tenant = Company(schema_name='public', name='TARMOR Master Live System')
-        public_tenant.save()
-        print("--- MASTER LIVE PUBLIC SCHEMA CREATED ---")
-        
-        public_domain = CompanyDomain(domain='app.tarmorglobal.com', tenant=public_tenant, is_primary=True)
-        public_domain.save()
-        print(f"--- ROOT DOMAIN DETECTED AND EXTENDED TO PUBLIC SCHEMA ---")
-
-    User = get_user_model()
-    companies = Company.objects.all()
-
-    for tenant in companies:
-        if tenant.schema_name == 'public':
-            continue
-            
-        if not User.objects.filter(username='jmaber').exists():
-                    User.objects.create_superuser('jmaber', 'joel.maber@gmail.com', 'Password123!')
-                    print(f"--- USER jmaber SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")
-                    
-        if not User.objects.filter(username='bmagro').exists():
-            User.objects.create_superuser('bmagro', 'bmagro@gmail.com', 'Password456!')
-            print(f"--- USER bmagro SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")
-                
-except Exception as e:
-    print(f"Error executing cloud seed script: {e}")
+        try:
+            with schema_context('public'):
+                if not User.objects.filter(username='admin').exists():
+                    User.objects.create_superuser(
+                        username='admin',
+                        email='markklatt@tarmorglobal.com',
+                        password='Password123!'
+                    )
+                    self.stdout.write(self.style.SUCCESS("Superuser created in public"))
+        except Exception:
+            self.stdout.write("Skipping public superuser creation (auth tables are tenant-only).")
