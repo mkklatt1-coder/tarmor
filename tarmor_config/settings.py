@@ -43,8 +43,6 @@ SHARED_APPS = [
     'django_tenants',
     'customers',
     'tarmor_config',
-    'django.contrib.auth',
-    'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
