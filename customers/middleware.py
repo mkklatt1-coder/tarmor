@@ -6,6 +6,11 @@ class SessionTenantMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+
+        path = request.path_info
+        if path.startswith('/static/') or path.startswith('/media/') or 'favicon.ico' in path:
+            return self.get_response(request)
+        
         schema_name = 'public'
         
         if hasattr(request, 'session') and 'tenant_schema' in request.session:
@@ -15,9 +20,7 @@ class SessionTenantMiddleware:
         try:
             tenant = Tenant.objects.get(schema_name=schema_name)
             request.tenant = tenant
-            
             connection.set_schema(tenant.schema_name, include_public=True)
-            
         except Tenant.DoesNotExist:
             request.tenant = Tenant.objects.get(schema_name='public')
             connection.set_schema_to_public()

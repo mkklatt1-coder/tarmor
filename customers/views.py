@@ -23,12 +23,12 @@ def tenant_login_view(request):
             return render(request, 'registration/login.html', {'error_message': error_message})
             
         connection.set_schema(tenant.schema_name, include_public=True)
-        user = authenticate(request, username=username, password=password)
+        
+        user = authenticate(request=request, username=username, password=password)
         
         if user is not None:
             request.session['tenant_schema'] = tenant.schema_name
             login(request, user)
-            
             request.session.modified = True
             return redirect('home')
         else:
