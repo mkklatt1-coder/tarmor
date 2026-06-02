@@ -41,18 +41,19 @@ ALLOWED_HOSTS = [
 SHARED_APPS = [
     'django_tenants',
     'customers',
+    'tarmor_config',
     
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'django.contrib.messages',
+    'django_filters',
 ]
 
 TENANT_APPS = [
     'django.contrib.auth',
     'django.contrib.admin',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.humanize',
-    'django_filters',
     'preventconcurrentlogins',
     
     'import_export',

@@ -1,17 +1,14 @@
-"""
-WSGI config for tarmor project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
-"""
-
 import os
-from whitenoise import WhiteNoise
+from pathlib import Path
 from django.core.wsgi import get_wsgi_application
+from whitenoise import WhiteNoise
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tarmor_config.settings')
 
 application = get_wsgi_application()
-application = WhiteNoise(application, root=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'staticfiles'))
+
+# Use Path to find the root folder cleanly
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+application = WhiteNoise(application, root=STATIC_ROOT)
