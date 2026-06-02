@@ -186,6 +186,14 @@ PUBLIC_SCHEMA_URLCONF = 'tarmor_config.urls'
 TENANT_URLCONF = 'tarmor_config.urls' 
 
 # Session Information
+SESSION_COOKIE_DOMAIN = '.tarmorglobal.com'
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+
+CSRF_COOKIE_DOMAIN = '.tarmorglobal.com'
+CSRF_COOKIE_SECURE = True
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 SESSION_COOKIE_AGE = 3600  
 SESSION_SAVE_EVERY_REQUEST = True  
