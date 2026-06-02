@@ -9,25 +9,19 @@ from django_tenants.utils import tenant_context
 from customers.models import Company, CompanyDomain
 
 try:
-    # --- AUTOMATED MASTER SCHEMA INITIALIZATION ---
-    # Check if the core global system structure exists yet
     if not Company.objects.filter(schema_name='public').exists():
         public_tenant = Company(schema_name='public', name='TARMOR Master Live System')
         public_tenant.save()
         print("--- MASTER LIVE PUBLIC SCHEMA CREATED ---")
         
-        # LINK YOUR EXACT purchased Wix domain address right here
-        # Replace 'yourwixdomain.com' with your actual company URL string
-        public_domain = CompanyDomain(domain='tarmorglobal.com', tenant=public_tenant, is_primary=True)
+        public_domain = CompanyDomain(domain='app.tarmorglobal.com', tenant=public_tenant, is_primary=True)
         public_domain.save()
         print(f"--- ROOT DOMAIN DETECTED AND EXTENDED TO PUBLIC SCHEMA ---")
 
-    # --- AUTOMATED ADMINISTRATOR ACCOUNT INJECTION LOOP ---
     User = get_user_model()
     companies = Company.objects.all()
 
     for tenant in companies:
-        # Skip the public schema layout space since auth tables don't reside there
         if tenant.schema_name == 'public':
             continue
             
@@ -35,7 +29,6 @@ try:
                     User.objects.create_superuser('jmaber', 'joel.maber@gmail.com', 'Password123!')
                     print(f"--- USER jmaber SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")
                     
-                # Verify and register Account for B. Magro
         if not User.objects.filter(username='bmagro').exists():
             User.objects.create_superuser('bmagro', 'bmagro@gmail.com', 'Password456!')
             print(f"--- USER bmagro SECURED IN LIVE SCHEMA: {tenant.schema_name} ---")

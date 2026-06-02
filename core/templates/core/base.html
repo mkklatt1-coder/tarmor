@@ -53,8 +53,18 @@
 
 <body>
     <div class="site-container">
-        <h1 style="font-size: 18px;"> <img class="logo" src="{% static 'Images/alignment.jpg' %}" >
-            <small><i>by TARMOR</i></small></h1>
+        <h1 class="main-brand-header">
+            <div class="brand-left" style="font-size: 18px;">
+                <img class="logo" src="{% static 'Images/alignment.jpg' %}" >
+                <small><i>by TARMOR</i></small>
+            </div>
+
+            {% if user.is_authenticated %}
+                <div class="brand-right">
+                    <a href="{% url 'logout' %}" class="btn-logout-header">Log Out</a>
+                </div>
+            {% endif %}
+        </h1>
 
         {% block top_navigation %}
         {% endblock %}
