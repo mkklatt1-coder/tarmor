@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login
 from django.db import connection
 from django_tenants.utils import get_tenant_model
 
+
 def tenant_login_view(request):
     error_message = None
     

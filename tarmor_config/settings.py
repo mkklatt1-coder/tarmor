@@ -55,7 +55,6 @@ TENANT_APPS = [
     'django.contrib.auth',
     'django.contrib.admin',
     'preventconcurrentlogins',
-    
     'import_export',
     'equipment',
     'work_orders',
