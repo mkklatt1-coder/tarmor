@@ -30,10 +30,10 @@ def run():
 
         # 2. Define your 4 additional users
         additional_users = [
-            {'jmaber': 'jmaber', 'email': 'joelmaber@tarmorglobal.com', 'password': 'Password123!', 'is_staff': True},
-            {'markklatt': 'markklatt', 'email': 'markklatt@tarmorglobal.com', 'password': 'Password123!', 'is_staff': True},
-            {'bmagro': 'bmagro', 'email': 'bmagro@gmail.com', 'password': 'Password123!', 'is_staff': False},
-            {'kklatt': 'kklatt', 'email': 'mkklatt1@gmail.com', 'password': 'Password123!', 'is_staff': False},
+            {'username': 'jmaber', 'email': 'joelmaber@tarmorglobal.com', 'password': 'Password123!', 'is_staff': True},
+            {'username': 'markklatt', 'email': 'markklatt@tarmorglobal.com', 'password': 'Password123!', 'is_staff': True},
+            {'username': 'bmagro', 'email': 'bmagro@gmail.com', 'password': 'Password123!', 'is_staff': False},
+            {'username': 'kklatt', 'email': 'mkklatt1@gmail.com', 'password': 'Password123!', 'is_staff': False},
         ]
 
         # 3. Loop and safely create each user inside the test_company partition
