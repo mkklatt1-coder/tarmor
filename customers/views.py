@@ -17,11 +17,10 @@ def tenant_login_view(request):
         try:
             tenant = Tenant.objects.get(schema_name=company_slug)
         except Tenant.DoesNotExist:
-            error_message = "Invalid company organization code."
+            error_message = "Invalid Company Code."
             return render(request, 'registration/login.html', {'error_message': error_message})
             
-        request.tenant = tenant
-        connection.set_tenant(request.tenant)
+        connection.set_schema(tenant.schema_name, include_public=True)
         
         user = authenticate(request, username=username, password=password)
         
@@ -30,7 +29,6 @@ def tenant_login_view(request):
             login(request, user)
             return redirect('home')
         else:
-            connection.set_schema_to_public()
-            error_message = "Invalid user login ID or password for this company."
+            error_message = "Invalid User Login ID or Password for this organization."
             
     return render(request, 'registration/login.html', {'error_message': error_message})
