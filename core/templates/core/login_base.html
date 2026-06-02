@@ -8,10 +8,17 @@
     <!-- Link your stylesheet so your login card stays beautifully styled -->
     <link rel="stylesheet" href="{% static 'css/stylesheet.css' %}">
 </head>
-<body style="background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;">
-    
+<body style="background-color: #f7e7ce; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;">
+    <h1 class="main-brand-header">
+        <div class="brand-left" style="font-size: 18px;">
+            <img class="logo" src="{% static 'Images/alignment.jpg' %}" >
+            <small><i>by TARMOR</i></small>
+        </div>
+    </h1>
     {% block content %}
     {% endblock %}
-
+    <div class="footer">
+        
+    </div>
 </body>
 </html>
