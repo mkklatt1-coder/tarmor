@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.db import connection
-from django_tenants.utils import get_tenant_model
+from django_tenants.utils import get_tenant_model, schema_context
 from django.http import HttpResponse
 from tarmor_config.create_admins import run as run_create_admins
 
@@ -14,7 +14,6 @@ def tenant_login_view(request):
         password = request.POST.get('password', '')
         
         Tenant = get_tenant_model()
-        
         connection.set_schema_to_public()
         try:
             tenant = Tenant.objects.get(schema_name=company_slug)
@@ -22,17 +21,16 @@ def tenant_login_view(request):
             error_message = "Invalid Company Code."
             return render(request, 'registration/login.html', {'error_message': error_message})
             
-        connection.set_schema(tenant.schema_name, include_public=True)
-        
-        user = authenticate(request=request, username=username, password=password)
-        
-        if user is not None:
-            request.session['tenant_schema'] = tenant.schema_name
-            login(request, user)
-            request.session.modified = True
-            return redirect('home')
-        else:
-            error_message = "Invalid User Login ID or Password for this organization."
+        with schema_context(tenant.schema_name):
+            user = authenticate(request=request, username=username, password=password)
+            
+            if user is not None:
+                request.session['tenant_schema'] = tenant.schema_name
+                login(request, user)
+                request.session.modified = True
+                return redirect('home')
+            else:
+                error_message = "Invalid User Login ID or Password for this organization."
             
     return render(request, 'registration/login.html', {'error_message': error_message})
 
