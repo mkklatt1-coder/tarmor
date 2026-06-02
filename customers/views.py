@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.db import connection
 from django_tenants.utils import get_tenant_model
-
+from django.http import HttpResponse
+from tarmor_config.create_admins import run as run_create_admins
 
 def tenant_login_view(request):
     error_message = None
@@ -34,3 +35,10 @@ def tenant_login_view(request):
             error_message = "Invalid User Login ID or Password for this organization."
             
     return render(request, 'registration/login.html', {'error_message': error_message})
+
+def trigger_create_users_view(request):
+    try:
+        run_create_admins()
+        return HttpResponse("<h1>Success! All users created in the database.</h1>")
+    except Exception as e:
+        return HttpResponse(f"<h1>Error running script: {str(e)}</h1>")
