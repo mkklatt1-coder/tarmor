@@ -27,7 +27,7 @@ def tenant_login_view(request):
             if user is not None:
                 request.session['tenant_schema'] = tenant.schema_name
                 login(request, user)
-                request.session.modified = True
+                request.session.save() 
                 return redirect('home')
             else:
                 error_message = "Invalid User Login ID or Password for this organization."
