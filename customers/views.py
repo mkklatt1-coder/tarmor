@@ -39,6 +39,14 @@ def tenant_login_view(request):
 def trigger_create_users_view(request):
     try:
         run_create_admins()
-        return HttpResponse("<h1>Success! All users created in the database.</h1>")
+        
+        with schema_context('test_company'):
+            user = authenticate(username='admin', password='Password123!') 
+            
+            if user is not None:
+                return HttpResponse("<h1>Internal Auth Test: SUCCESS! User found and authenticated inside test_company.</h1>")
+            else:
+                return HttpResponse("<h1>Internal Auth Test: FAILED. Script ran, but Django cannot authenticate the user inside test_company.</h1>")
+                
     except Exception as e:
-        return HttpResponse(f"<h1>Error running script: {str(e)}</h1>")
+        return HttpResponse(f"<h1>Error running script or test: {str(e)}</h1>")

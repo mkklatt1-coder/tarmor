@@ -201,3 +201,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 WHITENOISE_USE_FINDERS = True
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
