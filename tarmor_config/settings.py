@@ -39,6 +39,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 SHARED_APPS = [
+    'whitenoise.runserver_nostatic',
     'django_tenants',
     'customers',
     'tarmor_config',
@@ -200,3 +201,5 @@ CSRF_TRUSTED_ORIGINS = [
     'https://app.tarmorglobal.com',
     'https://*.tarmorglobal.com', 
 ]
+
+WHITENOISE_USE_FINDERS = True
