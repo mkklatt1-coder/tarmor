@@ -13,14 +13,19 @@
     <div class="login-wrapper">
         <div class="login-container">
 
-            {% if form.errors %}
-                <div class="login-error">
-                    Invalid company credentials. Please try again.
+            {% if error_message %}
+                <div class="login-error" style="color: red; margin-bottom: 15px; font-weight: bold;">
+                    {{ error_message }}
                 </div>
             {% endif %}
 
             <form method="POST" action="{% url 'login' %}">
                 {% csrf_token %}
+
+                <div class="login-input-wrapper">
+                    <label>Company/Organization Code</label>
+                    <input type="text" name="company_slug" class="input" placeholder="e.g. company-a" required>
+                </div>
                 
                 <div class="login-input-wrapper">
                     <label>User Login ID</label>
