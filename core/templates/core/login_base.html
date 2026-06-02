@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Login | TARMOR{% endblock %}</title>
+    {% load static %}
+    <!-- Link your stylesheet so your login card stays beautifully styled -->
+    <link rel="stylesheet" href="{% static 'css/stylesheet.css' %}">
+</head>
+<body style="background-color: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0;">
+    
+    {% block content %}
+    {% endblock %}
+
+</body>
+</html>

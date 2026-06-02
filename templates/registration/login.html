@@ -1,4 +1,4 @@
-{% extends "core/base.html" %}
+{% extends "registration/login_base.html" %}
 {% load static %}
 
 {%block title %}
@@ -19,7 +19,7 @@
                 </div>
             {% endif %}
 
-            <form method="POST" action="{% url 'login' %}">
+            <form method="POST" action="{% url 'login' %}" target="_self">
                 {% csrf_token %}
 
                 <div class="login-input-wrapper">
