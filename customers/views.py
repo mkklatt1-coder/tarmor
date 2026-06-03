@@ -55,7 +55,7 @@ def tenant_login_view(request):
                 with schema_context(tenant.schema_name):
                     user.last_login = timezone.now()
                     user.save(update_fields=['last_login'])
-                return redirect('home')
+                return redirect('core:home')
             except Exception as e:
                 print("LOGIN SUCCESS BLOCK ERROR:", repr(e), flush=True)
                 traceback.print_exc()
