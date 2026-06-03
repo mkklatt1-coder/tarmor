@@ -24,13 +24,14 @@ def tenant_login_view(request):
                 username=username,
                 password=password,
             )
-            if user is not None:
-                login(request, user)
-                request.session['tenant_schema'] = tenant.schema_name
-                request.session.save()
-                return redirect('home')
-            error_message = "Invalid User Login ID or Password for this organization."
-            return render(request, 'registration/login.html', {'error_message': error_message})
+        if user is not None:
+            connection.set_schema_to_public()
+            login(request, user)
+            request.session['tenant_schema'] = tenant.schema_name
+            request.session.save()
+            return redirect('home')
+        error_message = "Invalid User Login ID or Password for this organization."
+        return render(request, 'registration/login.html', {'error_message': error_message})
     return render(request, 'registration/login.html', {'error_message': error_message})
 
 def trigger_create_users_view(request):
