@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth.signals import user_logged_in
 from django.db import connection
 from django_tenants.utils import get_tenant_model, schema_context
 from django.http import HttpResponse
+from django.utils import timezone
 from tarmor_config.create_admins import run as run_create_admins
 
 def tenant_login_view(request):
@@ -34,15 +37,17 @@ def tenant_login_view(request):
         if user is not None:
             import traceback
             try:
-                print("ABOUT TO SWITCH TO PUBLIC BEFORE LOGIN", flush=True)
                 connection.set_schema_to_public()
-                print("SCHEMA BEFORE login():", connection.schema_name, flush=True)
-                login(request, user)
-                print("login() SUCCESS", flush=True)
+                user_logged_in.disconnect(update_last_login)
+                try:
+                    login(request, user)
+                finally:
+                    user_logged_in.connect(update_last_login)
                 request.session['tenant_schema'] = tenant.schema_name
-                print("tenant_schema SET:", request.session.get('tenant_schema'), flush=True)
                 request.session.save()
-                print("session.save() SUCCESS", flush=True)
+                with schema_context(tenant.schema_name):
+                    user.last_login = timezone.now()
+                    user.save(update_fields=['last_login'])
                 return redirect('home')
             except Exception as e:
                 print("LOGIN SUCCESS BLOCK ERROR:", repr(e), flush=True)
