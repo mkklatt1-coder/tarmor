@@ -186,11 +186,9 @@ PUBLIC_SCHEMA_URLCONF = 'tarmor_config.urls'
 TENANT_URLCONF = 'tarmor_config.urls' 
 
 # Session Information
-SESSION_COOKIE_DOMAIN = '.tarmorglobal.com'
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 
-CSRF_COOKIE_DOMAIN = '.tarmorglobal.com'
 CSRF_COOKIE_SECURE = True
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -199,7 +197,6 @@ SESSION_COOKIE_AGE = 3600
 SESSION_SAVE_EVERY_REQUEST = True  
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  
 
-TENANT_COOKIE_NAME = 'tarmor_session_id'
 
 LOGIN_URL = '/admin/login/'
 LOGIN_REDIRECT_URL = '/' 
