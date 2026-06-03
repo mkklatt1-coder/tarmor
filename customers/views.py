@@ -38,11 +38,18 @@ def tenant_login_view(request):
             import traceback
             try:
                 connection.set_schema_to_public()
-                user_logged_in.disconnect(update_last_login)
+                user_logged_in.disconnect(
+                    update_last_login,
+                    dispatch_uid="update_last_login",
+                )
                 try:
+                    print("DISCONNECTED update_last_login; ABOUT TO CALL login()", flush=True)
                     login(request, user)
                 finally:
-                    user_logged_in.connect(update_last_login)
+                    user_logged_in.connect(
+                        update_last_login,
+                        dispatch_uid="update_last_login",
+                    )
                 request.session['tenant_schema'] = tenant.schema_name
                 request.session.save()
                 with schema_context(tenant.schema_name):
