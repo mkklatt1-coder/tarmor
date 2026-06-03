@@ -11,25 +11,44 @@ def tenant_login_view(request):
         company_slug = request.POST.get('company_slug', '').strip().lower()
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
+        print("LOGIN POST company_slug:", repr(company_slug), flush=True)
+        print("LOGIN POST username:", repr(username), flush=True)
         Tenant = get_tenant_model()
         connection.set_schema_to_public()
+        print("SCHEMA AFTER set_schema_to_public:", connection.schema_name, flush=True)
         try:
             tenant = Tenant.objects.get(schema_name=company_slug)
+            print("FOUND TENANT:", tenant.schema_name, flush=True)
         except Tenant.DoesNotExist:
+            print("TENANT NOT FOUND:", repr(company_slug), flush=True)
             error_message = "Invalid Company Code."
             return render(request, 'registration/login.html', {'error_message': error_message})
         with schema_context(tenant.schema_name):
+            print("CURRENT SCHEMA BEFORE AUTH:", connection.schema_name, flush=True)
             user = authenticate(
                 request=request,
                 username=username,
                 password=password,
             )
+            print("AUTH USER:", user, flush=True)
         if user is not None:
-            connection.set_schema_to_public()
-            login(request, user)
-            request.session['tenant_schema'] = tenant.schema_name
-            request.session.save()
-            return redirect('home')
+            import traceback
+            try:
+                print("ABOUT TO SWITCH TO PUBLIC BEFORE LOGIN", flush=True)
+                connection.set_schema_to_public()
+                print("SCHEMA BEFORE login():", connection.schema_name, flush=True)
+                login(request, user)
+                print("login() SUCCESS", flush=True)
+                request.session['tenant_schema'] = tenant.schema_name
+                print("tenant_schema SET:", request.session.get('tenant_schema'), flush=True)
+                request.session.save()
+                print("session.save() SUCCESS", flush=True)
+                return redirect('home')
+            except Exception as e:
+                print("LOGIN SUCCESS BLOCK ERROR:", repr(e), flush=True)
+                traceback.print_exc()
+                raise
+        print("AUTH FAILED FOR:", repr(username), "TENANT:", tenant.schema_name, flush=True)
         error_message = "Invalid User Login ID or Password for this organization."
         return render(request, 'registration/login.html', {'error_message': error_message})
     return render(request, 'registration/login.html', {'error_message': error_message})
