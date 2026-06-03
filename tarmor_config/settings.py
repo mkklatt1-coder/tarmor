@@ -85,10 +85,10 @@ DATABASE_ROUTERS = (
 )
 
 MIDDLEWARE = [
-    'customers.middleware.SessionTenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'customers.middleware.SessionTenantMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
