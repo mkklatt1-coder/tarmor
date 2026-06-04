@@ -7,6 +7,7 @@ from django_tenants.utils import get_tenant_model, schema_context
 from django.http import HttpResponse
 from django.utils import timezone
 from tarmor_config.create_admins import run as run_create_admins
+from django.contrib.auth import logout
 
 def tenant_login_view(request):
     error_message = None
@@ -14,26 +15,19 @@ def tenant_login_view(request):
         company_slug = request.POST.get('company_slug', '').strip().lower()
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
-        print("LOGIN POST company_slug:", repr(company_slug), flush=True)
-        print("LOGIN POST username:", repr(username), flush=True)
         Tenant = get_tenant_model()
         connection.set_schema_to_public()
-        print("SCHEMA AFTER set_schema_to_public:", connection.schema_name, flush=True)
         try:
             tenant = Tenant.objects.get(schema_name=company_slug)
-            print("FOUND TENANT:", tenant.schema_name, flush=True)
         except Tenant.DoesNotExist:
-            print("TENANT NOT FOUND:", repr(company_slug), flush=True)
             error_message = "Invalid Company Code."
             return render(request, 'registration/login.html', {'error_message': error_message})
         with schema_context(tenant.schema_name):
-            print("CURRENT SCHEMA BEFORE AUTH:", connection.schema_name, flush=True)
             user = authenticate(
                 request=request,
                 username=username,
                 password=password,
             )
-            print("AUTH USER:", user, flush=True)
         if user is not None:
             import traceback
             try:
@@ -43,7 +37,6 @@ def tenant_login_view(request):
                     dispatch_uid="update_last_login",
                 )
                 try:
-                    print("DISCONNECTED update_last_login; ABOUT TO CALL login()", flush=True)
                     login(request, user)
                 finally:
                     user_logged_in.connect(
@@ -57,10 +50,8 @@ def tenant_login_view(request):
                     user.save(update_fields=['last_login'])
                 return redirect('core:home')
             except Exception as e:
-                print("LOGIN SUCCESS BLOCK ERROR:", repr(e), flush=True)
                 traceback.print_exc()
                 raise
-        print("AUTH FAILED FOR:", repr(username), "TENANT:", tenant.schema_name, flush=True)
         error_message = "Invalid User Login ID or Password for this organization."
         return render(request, 'registration/login.html', {'error_message': error_message})
     return render(request, 'registration/login.html', {'error_message': error_message})
@@ -79,3 +70,8 @@ def trigger_create_users_view(request):
                 
     except Exception as e:
         return HttpResponse(f"<h1>Error running script or test: {str(e)}</h1>")
+    
+def tenant_logout_view(request):
+    logout(request)
+    request.session.flush()
+    return redirect('login')

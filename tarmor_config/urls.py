@@ -3,13 +3,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from customers.views import tenant_login_view, trigger_create_users_view
+from customers.views import tenant_login_view, tenant_logout_view, trigger_create_users_view
 
 urlpatterns = [
     path('setup-users-secret-abc/', trigger_create_users_view),
     path('admin/', admin.site.urls),
     path('login/', tenant_login_view, name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('logout/', tenant_logout_view, name='logout'),
     path('', include('core.urls')),
     path('equipment/', include('equipment.urls')),
     path('work_orders/', include('work_orders.urls')),
