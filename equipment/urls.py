@@ -10,6 +10,7 @@ urlpatterns = [
     path('', views.equipment, name='equipment'), 
     
     # Forms and Actions
+    path('tables/', views.tables, name='tables'),
     path('upload/', views.equpload, name='equpload'),
     path('search/', views.search_eq, name='search_eq'),
     path('export_eq/', views.export_equipment, name='export_eq'),
@@ -37,5 +38,9 @@ urlpatterns = [
     path('search_comp_list/', views.search_comp_list, name='search_comp_list'),
     path('export_list_excel/', views.export_list_excel, name='export_list_excel'),
     path('ajax/load-options/', views.load_equipment_options, name='load_options'),
+
+    path("tables/asset-types/", views.asset_type_table, name="asset_type_table"),
+    path("tables/equipment-types/", views.eq_type_table, name="eq_type_table"),
+    path("tables/component-types/", views.component_type_table, name="component_type_table"),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

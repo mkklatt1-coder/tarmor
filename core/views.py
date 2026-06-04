@@ -16,7 +16,7 @@ def settings_view(request):
             user = form.save()
             update_session_auth_hash(request, user)
             messages.success(request, 'Your password was updated successfully.')
-            return redirect('core:settings')
+            return redirect('core:home')
         messages.error(request, 'Please correct the errors below.')
     else:
         form = PasswordChangeForm(user=request.user)

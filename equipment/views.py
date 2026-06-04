@@ -2,14 +2,19 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from .models import AssetType, Equipment, EQ_Type, Meter, ComponentType, Component, ComponentHistory, ShiftReport, MachineShiftStatus
-from .forms import EqEditForm, EqUploadForm, MeterFormSet, CompUploadForm, CompChangeForm, ComponentHistory, ShiftReportForm
+from .forms import (EQTypeForm, EqEditForm, EqUploadForm, MeterFormSet, CompUploadForm, CompChangeForm, ComponentHistory, ShiftReportForm, 
+                    AssetTypeForm, ComponentTypeForm)
 import json, pandas as pd, openpyxl, io
 from openpyxl.utils import get_column_letter
 from django.contrib import messages
 from django.db.models import Q
+from django.db import IntegrityError
 
 def equipment(request):
     return render(request, 'equipment/equipment.html', {'content_type': 'text/html'})
+
+def tables(request):
+    return render(request, 'equipment/tables.html', {'content_type': 'text/html'})
 
 def shift_report_list(request):
     reports = ShiftReport.objects.all().order_by('-date')
@@ -922,4 +927,236 @@ def export_list_excel(request):
     )
     response['Content-Disposition'] = 'attachment; filename="Component_List.xlsx"'
     return response
-    
+
+def asset_type_table(request):
+    asset_types = AssetType.objects.all().order_by("id")
+    form = AssetTypeForm()
+    edit_id = None
+    editing_asset_type = None
+    if request.method == "POST":
+        action = request.POST.get("action")
+        asset_type_id = request.POST.get("asset_type_id")
+        name = request.POST.get("name", "").strip()
+        if action == "save":
+            if not name:
+                messages.error(request, "Asset type name is required.")
+                return redirect("equipment:asset_type_table")
+            if asset_type_id:
+                asset_type = get_object_or_404(AssetType, id=asset_type_id)
+                duplicate_asset_type = AssetType.objects.filter(
+                    name__iexact=name
+                ).exclude(
+                    id=asset_type.id
+                ).first()
+                if duplicate_asset_type:
+                    messages.error(request, "That asset type already exists.")
+                    return redirect("equipment:asset_type_table")
+                asset_type.name = name
+                asset_type.is_active = request.POST.get("is_active") == "on"
+                asset_type.save()
+                messages.success(request, "Successfully updated entry.")
+                return redirect("equipment:asset_type_table")
+            existing_asset_type = AssetType.objects.filter(name__iexact=name).first()
+            if existing_asset_type:
+                if not existing_asset_type.is_active:
+                    existing_asset_type.is_active = True
+                    existing_asset_type.save()
+                    messages.success(request, "Successfully reactivated existing entry.")
+                    return redirect("equipment:asset_type_table")
+                messages.error(request, "That asset type already exists.")
+                return redirect("equipment:asset_type_table")
+            AssetType.objects.create(
+                name=name,
+                is_active=True,
+            )
+            messages.success(request, "Successfully added entry.")
+            return redirect("equipment:asset_type_table")
+        if action == "deactivate":
+            inactive_ids = request.POST.getlist("inactive_ids")
+            if inactive_ids:
+                updated_count = AssetType.objects.filter(id__in=inactive_ids).update(
+                    is_active=False
+                )
+                if updated_count == 1:
+                    messages.success(request, "Successfully set entry inactive.")
+                else:
+                    messages.success(request, f"Successfully set {updated_count} entries inactive.")
+            else:
+                messages.warning(request, "No entries were selected.")
+            return redirect("equipment:asset_type_table")
+    if request.GET.get("edit"):
+        edit_id = request.GET.get("edit")
+        editing_asset_type = get_object_or_404(AssetType, id=edit_id)
+        form = AssetTypeForm(instance=editing_asset_type)
+    context = {
+        "form": form,
+        "asset_types": asset_types,
+        "edit_id": edit_id,
+        "editing_asset_type": editing_asset_type,
+    }
+    return render(request, "equipment/asset_type_table.html", context)
+
+def eq_type_table(request):
+    eq_types = EQ_Type.objects.select_related("Asset_Type").all().order_by(
+        "Asset_Type__name",
+        "Equipment_Type",
+    )
+    form = EQTypeForm()
+    edit_id = None
+    editing_eq_type = None
+    if request.method == "POST":
+        action = request.POST.get("action")
+        eq_type_id = request.POST.get("eq_type_id")
+        if action == "save":
+            if eq_type_id:
+                editing_eq_type = get_object_or_404(EQ_Type, id=eq_type_id)
+                form = EQTypeForm(request.POST, instance=editing_eq_type)
+            else:
+                form = EQTypeForm(request.POST)
+            if form.is_valid():
+                eq_type = form.save(commit=False)
+                eq_type.is_active = request.POST.get("is_active") == "on" if eq_type_id else True
+                duplicate_prefix = EQ_Type.objects.filter(
+                    Prefix__iexact=eq_type.Prefix
+                )
+                if eq_type_id:
+                    duplicate_prefix = duplicate_prefix.exclude(id=eq_type.id)
+                if duplicate_prefix.exists():
+                    messages.error(request, "That prefix already exists.")
+                    return redirect("equipment:eq_type_table")
+                duplicate_equipment_type = EQ_Type.objects.filter(
+                    Asset_Type=eq_type.Asset_Type,
+                    Equipment_Type__iexact=eq_type.Equipment_Type,
+                )
+                if eq_type_id:
+                    duplicate_equipment_type = duplicate_equipment_type.exclude(id=eq_type.id)
+                if duplicate_equipment_type.exists():
+                    messages.error(request, "That equipment type already exists for this asset type.")
+                    return redirect("equipment:eq_type_table")
+                try:
+                    eq_type.save()
+                except IntegrityError:
+                    messages.error(request, "Unable to save. Please check for duplicate values.")
+                    return redirect("equipment:eq_type_table")
+                if eq_type_id:
+                    messages.success(request, "Successfully updated entry.")
+                else:
+                    messages.success(request, "Successfully added entry.")
+                return redirect("equipment:eq_type_table")
+            messages.error(request, "Please correct the errors below.")
+        if action == "deactivate":
+            inactive_ids = request.POST.getlist("inactive_ids")
+            if inactive_ids:
+                updated_count = EQ_Type.objects.filter(id__in=inactive_ids).update(
+                    is_active=False
+                )
+                if updated_count == 1:
+                    messages.success(request, "Successfully set entry inactive.")
+                else:
+                    messages.success(request, f"Successfully set {updated_count} entries inactive.")
+            else:
+                messages.warning(request, "No entries were selected.")
+            return redirect("equipment:eq_type_table")
+    if request.GET.get("edit"):
+        edit_id = request.GET.get("edit")
+        editing_eq_type = get_object_or_404(EQ_Type, id=edit_id)
+        form = EQTypeForm(instance=editing_eq_type)
+    context = {
+        "form": form,
+        "eq_types": eq_types,
+        "edit_id": edit_id,
+        "editing_eq_type": editing_eq_type,
+    }
+    return render(request, "equipment/eq_type_table.html", context)
+
+def component_type_table(request):
+    component_types = ComponentType.objects.select_related("asset_type").all().order_by(
+        "asset_type__name",
+        "name",
+    )
+    form = ComponentTypeForm()
+    edit_id = None
+    editing_component_type = None
+    if request.method == "POST":
+        action = request.POST.get("action")
+        component_type_id = request.POST.get("component_type_id")
+        if action == "save":
+            if component_type_id:
+                editing_component_type = get_object_or_404(
+                    ComponentType,
+                    id=component_type_id,
+                )
+                form = ComponentTypeForm(request.POST, instance=editing_component_type)
+            else:
+                form = ComponentTypeForm(request.POST)
+            if form.is_valid():
+                component_type = form.save(commit=False)
+                if component_type_id:
+                    component_type.is_active = request.POST.get("is_active") == "on"
+                else:
+                    component_type.is_active = True
+                duplicate_code = ComponentType.objects.filter(
+                    short_code__iexact=component_type.short_code
+                )
+                if component_type_id:
+                    duplicate_code = duplicate_code.exclude(id=component_type.id)
+                if duplicate_code.exists():
+                    messages.error(request, "That code already exists.")
+                    return redirect("equipment:component_type_table")
+                duplicate_component_type = ComponentType.objects.filter(
+                    asset_type=component_type.asset_type,
+                    name__iexact=component_type.name,
+                )
+                if component_type_id:
+                    duplicate_component_type = duplicate_component_type.exclude(
+                        id=component_type.id
+                    )
+                if duplicate_component_type.exists():
+                    messages.error(
+                        request,
+                        "That component type already exists for this asset type.",
+                    )
+                    return redirect("equipment:component_type_table")
+                try:
+                    component_type.save()
+                except IntegrityError:
+                    messages.error(
+                        request,
+                        "Unable to save. Please check for duplicate values.",
+                    )
+                    return redirect("equipment:component_type_table")
+                if component_type_id:
+                    messages.success(request, "Successfully updated entry.")
+                else:
+                    messages.success(request, "Successfully added entry.")
+                return redirect("equipment:component_type_table")
+            messages.error(request, "Please correct the errors below.")
+        if action == "deactivate":
+            inactive_ids = request.POST.getlist("inactive_ids")
+            if inactive_ids:
+                updated_count = ComponentType.objects.filter(
+                    id__in=inactive_ids
+                ).update(
+                    is_active=False
+                )
+                if updated_count == 1:
+                    messages.success(request, "Successfully set entry inactive.")
+                else:
+                    messages.success(
+                        request,
+                        f"Successfully set {updated_count} entries inactive.",
+                    )
+            else:
+                messages.warning(request, "No entries were selected.")
+            return redirect("equipment:component_type_table")
+    if request.GET.get("edit"):
+        edit_id = request.GET.get("edit")
+        editing_component_type = get_object_or_404(ComponentType, id=edit_id)
+        form = ComponentTypeForm(instance=editing_component_type)
+    context = {
+        "form": form,
+        "component_types": component_types,
+        "edit_id": edit_id,
+        "editing_component_type": editing_component_type,
+    }
+    return render(request, "equipment/component_type_table.html", context)

@@ -408,3 +408,78 @@ class ShiftReportForm(forms.ModelForm):
                 )
         return cleaned_data
     
+class AssetTypeForm(forms.ModelForm):
+    class Meta:
+        model = AssetType
+        fields = ["name"]
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "Asset type name",
+                "autocomplete": "off",
+            })
+        }
+
+class EQTypeForm(forms.ModelForm):
+    class Meta:
+        model = EQ_Type
+        fields = ["Asset_Type", "Equipment_Type", "Prefix"]
+        widgets = {
+            "Asset_Type": forms.Select(attrs={
+                "class": "input",
+            }),
+            "Equipment_Type": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "Equipment type name",
+                "autocomplete": "off",
+            }),
+            "Prefix": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "ABC",
+                "maxlength": "3",
+                "autocomplete": "off",
+                "style": "text-transform: uppercase;",
+            }),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["Asset_Type"].queryset = AssetType.objects.filter(
+            is_active=True
+        ).order_by("name")
+    def clean_Prefix(self):
+        prefix = self.cleaned_data["Prefix"].strip().upper()
+        if len(prefix) != 3:
+            raise forms.ValidationError("Prefix must be exactly 3 characters.")
+        return prefix
+    
+class ComponentTypeForm(forms.ModelForm):
+    class Meta:
+        model = ComponentType
+        fields = ["asset_type", "name", "short_code"]
+        widgets = {
+            "asset_type": forms.Select(attrs={
+                "class": "input",
+            }),
+            "name": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "Component type name",
+                "autocomplete": "off",
+            }),
+            "short_code": forms.TextInput(attrs={
+                "class": "input",
+                "placeholder": "ABC",
+                "maxlength": "3",
+                "autocomplete": "off",
+                "style": "text-transform: uppercase;",
+            }),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["asset_type"].queryset = AssetType.objects.filter(
+            is_active=True
+        ).order_by("name")
+    def clean_short_code(self):
+        short_code = self.cleaned_data["short_code"].strip().upper()
+        if len(short_code) != 3:
+            raise forms.ValidationError("Code must be exactly 3 characters.")
+        return short_code

@@ -1,0 +1,133 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Equipment Types{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<ul>
+    <li><a href="javascript:void(0)" onclick="document.getElementById('eq-type-form').submit();">Save</a></li>
+    <li><a href="{% url 'equipment:tables' %}">Return</a></li>
+    <li><a href="{% url 'core:home' %}">Main</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<h2>Equipment Types</h2>
+{% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% if form.errors %}
+    <div class="message error">
+        Please correct the errors below.
+    </div>
+{% endif %}
+
+<form id="eq-type-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save">
+    <input type="hidden" name="eq_type_id" value="{{ edit_id|default:'' }}">
+    <table class="table-bare-container">
+        <tr>
+            <td>
+                <div>
+                    <label for="{{ form.Asset_Type.id_for_label }}">Asset Type:</label>
+                    {{ form.Asset_Type }}
+                    {{ form.Asset_Type.errors }}
+                </div>
+            </td>
+            <td>
+                <div>
+                    <label for="{{ form.Equipment_Type.id_for_label }}">Equipment Type:</label>
+                    {{ form.Equipment_Type }}
+                    {{ form.Equipment_Type.errors }}
+                </div>
+            </td>
+            <td>
+                <div>
+                    <label for="{{ form.Prefix.id_for_label }}">Prefix:</label>
+                    {{ form.Prefix }}
+                    {{ form.Prefix.errors }}
+                </div>
+            </td>
+            <td>
+                {% if edit_id %}
+                    <div>
+                        <label for="is_active">Active:</label>
+                        <input
+                            type="checkbox"
+                            id="is_active"
+                            name="is_active"
+                            {% if editing_eq_type.is_active %}checked{% endif %}
+                        >
+                    </div>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</form>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="deactivate">
+    <h3>Equipment Type List &nbsp; <button type="submit">Set Inactive</button></h3>
+    <br>
+    <table class="table-container">
+        <thead>
+            <tr>
+                <th class="th">ID</th>
+                <th class="th">Asset Type</th>
+                <th class="th">Equipment Type</th>
+                <th class="th">Prefix</th>
+                <th class="th">Status</th>
+                <th class="th">Edit</th>
+                <th class="th">Inactive</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for eq_type in eq_types %}
+                <tr>
+                    <td class="td">{{ eq_type.id }}</td>
+                    <td class="td">{{ eq_type.Asset_Type.name }}</td>
+                    <td class="td">{{ eq_type.Equipment_Type }}</td>
+                    <td class="td">{{ eq_type.Prefix }}</td>
+                    <td class="td">
+                        {% if eq_type.is_active %}
+                            Active
+                        {% else %}
+                            Inactive
+                        {% endif %}
+                    </td>
+                    <td class="td">
+                        <a href="{% url 'equipment:eq_type_table' %}?edit={{ eq_type.id }}">
+                            Edit
+                        </a>
+                    </td>
+                    <td class="td">
+                        {% if eq_type.is_active %}
+                            <input
+                                type="checkbox"
+                                name="inactive_ids"
+                                value="{{ eq_type.id }}"
+                            >
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td class="td" colspan="7">No equipment types found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+{% endblock %}

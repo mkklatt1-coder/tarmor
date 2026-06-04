@@ -1,0 +1,104 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Asset Types{% endblock %}
+
+{% block top_navigation %}{% endblock %}
+
+{% block sidebar %}
+<ul>
+    <li><a href="javascript:void(0)" onclick="document.getElementById('asset-type-form').submit();">Save</a></li>
+    <li><a href="{% url 'equipment:tables' %}">Return</a></li>
+    <br>
+    <li><a href="{% url 'core:home' %}">Main</a></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+
+<h2>Asset Types</h2>
+{% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<br>
+<form id="asset-type-form" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save">
+    <input type="hidden" name="asset_type_id" value="{{ edit_id|default:'' }}">
+    <div class="form-row">
+        <label for="{{ form.name.id_for_label }}">Asset Type:</label>
+        {{ form.name }}
+    </div>
+    {% if edit_id %}
+        <div class="form-row">
+            <label for="is_active">Active:</label>
+            <input
+                type="checkbox"
+                id="is_active"
+                name="is_active"
+                {% if editing_asset_type.is_active %}checked{% endif %}
+            >
+        </div>
+    {% endif %}
+</form>
+<hr>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="deactivate">
+    <h3>Asset Type Table &nbsp; <button type="submit">Deactivate</button></h3>
+    <br>
+    <table class="table-container">
+        <thead>
+            <tr>
+                <th class="th">ID</th>
+                <th class="th">Asset Type Name</th>
+                <th class="th">Status</th>
+                <th class="th">Edit</th>
+                <th class="th">Inactive</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset_type in asset_types %}
+                <tr>
+                    <td class="td">{{ asset_type.id }}</td>
+                    <td class="td">{{ asset_type.name }}</td>
+                    <td class="td">
+                        {% if asset_type.is_active %}
+                            Active
+                        {% else %}
+                            Inactive
+                        {% endif %}
+                    </td>
+                    <td class="td">
+                        <a href="{% url 'equipment:asset_type_table' %}?edit={{ asset_type.id }}">
+                            Edit
+                        </a>
+                    </td>
+                    <td class="td">
+                        {% if asset_type.is_active %}
+                            <input
+                                type="checkbox"
+                                name="inactive_ids"
+                                value="{{ asset_type.id }}"
+                            >
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td class="td" colspan="5">No asset types found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+{% endblock %}

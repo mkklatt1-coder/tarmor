@@ -1,7 +1,9 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 class AssetType(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    is_active = models.BooleanField(default=True)
     class Meta:
         managed = True
         db_table = 'tarmor_assettype'
@@ -9,26 +11,64 @@ class AssetType(models.Model):
         return self.name
     
 class ComponentType(models.Model):
-    name = models.CharField(max_length=100) # e.g., "Engine"
-    short_code = models.CharField(max_length=5) # e.g., "ENG"
-    asset_type = models.ForeignKey('AssetType', on_delete=models.CASCADE, related_name='component_types')
-
+    name = models.CharField(max_length=100)
+    short_code = models.CharField(max_length=3, unique=True)
+    asset_type = models.ForeignKey(
+        "AssetType",
+        on_delete=models.CASCADE,
+        related_name="component_types",
+    )
+    is_active = models.BooleanField(default=True)
+    def clean(self):
+        super().clean()
+        if self.short_code:
+            self.short_code = self.short_code.upper().strip()
+        if self.short_code and len(self.short_code) != 3:
+            raise ValidationError({
+                "short_code": "Code must be exactly 3 characters."
+            })
+    def save(self, *args, **kwargs):
+        if self.short_code:
+            self.short_code = self.short_code.upper().strip()
+        self.full_clean()
+        super().save(*args, **kwargs)
     def __str__(self):
         return f"{self.name} ({self.short_code})"
-
     class Meta:
         verbose_name_plural = "Component Types"
-        ordering = ['name']
-        unique_together = (('short_code', 'asset_type'), ('name', 'asset_type'))
+        ordering = ["asset_type__name", "name"]
+        unique_together = (
+            ("name", "asset_type"),
+        )
         
 class EQ_Type(models.Model):
-    Asset_Type = models.ForeignKey('AssetType', on_delete=models.CASCADE, related_name="equipment_types", db_column='Asset_Type')
+    Asset_Type = models.ForeignKey(
+        "AssetType",
+        on_delete=models.CASCADE,
+        related_name="equipment_types",
+        db_column="Asset_Type",
+    )
     Equipment_Type = models.CharField(max_length=50)
-    Prefix = models.CharField(max_length=10)
+    Prefix = models.CharField(max_length=3, unique=True)
+    is_active = models.BooleanField(default=True)
     class Meta:
         managed = True
-        db_table = 'tarmor_eq_type'
-        unique_together = ('Asset_Type', 'Equipment_Type')
+        db_table = "tarmor_eq_type"
+        unique_together = ("Asset_Type", "Equipment_Type")
+        ordering = ["id"]
+    def clean(self):
+        super().clean()
+        if self.Prefix:
+            self.Prefix = self.Prefix.upper().strip()
+        if self.Prefix and len(self.Prefix) != 3:
+            raise ValidationError({
+                "Prefix": "Prefix must be exactly 3 characters."
+            })
+    def save(self, *args, **kwargs):
+        if self.Prefix:
+            self.Prefix = self.Prefix.upper().strip()
+        self.full_clean()
+        super().save(*args, **kwargs)
     def __str__(self):
         return self.Equipment_Type
     
