@@ -26,13 +26,16 @@ def equpload(request):
         meter_formset = MeterFormSet(request.POST, prefix='meters')
         if equploadform.is_valid() and meter_formset.is_valid():
             equipment_instance = equploadform.save(commit=False)
-            asset_name = request.POST.get('Asset_Type')
-            eq_type_id = request.POST.get('Equipment_Type')
+            asset_name = equploadform.cleaned_data.get('Asset_Type')
+            eq_type_obj = equploadform.cleaned_data.get('Equipment_Type')
             try:
                 if asset_name:
-                    equipment_instance.Asset_Type = AssetType.objects.get(name=asset_name)
-                if eq_type_id:
-                    equipment_instance.Equipment_Type = EQ_Type.objects.get(id=eq_type_id)
+                    equipment_instance.Asset_Type = AssetType.objects.get(
+                        name=asset_name,
+                        is_active=True,
+                    )
+                if eq_type_obj:
+                    equipment_instance.Equipment_Type = eq_type_obj
                 equipment_instance.save()
                 meter_formset.instance = equipment_instance
                 meter_formset.save()
@@ -54,10 +57,11 @@ def create_eq(request):
     meter_formset = MeterFormSet(prefix='meters')
     return render(request, 'equipment/create_eq.html', {'equploadform': equploadform, 'meter_formset': meter_formset})
 
-def get_next_equipment_number(selected_type):
-    eq_type = EQ_Type.objects.get(Equipment_Type=selected_type)
+def get_next_equipment_number(eq_type):
     prefix = eq_type.Prefix
-    last_eq = Equipment.objects.filter(Equipment_Number__startswith=prefix).order_by('Equipment_Number').last()
+    last_eq = Equipment.objects.filter(
+        Equipment_Number__startswith=prefix
+    ).order_by('Equipment_Number').last()
     if last_eq:
         last_num = int(last_eq.Equipment_Number.split('-')[-1])
         next_num = str(last_num + 1).zfill(3)
@@ -66,31 +70,37 @@ def get_next_equipment_number(selected_type):
     return f"{prefix}-{next_num}"
 
 def load_equipment_types(request):
-    asset_name = request.GET.get('asset_id') 
+    asset_name = request.GET.get('asset_id')
     types = EQ_Type.objects.filter(
-        Asset_Type__name=asset_name
-    ).values('id', 'Equipment_Type').order_by('Equipment_Type')
+        Asset_Type__name=asset_name,
+        Asset_Type__is_active=True,
+        is_active=True,
+    ).values(
+        'id',
+        'Equipment_Type'
+    ).order_by('Equipment_Type')
     return JsonResponse(list(types), safe=False)
 
 def load_equipment_options(request):
     form = EqUploadForm(data=request.GET)
     asset_val = request.GET.get('Asset_Type')
-
     if asset_val:
         form.fields['Equipment_Type'].queryset = EQ_Type.objects.filter(
-            Asset_Type__name=asset_val
+            Asset_Type__name=asset_val,
+            Asset_Type__is_active=True,
+            is_active=True,
         ).order_by('Equipment_Type')
-    
     eq_type_id = request.GET.get('Equipment_Type')
     if eq_type_id and eq_type_id.isdigit():
         try:
-            eq_type_obj = EQ_Type.objects.get(id=int(eq_type_id))
-            new_num = get_next_equipment_number(eq_type_obj.Equipment_Type)
-
+            eq_type_obj = EQ_Type.objects.get(
+                id=int(eq_type_id),
+                is_active=True,
+            )
+            new_num = get_next_equipment_number(eq_type_obj)
             form.data = form.data.copy()
             form.data['Equipment_Number'] = new_num
             form.initial['Equipment_Number'] = new_num
-
         except EQ_Type.DoesNotExist:
             pass
     return render(request, 'equipment/equipment_fields.html', {'equploadform': form})
@@ -98,12 +108,17 @@ def load_equipment_options(request):
 def generate_eq_number(request):
     type_id = request.GET.get('type_id')
     try:
-        eq_type_obj = EQ_Type.objects.get(id=type_id)
-        prefix = eq_type_obj.Prefix 
-        last_eq = Equipment.objects.filter(Equipment_Number__startswith=prefix).order_by('Equipment_Number').last()
+        eq_type_obj = EQ_Type.objects.get(
+            id=type_id,
+            is_active=True,
+        )
+        prefix = eq_type_obj.Prefix
+        last_eq = Equipment.objects.filter(
+            Equipment_Number__startswith=prefix
+        ).order_by('Equipment_Number').last()
         if last_eq:
             parts = last_eq.Equipment_Number.split('-')
-            last_num = int(parts[-1]) if len(parts)>1 else 0
+            last_num = int(parts[-1]) if len(parts) > 1 else 0
             new_num = str(last_num + 1).zfill(3)
         else:
             new_num = "001"

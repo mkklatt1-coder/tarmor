@@ -27,13 +27,6 @@ MeterFormSet = inlineformset_factory(
 # Equipment Upload Form
 # ---------------------------------------
 class EqUploadForm(ModelForm):
-    ASSET_CHOICES = [
-        ('', 'Select Asset Type'),
-        ('Surface Fixed', 'Surface Fixed'),
-        ('Surface Mobile', 'Surface Mobile'),
-        ('Underground Fixed', 'Underground Fixed'),
-        ('Underground Mobile', 'Underground Mobile'),
-    ]
     EQUIPMENT_STATUS_CHOICES = [
         ('Select', 'Select'),
         ('In Service', 'In Service'),
@@ -42,46 +35,39 @@ class EqUploadForm(ModelForm):
         ('Decommissioned', 'Decommissioned'),
     ]
     Asset_Type = forms.ChoiceField(
-        choices=[], 
+        choices=[],
         widget=forms.Select(attrs={'class': 'input'}),
         required=True
     )
-    
     Equipment_Type = forms.ModelChoiceField(
         queryset=EQ_Type.objects.none(),
         widget=forms.Select(attrs={'class': 'input'}),
         required=True
     )
-    
     Equipment_Status = forms.ChoiceField(
         choices=EQUIPMENT_STATUS_CHOICES,
         widget=forms.Select(attrs={'class': 'input'}),
         required=True
     )
-    
     Cab_Style = forms.ChoiceField(
         choices=CAB_CHOICES,
         widget=forms.Select(attrs={'class': 'input'}),
         required=False
     )
-    
     Eng_Tier = forms.ChoiceField(
         choices=TIER_CHOICES,
         widget=forms.Select(attrs={'class': 'input'}),
         required=False
     )
-    
     Box_Type = forms.ChoiceField(
         choices=BOX_CHOICES,
         widget=forms.Select(attrs={'class': 'input'}),
         required=False
     )
-    
     Equipment_Image = forms.ImageField(
         required=False,
         widget=forms.ClearableFileInput(attrs={'class': 'input'})
     )
-
     class Meta:
         model = Equipment
         exclude = ['Asset_Type', 'Equipment_Type']
@@ -105,59 +91,68 @@ class EqUploadForm(ModelForm):
             'Overhaul_Value': forms.NumberInput(attrs={'class': 'input'}),
             'End_of_Life': forms.NumberInput(attrs={'class': 'input'}),
             'Additional_Information': forms.Textarea(attrs={'class': 'input', 'rows': 10, 'style': 'width: 90%'}),
-            'Equipment_Number': forms.TextInput(attrs={'class': 'locked', 'readonly': 'readonly'}),
             'oh_uom': forms.Select(attrs={'class': 'input'}),
             'eol_uom': forms.Select(attrs={'class': 'input'}),
         }
-        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-               
-        self.fields['Asset_Type'].choices = [('', 'Select Asset Type')] + \
-        [(at.name, at.name) for at in AssetType.objects.all()]
-        
+        self.fields['Asset_Type'].choices = [('', 'Select Asset Type')] + [
+            (at.name, at.name)
+            for at in AssetType.objects.filter(is_active=True).order_by("name")
+        ]
         asset_val = self.data.get('Asset_Type') or (
-            self.instance.Asset_Type.name if self.instance.pk and self.instance.Asset_Type else None
+            self.instance.Asset_Type.name
+            if self.instance.pk and self.instance.Asset_Type
+            else None
         )
-        
         if asset_val:
-            queryset = EQ_Type.objects.filter(Asset_Type__name=asset_val)
-            self.fields['Equipment_Type'].queryset = queryset
-            
+            self.fields['Equipment_Type'].queryset = EQ_Type.objects.filter(
+                Asset_Type__name=asset_val,
+                Asset_Type__is_active=True,
+                is_active=True,
+            ).order_by('Equipment_Type')
         mobile_types = ["Surface Mobile", "Underground Mobile"]
-        
         if asset_val not in mobile_types:
             for f in ['Engine_HP_Rating', 'Eng_Tier', 'Cab_Style']:
                 self.fields[f].widget = forms.HiddenInput()
                 self.fields[f].required = False
-
         if asset_val != "Underground Mobile":
             for f in ['CANMET_Number', 'Ventilation_Rating']:
                 self.fields[f].widget = forms.HiddenInput()
                 self.fields[f].required = False
-
         eq_type_id = self.data.get('Equipment_Type')
         is_haul_truck = False
         if eq_type_id and str(eq_type_id).isdigit():
             try:
-                selected_type = EQ_Type.objects.get(id=eq_type_id)
+                selected_type = EQ_Type.objects.get(
+                    id=eq_type_id,
+                    is_active=True,
+                )
                 if "Haul Truck" in selected_type.Equipment_Type:
                     is_haul_truck = True
             except EQ_Type.DoesNotExist:
                 pass
-        
         if not is_haul_truck:
             self.fields['Box_Type'].widget = forms.HiddenInput()
             self.fields['Box_Type'].required = False
-
     def clean(self):
         cleaned_data = super().clean()
+        asset_name = cleaned_data.get("Asset_Type")
         eq_type_obj = cleaned_data.get("Equipment_Type")
-        
+        if asset_name and eq_type_obj:
+            if eq_type_obj.Asset_Type.name != asset_name:
+                self.add_error(
+                    "Equipment_Type",
+                    "Equipment type must belong to the selected asset type."
+                )
+            if not eq_type_obj.is_active:
+                self.add_error(
+                    "Equipment_Type",
+                    "Selected equipment type is inactive."
+                )
         if eq_type_obj and "Haul Truck" in eq_type_obj.Equipment_Type:
             if not cleaned_data.get("Box_Type"):
                 self.add_error('Box_Type', "Box Type is required for Haul Trucks.")
-                
         return cleaned_data
                 
 # ---------------------------------------
@@ -451,7 +446,7 @@ class EQTypeForm(forms.ModelForm):
         if len(prefix) != 3:
             raise forms.ValidationError("Prefix must be exactly 3 characters.")
         return prefix
-    
+
 class ComponentTypeForm(forms.ModelForm):
     class Meta:
         model = ComponentType
