@@ -438,9 +438,10 @@ class EQTypeForm(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["Asset_Type"].queryset = AssetType.objects.filter(
-            is_active=True
-        ).order_by("name")
+        queryset = AssetType.objects.filter(is_active=True).order_by("name")
+        if self.instance and self.instance.pk and self.instance.Asset_Type_id:
+            queryset = AssetType.objects.filter(id=self.instance.Asset_Type_id) | queryset
+        self.fields["Asset_Type"].queryset = queryset.distinct()
     def clean_Prefix(self):
         prefix = self.cleaned_data["Prefix"].strip().upper()
         if len(prefix) != 3:
@@ -470,9 +471,10 @@ class ComponentTypeForm(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["asset_type"].queryset = AssetType.objects.filter(
-            is_active=True
-        ).order_by("name")
+        queryset = AssetType.objects.filter(is_active=True).order_by("name")
+        if self.instance and self.instance.pk and self.instance.asset_type_id:
+            queryset = AssetType.objects.filter(id=self.instance.asset_type_id) | queryset
+        self.fields["asset_type"].queryset = queryset.distinct()
     def clean_short_code(self):
         short_code = self.cleaned_data["short_code"].strip().upper()
         if len(short_code) != 3:

@@ -2,7 +2,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from .models import AssetType, Equipment, EQ_Type, Meter, ComponentType, Component, ComponentHistory, ShiftReport, MachineShiftStatus
-from .forms import (EQTypeForm, EqEditForm, EqUploadForm, MeterFormSet, CompUploadForm, CompChangeForm, ComponentHistory, ShiftReportForm, 
+from .forms import (EQTypeForm, EqEditForm, EqUploadForm, MeterFormSet, CompUploadForm, CompChangeForm, ShiftReportForm, 
                     AssetTypeForm, ComponentTypeForm)
 import json, pandas as pd, openpyxl, io
 from openpyxl.utils import get_column_letter

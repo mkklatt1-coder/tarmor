@@ -19,6 +19,7 @@ class ComponentType(models.Model):
         related_name="component_types",
     )
     is_active = models.BooleanField(default=True)
+
     def clean(self):
         super().clean()
         if self.short_code:
@@ -27,16 +28,17 @@ class ComponentType(models.Model):
             raise ValidationError({
                 "short_code": "Code must be exactly 3 characters."
             })
+        
     def save(self, *args, **kwargs):
         if self.short_code:
             self.short_code = self.short_code.upper().strip()
-        self.full_clean()
         super().save(*args, **kwargs)
     def __str__(self):
         return f"{self.name} ({self.short_code})"
+    
     class Meta:
         verbose_name_plural = "Component Types"
-        ordering = ["asset_type__name", "name"]
+        ordering = ["name"]
         unique_together = (
             ("name", "asset_type"),
         )
@@ -67,7 +69,6 @@ class EQ_Type(models.Model):
     def save(self, *args, **kwargs):
         if self.Prefix:
             self.Prefix = self.Prefix.upper().strip()
-        self.full_clean()
         super().save(*args, **kwargs)
     def __str__(self):
         return self.Equipment_Type
