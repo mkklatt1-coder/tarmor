@@ -37,6 +37,7 @@ class ComponentType(models.Model):
         return f"{self.name} ({self.short_code})"
     
     class Meta:
+        db_table = "equipment_componenttype"
         verbose_name_plural = "Component Types"
         ordering = ["name"]
         unique_together = (
@@ -141,9 +142,10 @@ class Equipment(models.Model):
     
     @property
     def asset_key(self):
-        if "Fixed" in self.Asset_Type:
+        asset_name = self.Asset_Type.name if self.Asset_Type else ""
+        if "Fixed" in asset_name:
             return "F"
-        elif "Mobile" in self.Asset_Type:
+        elif "Mobile" in asset_name:
             return "M"
         return None
     

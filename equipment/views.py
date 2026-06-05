@@ -2,8 +2,17 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from .models import AssetType, Equipment, EQ_Type, Meter, ComponentType, Component, ComponentHistory, ShiftReport, MachineShiftStatus
-from .forms import (EQTypeForm, EqEditForm, EqUploadForm, MeterFormSet, CompUploadForm, CompChangeForm, ShiftReportForm, 
-                    AssetTypeForm, ComponentTypeForm)
+from .forms import (
+    EQTypeForm,
+    EqEditForm,
+    EqUploadForm,
+    MeterFormSet,
+    CompUploadForm,
+    CompChangeForm,
+    ShiftReportForm,
+    AssetTypeForm,
+    ComponentTypeForm,
+)
 import json, pandas as pd, openpyxl, io
 from openpyxl.utils import get_column_letter
 from django.contrib import messages
@@ -210,9 +219,9 @@ def export_equipment(request):
     if equipment_number:
         equipment_list = equipment_list.filter(Equipment_Number__icontains=equipment_number)
     if asset_type:
-        equipment_list = equipment_list.filter(Asset_Type__icontains=asset_type)
+        equipment_list = equipment_list.filter(Asset_Type__name__icontains=asset_type)
     if equipment_type:
-        equipment_list = equipment_list.filter(Equipment_Type__icontains=equipment_type)
+        equipment_list = equipment_list.filter(Equipment_Type__Equipment_Type__icontains=equipment_type)
     if equipment_status:
         equipment_list = equipment_list.filter(Equipment_Status__icontains=equipment_status)
     if make:
@@ -337,7 +346,10 @@ def get_equipment_details(request):
     eq_number = request.GET.get('eq_num')
     try:
         equipment = Equipment.objects.get(Equipment_Number=eq_number)
-        comp_types = ComponentType.objects.filter(asset_type=equipment.Asset_Type).order_by('name')
+        comp_types = ComponentType.objects.filter(
+            asset_type=equipment.Asset_Type,
+            is_active=True,
+        ).order_by('name')
         comp_type_list = [
             {'id': ct.id, 'name': ct.name} for ct in comp_types
         ]
@@ -612,7 +624,7 @@ def _save_machine_statuses(report, machines_json):
         machines = json.loads(machines_json)
     except json.JSONDecodeError:
         machines = []
-    # For edit mode, clear old rows and rebuild them
+        
     report.statuses.all().delete()
     for machine in machines:
         equipment_number = machine.get('id')
@@ -627,7 +639,7 @@ def _save_machine_statuses(report, machines_json):
             total_down=float(machine.get('td') or 0),
             total_worked=float(machine.get('tw') or 0),
             available=float(machine.get('av') or 0),
-            final_status=machine.get('status') or 'Y',
+            final_status=machine.get('status') or 'Available',
             grid_data=machine.get('grid') or ''
         )
         

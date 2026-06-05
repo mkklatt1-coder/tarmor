@@ -212,10 +212,16 @@ class EqEditForm(ModelForm):
         self.fields['Asset_Type'].widget.attrs['class'] = 'locked'
         self.fields['Asset_Type'].widget.attrs['tabindex'] = '-1'
         if self.instance and self.instance.pk:
-            self.fields['Equipment_Type'].queryset = EQ_Type.objects.filter(
-                Asset_Type=self.instance.Asset_Type
-            )
-            
+            queryset = EQ_Type.objects.filter(
+                Asset_Type=self.instance.Asset_Type,
+                is_active=True,
+            ).order_by("Equipment_Type")
+            if self.instance.Equipment_Type_id:
+                queryset = EQ_Type.objects.filter(
+                    id=self.instance.Equipment_Type_id
+                ) | queryset
+            self.fields['Equipment_Type'].queryset = queryset.distinct()
+
 # ---------------------------------------
 # Component Upload Form
 # ---------------------------------------
@@ -238,7 +244,7 @@ class CompUploadForm(ModelForm):
     ]
     
     Component_Type = forms.ModelChoiceField(
-        queryset=ComponentType.objects.all(),
+        queryset=ComponentType.objects.none(),
         empty_label="Select Component Type",
         widget=forms.Select(attrs={'class': 'input', 'id': 'id_Component_Type'})
     )
@@ -266,8 +272,8 @@ class CompUploadForm(ModelForm):
     )
     
     Status = forms.ChoiceField(
-        choices=Component.STATUS_CHOICES, 
-        initial='Active',
+        choices=Component.STATUS_CHOICES,
+        initial='Installed',
         widget=forms.Select(attrs={'class': 'input'})
     )
 
@@ -297,6 +303,21 @@ class CompUploadForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['Equipment'].widget = forms.HiddenInput()
+        equipment = None
+        if self.data.get("Equipment"):
+            try:
+                equipment = Equipment.objects.get(id=self.data.get("Equipment"))
+            except Equipment.DoesNotExist:
+                equipment = None
+        elif self.initial.get("Equipment"):
+            equipment = self.initial.get("Equipment")
+        elif self.instance and self.instance.pk and self.instance.Equipment_id:
+            equipment = self.instance.Equipment
+        if equipment and equipment.Asset_Type_id:
+            self.fields["Component_Type"].queryset = ComponentType.objects.filter(
+                asset_type=equipment.Asset_Type,
+                is_active=True,
+            ).order_by("name")
         
 # ---------------------------------------
 # Component Change Form
@@ -368,11 +389,11 @@ class CompChangeForm(forms.ModelForm):
   
             
 class ShiftReportForm(forms.ModelForm):
-    asset_type= forms.ModelChoiceField(
-        queryset=AssetType.objects.all(), 
-        required=False, 
+    asset_type = forms.ModelChoiceField(
+        queryset=AssetType.objects.filter(is_active=True).order_by("name"),
+        required=False,
         to_field_name="name"
-        )
+    )
     garage= forms.ModelChoiceField(
         queryset=Facility.objects.all(), 
         required=False, 

@@ -88,10 +88,10 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'customers.middleware.SessionTenantMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'customers.middleware.SessionTenantMiddleware',
     'preventconcurrentlogins.middleware.PreventConcurrentLoginsMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -200,6 +200,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 LOGIN_URL = '/admin/login/'
 LOGIN_REDIRECT_URL = '/' 
+
 
 CSRF_TRUSTED_ORIGINS = [
     'https://tarmor-production.up.railway.app',
