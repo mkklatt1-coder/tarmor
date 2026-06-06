@@ -5,6 +5,7 @@ from django.contrib.auth.signals import user_logged_in
 from django.db import connection
 from django_tenants.utils import get_tenant_model, schema_context
 from django.http import HttpResponse
+import traceback
 from django.utils import timezone
 from tarmor_config.create_admins import run as run_create_admins
 from django.contrib.auth import logout
@@ -72,6 +73,10 @@ def trigger_create_users_view(request):
         return HttpResponse(f"<h1>Error running script or test: {str(e)}</h1>")
     
 def tenant_logout_view(request):
-    connection.set_schema_to_public()
-    logout(request)
-    return redirect("login")
+    try:
+        connection.set_schema_to_public()
+        logout(request)
+        return redirect("login")
+    except Exception as e:
+        traceback.print_exc()
+        return HttpResponse(f"Logout failed: {e}", status=500)
