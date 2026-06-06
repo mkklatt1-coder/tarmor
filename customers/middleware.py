@@ -29,7 +29,6 @@ class SessionTenantMiddleware:
                 return self.get_response(request)
             schema_name = request.session.get("tenant_schema")
             if not schema_name or schema_name == "public":
-                request.session.pop("tenant_schema", None)
                 connection.set_schema_to_public()
                 request.tenant = self._get_public_tenant()
                 return redirect("login")

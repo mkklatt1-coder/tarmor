@@ -72,6 +72,9 @@ def trigger_create_users_view(request):
         return HttpResponse(f"<h1>Error running script or test: {str(e)}</h1>")
     
 def tenant_logout_view(request):
+    connection.set_schema_to_public()
     logout(request)
-    request.session.flush()
-    return redirect('login')
+    if "tenant_schema" in request.session:
+        del request.session["tenant_schema"]
+    request.session.modified = True
+    return redirect("login")
