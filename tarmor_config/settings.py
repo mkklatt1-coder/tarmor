@@ -92,7 +92,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'customers.middleware.SessionTenantMiddleware',
-    'preventconcurrentlogins.middleware.PreventConcurrentLoginsMiddleware',
+    #'preventconcurrentlogins.middleware.PreventConcurrentLoginsMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
