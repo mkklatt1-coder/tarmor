@@ -2,7 +2,6 @@ from django.db import connection
 from django.shortcuts import redirect
 from django.urls import reverse
 from django_tenants.utils import get_tenant_model
-
 class SessionTenantMiddleware:
     PUBLIC_PATH_PREFIXES = (
         "/static/",
@@ -25,12 +24,13 @@ class SessionTenantMiddleware:
                 or any(path.startswith(prefix) for prefix in self.PUBLIC_PATH_PREFIXES)
             ):
                 connection.set_schema_to_public()
-                request.tenant = self._get_public_tenant()
+                request.tenant = None
                 return self.get_response(request)
             schema_name = request.session.get("tenant_schema")
             if not schema_name or schema_name == "public":
+                request.session.pop("tenant_schema", None)
                 connection.set_schema_to_public()
-                request.tenant = self._get_public_tenant()
+                request.tenant = None
                 return redirect("login")
             Tenant = get_tenant_model()
             try:
@@ -38,13 +38,11 @@ class SessionTenantMiddleware:
             except Tenant.DoesNotExist:
                 request.session.pop("tenant_schema", None)
                 connection.set_schema_to_public()
-                request.tenant = self._get_public_tenant()
+                request.tenant = None
                 return redirect("login")
             request.tenant = tenant
             connection.set_tenant(tenant)
             return self.get_response(request)
         finally:
             connection.set_schema_to_public()
-    def _get_public_tenant(self):
-        Tenant = get_tenant_model()
-        return Tenant.objects.get(schema_name="public")
+            

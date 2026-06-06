@@ -74,7 +74,4 @@ def trigger_create_users_view(request):
 def tenant_logout_view(request):
     connection.set_schema_to_public()
     logout(request)
-    if "tenant_schema" in request.session:
-        del request.session["tenant_schema"]
-    request.session.modified = True
     return redirect("login")
