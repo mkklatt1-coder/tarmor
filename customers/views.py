@@ -73,10 +73,6 @@ def trigger_create_users_view(request):
         return HttpResponse(f"<h1>Error running script or test: {str(e)}</h1>")
     
 def tenant_logout_view(request):
-    try:
-        connection.set_schema_to_public()
-        logout(request)
-        return redirect("login")
-    except Exception as e:
-        traceback.print_exc()
-        return HttpResponse(f"Logout failed: {e}", status=500)
+    logout(request)
+    request.session.pop("tenant_schema", None)
+    return redirect("login")
