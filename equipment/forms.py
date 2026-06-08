@@ -310,7 +310,14 @@ class CompUploadForm(ModelForm):
             except Equipment.DoesNotExist:
                 equipment = None
         elif self.initial.get("Equipment"):
-            equipment = self.initial.get("Equipment")
+            initial_equipment = self.initial.get("Equipment")
+            if isinstance(initial_equipment, Equipment):
+                equipment = initial_equipment
+            else:
+                try:
+                    equipment = Equipment.objects.get(id=initial_equipment)
+                except Equipment.DoesNotExist:
+                    equipment = None
         elif self.instance and self.instance.pk and self.instance.Equipment_id:
             equipment = self.instance.Equipment
         if equipment and equipment.Asset_Type_id:
@@ -318,6 +325,8 @@ class CompUploadForm(ModelForm):
                 asset_type=equipment.Asset_Type,
                 is_active=True,
             ).order_by("name")
+        else:
+            self.fields["Component_Type"].queryset = ComponentType.objects.none()
         
 # ---------------------------------------
 # Component Change Form

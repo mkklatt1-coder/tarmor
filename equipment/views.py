@@ -291,54 +291,50 @@ def add_component(request):
     eq_query = request.GET.get('eqedit')
     item = None
     initial_data = {}
-
     if eq_query:
         item = Equipment.objects.filter(Equipment_Number__iexact=eq_query).first()
         if item:
             initial_data = {
-                'Equipment': item, 
+                'Equipment': item,
                 'Equipment_Number': item.Equipment_Number,
                 'Equipment_Description': item.Equipment_Description
             }
-
     if request.method == 'POST':
         form = CompUploadForm(request.POST, request.FILES)
         if form.is_valid():
             component = form.save(commit=False)
-            
             comp_type_name = component.Component_Type.name if component.Component_Type else ""
-            
             seq_num = ""
             if component.Component_Number and '-' in component.Component_Number:
                 seq_num = component.Component_Number.split('-')[-1]
-            
             desc_parts = [
                 comp_type_name,
                 component.Make,
                 component.Model,
                 seq_num
             ]
-            
             generated_desc = ", ".join([str(p).strip() for p in desc_parts if p])
             component.Component_Description = generated_desc
-
             try:
                 component.save()
                 messages.success(request, 'Component added successfully.')
                 return redirect('equipment:equipment')
-            except Exception as e:
+            except Exception:
                 form.add_error('Component_Description', f"A component with this description already exists: {generated_desc}")
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     field_label = form.fields[field].label or field.replace('_', ' ').title()
                     messages.error(request, f"{field_label}: {error}")
-                    
             for error in form.non_field_errors():
                 messages.error(request, error)
     else:
         form = CompUploadForm(initial=initial_data)
-
+        if item and item.Asset_Type_id:
+            form.fields["Component_Type"].queryset = ComponentType.objects.filter(
+                asset_type=item.Asset_Type,
+                is_active=True,
+            ).order_by("name")
     return render(request, 'equipment/add_comp.html', {
         'compuploadform': form,
         'item': item,
