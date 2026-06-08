@@ -1,26 +1,21 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from datetime import timedelta, datetime, time
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Value
+from django.db.models.functions import Concat
 from .models import WorkWeek, Schedule, ScheduleSnapshot, DailyCrewCapacity, WeekSetup, TimeOffLog
 from .forms import WeekSetupForm
 from work_orders.models import WorkOrder
 from facilities.models import Facility
 from personnel.models import CrewShiftRotation, Employee, Crew
-import io
-import pandas as pd
-from django.http import HttpResponse
-from django.db.models import Value
-from django.db.models.functions import Concat
 from collections import defaultdict
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.utils.timezone import make_aware
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-from openpyxl.utils import get_column_letter
 from django.db import transaction
+import io
+import json
 
 def scheduling(request):
     return render(request, 'scheduling/scheduling.html')
@@ -290,7 +285,7 @@ def weeksetup_view(request):
     return render(request, "scheduling/weeksetup.html", context)
 
 def export_weeks_excel(request):
-    """Download currently active WorkWeek table as an Excel file."""
+    import pandas as pd
     active = WeekSetup.objects.filter(active=True).first()
     if not active:
         return HttpResponse("No active week setup to export.", content_type="text/plain")
@@ -324,6 +319,9 @@ def save_working_copy(request):
     return redirect('scheduling:scheduling')
 
 def export_forecast_excel(request):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
     today = timezone.now().date()
     garage_id = request.GET.get("garage")
     garages = Facility.objects.all().order_by("Facility_Name")
