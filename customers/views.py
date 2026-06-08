@@ -76,10 +76,8 @@ def tenant_logout_view(request):
     try:
         print("LOGOUT VIEW START")
         print("Before logout, tenant_schema =", request.session.get("tenant_schema"))
-        logout(request)
-        print("After logout")
         request.session.pop("tenant_schema", None)
-        print("After tenant_schema pop")
+        logout(request)
         return redirect("login")
     except Exception as e:
         traceback.print_exc()
