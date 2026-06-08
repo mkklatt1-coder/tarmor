@@ -73,12 +73,5 @@ def trigger_create_users_view(request):
         return HttpResponse(f"<h1>Error running script or test: {str(e)}</h1>")
     
 def tenant_logout_view(request):
-    try:
-        print("LOGOUT VIEW START")
-        print("Before logout, tenant_schema =", request.session.get("tenant_schema"))
-        request.session.pop("tenant_schema", None)
-        logout(request)
-        return redirect("login")
-    except Exception as e:
-        traceback.print_exc()
-        return HttpResponse(f"Logout failed in view: {e}", status=500)
+    logout(request)
+    return redirect("login")

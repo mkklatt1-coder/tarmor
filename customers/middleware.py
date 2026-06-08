@@ -2,6 +2,7 @@ from django.db import connection
 from django.shortcuts import redirect
 from django.urls import reverse
 from django_tenants.utils import get_tenant_model
+
 class SessionTenantMiddleware:
     PUBLIC_PATH_PREFIXES = (
         "/static/",
@@ -14,12 +15,10 @@ class SessionTenantMiddleware:
         self.get_response = get_response
     def __call__(self, request):
         login_url = reverse("login")
-        logout_url = reverse("logout")
         path = request.path_info
         try:
             if (
                 path == login_url
-                or path == logout_url
                 or path in self.PUBLIC_EXACT_PATHS
                 or any(path.startswith(prefix) for prefix in self.PUBLIC_PATH_PREFIXES)
             ):
