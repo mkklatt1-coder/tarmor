@@ -1,6 +1,11 @@
+import json
+import io
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
+from django.contrib import messages
+from django.db.models import Q
+from django.db import IntegrityError
 from .models import AssetType, Equipment, EQ_Type, Meter, ComponentType, Component, ComponentHistory, ShiftReport, MachineShiftStatus
 from .forms import (
     EQTypeForm,
@@ -13,11 +18,6 @@ from .forms import (
     AssetTypeForm,
     ComponentTypeForm,
 )
-import json, pandas as pd, openpyxl, io
-from openpyxl.utils import get_column_letter
-from django.contrib import messages
-from django.db.models import Q
-from django.db import IntegrityError
 
 def equipment(request):
     return render(request, 'equipment/equipment.html', {'content_type': 'text/html'})
@@ -208,6 +208,8 @@ def search_eq(request):
     })
 
 def export_equipment(request):
+    import openpyxl
+    import pandas as pd
     sort_by = request.GET.get('sort', 'Equipment_Number')
     equipment_list = Equipment.objects.all()
     equipment_number = request.GET.get('Equipment_Number')
@@ -535,6 +537,7 @@ def search_component_history(request):
     })
     
 def export_component_history(request):
+    import openpyxl
     history_query = ComponentHistory.objects.select_related('Equipment', 'Component').all()
 
     eq_num = request.GET.get('Equipment_Number')
@@ -595,7 +598,7 @@ def _build_shift_report_context(form, report=None, request=None):
             equipment_list = equipment_list.filter(Garage__Facility_Name=garage_filter)
 
     hours_range = range(6, 18)
-    range_49 = range(48)
+    range_48 = range(48)
     saved_data = {}
     
     if report:
@@ -684,6 +687,8 @@ def shift_report_edit(request, pk):
     return render(request, 'equipment/shift_report.html', context)
 
 def export_shift_report_excel(request, report_id):
+    import openpyxl
+    from openpyxl.utils import get_column_letter
     report = get_object_or_404(ShiftReport, pk=report_id)
     asset_filter = request.GET.get('asset_type')
     garage_filter = request.GET.get('garage')
@@ -746,6 +751,8 @@ def export_shift_report_excel(request, report_id):
     return response
 
 def export_shift_archive_excel(request):
+    import openpyxl
+    from openpyxl.utils import get_column_letter
     asset_filter = request.GET.get('asset_type')
     garage_filter = request.GET.get('garage')
     reports = ShiftReport.objects.all().order_by('-date', 'shift')
@@ -887,6 +894,7 @@ def search_comp_list(request):
     return render(request, 'equipment/search_comp_list.html', context)
 
 def export_list_excel(request):
+    import openpyxl
     comp_list = Component.objects.select_related(
         'Equipment', 
         'Equipment__Asset_Type', 
@@ -956,7 +964,7 @@ def export_list_excel(request):
     return response
 
 def asset_type_table(request):
-    asset_types = AssetType.objects.all().order_by("id")
+    asset_types = AssetType.objects.all().order_by("name")
     form = AssetTypeForm()
     edit_id = None
     editing_asset_type = None
@@ -970,12 +978,10 @@ def asset_type_table(request):
                 return redirect("equipment:asset_type_table")
             if asset_type_id:
                 asset_type = get_object_or_404(AssetType, id=asset_type_id)
-                duplicate_asset_type = AssetType.objects.filter(
+                duplicate = AssetType.objects.filter(
                     name__iexact=name
-                ).exclude(
-                    id=asset_type.id
-                ).first()
-                if duplicate_asset_type:
+                ).exclude(id=asset_type.id).first()
+                if duplicate:
                     messages.error(request, "That asset type already exists.")
                     return redirect("equipment:asset_type_table")
                 asset_type.name = name
@@ -983,31 +989,27 @@ def asset_type_table(request):
                 asset_type.save()
                 messages.success(request, "Successfully updated entry.")
                 return redirect("equipment:asset_type_table")
-            existing_asset_type = AssetType.objects.filter(name__iexact=name).first()
-            if existing_asset_type:
-                if not existing_asset_type.is_active:
-                    existing_asset_type.is_active = True
-                    existing_asset_type.save()
+            existing = AssetType.objects.filter(name__iexact=name).first()
+            if existing:
+                if not existing.is_active:
+                    existing.is_active = True
+                    existing.save()
                     messages.success(request, "Successfully reactivated existing entry.")
                     return redirect("equipment:asset_type_table")
                 messages.error(request, "That asset type already exists.")
                 return redirect("equipment:asset_type_table")
-            AssetType.objects.create(
-                name=name,
-                is_active=True,
-            )
+            AssetType.objects.create(name=name, is_active=True)
             messages.success(request, "Successfully added entry.")
             return redirect("equipment:asset_type_table")
         if action == "deactivate":
             inactive_ids = request.POST.getlist("inactive_ids")
             if inactive_ids:
-                updated_count = AssetType.objects.filter(id__in=inactive_ids).update(
-                    is_active=False
+                updated_count = AssetType.objects.filter(id__in=inactive_ids).update(is_active=False)
+                messages.success(
+                    request,
+                    "Successfully set entry inactive." if updated_count == 1
+                    else f"Successfully set {updated_count} entries inactive."
                 )
-                if updated_count == 1:
-                    messages.success(request, "Successfully set entry inactive.")
-                else:
-                    messages.success(request, f"Successfully set {updated_count} entries inactive.")
             else:
                 messages.warning(request, "No entries were selected.")
             return redirect("equipment:asset_type_table")
@@ -1025,8 +1027,7 @@ def asset_type_table(request):
 
 def eq_type_table(request):
     eq_types = EQ_Type.objects.select_related("Asset_Type").all().order_by(
-        "Asset_Type__name",
-        "Equipment_Type",
+        "Asset_Type__name", "Equipment_Type"
     )
     form = EQTypeForm()
     edit_id = None
@@ -1043,9 +1044,10 @@ def eq_type_table(request):
             if form.is_valid():
                 eq_type = form.save(commit=False)
                 eq_type.is_active = request.POST.get("is_active") == "on" if eq_type_id else True
-                duplicate_prefix = EQ_Type.objects.filter(
-                    Prefix__iexact=eq_type.Prefix
-                )
+                if not eq_type.Asset_Type.is_active:
+                    messages.error(request, "Cannot assign an equipment type to an inactive asset type.")
+                    return redirect("equipment:eq_type_table")
+                duplicate_prefix = EQ_Type.objects.filter(Prefix__iexact=eq_type.Prefix)
                 if eq_type_id:
                     duplicate_prefix = duplicate_prefix.exclude(id=eq_type.id)
                 if duplicate_prefix.exists():
@@ -1065,22 +1067,21 @@ def eq_type_table(request):
                 except IntegrityError:
                     messages.error(request, "Unable to save. Please check for duplicate values.")
                     return redirect("equipment:eq_type_table")
-                if eq_type_id:
-                    messages.success(request, "Successfully updated entry.")
-                else:
-                    messages.success(request, "Successfully added entry.")
+                messages.success(
+                    request,
+                    "Successfully updated entry." if eq_type_id else "Successfully added entry."
+                )
                 return redirect("equipment:eq_type_table")
             messages.error(request, "Please correct the errors below.")
         if action == "deactivate":
             inactive_ids = request.POST.getlist("inactive_ids")
             if inactive_ids:
-                updated_count = EQ_Type.objects.filter(id__in=inactive_ids).update(
-                    is_active=False
+                updated_count = EQ_Type.objects.filter(id__in=inactive_ids).update(is_active=False)
+                messages.success(
+                    request,
+                    "Successfully set entry inactive." if updated_count == 1
+                    else f"Successfully set {updated_count} entries inactive."
                 )
-                if updated_count == 1:
-                    messages.success(request, "Successfully set entry inactive.")
-                else:
-                    messages.success(request, f"Successfully set {updated_count} entries inactive.")
             else:
                 messages.warning(request, "No entries were selected.")
             return redirect("equipment:eq_type_table")
@@ -1098,8 +1099,7 @@ def eq_type_table(request):
 
 def component_type_table(request):
     component_types = ComponentType.objects.select_related("asset_type").all().order_by(
-        "asset_type__name",
-        "name",
+        "asset_type__name", "name"
     )
     form = ComponentTypeForm()
     edit_id = None
@@ -1109,19 +1109,16 @@ def component_type_table(request):
         component_type_id = request.POST.get("component_type_id")
         if action == "save":
             if component_type_id:
-                editing_component_type = get_object_or_404(
-                    ComponentType,
-                    id=component_type_id,
-                )
+                editing_component_type = get_object_or_404(ComponentType, id=component_type_id)
                 form = ComponentTypeForm(request.POST, instance=editing_component_type)
             else:
                 form = ComponentTypeForm(request.POST)
             if form.is_valid():
                 component_type = form.save(commit=False)
-                if component_type_id:
-                    component_type.is_active = request.POST.get("is_active") == "on"
-                else:
-                    component_type.is_active = True
+                component_type.is_active = request.POST.get("is_active") == "on" if component_type_id else True
+                if not component_type.asset_type.is_active:
+                    messages.error(request, "Cannot assign a component type to an inactive asset type.")
+                    return redirect("equipment:component_type_table")
                 duplicate_code = ComponentType.objects.filter(
                     short_code__iexact=component_type.short_code
                 )
@@ -1135,9 +1132,7 @@ def component_type_table(request):
                     name__iexact=component_type.name,
                 )
                 if component_type_id:
-                    duplicate_component_type = duplicate_component_type.exclude(
-                        id=component_type.id
-                    )
+                    duplicate_component_type = duplicate_component_type.exclude(id=component_type.id)
                 if duplicate_component_type.exists():
                     messages.error(
                         request,
@@ -1147,32 +1142,23 @@ def component_type_table(request):
                 try:
                     component_type.save()
                 except IntegrityError:
-                    messages.error(
-                        request,
-                        "Unable to save. Please check for duplicate values.",
-                    )
+                    messages.error(request, "Unable to save. Please check for duplicate values.")
                     return redirect("equipment:component_type_table")
-                if component_type_id:
-                    messages.success(request, "Successfully updated entry.")
-                else:
-                    messages.success(request, "Successfully added entry.")
+                messages.success(
+                    request,
+                    "Successfully updated entry." if component_type_id else "Successfully added entry."
+                )
                 return redirect("equipment:component_type_table")
             messages.error(request, "Please correct the errors below.")
         if action == "deactivate":
             inactive_ids = request.POST.getlist("inactive_ids")
             if inactive_ids:
-                updated_count = ComponentType.objects.filter(
-                    id__in=inactive_ids
-                ).update(
-                    is_active=False
+                updated_count = ComponentType.objects.filter(id__in=inactive_ids).update(is_active=False)
+                messages.success(
+                    request,
+                    "Successfully set entry inactive." if updated_count == 1
+                    else f"Successfully set {updated_count} entries inactive."
                 )
-                if updated_count == 1:
-                    messages.success(request, "Successfully set entry inactive.")
-                else:
-                    messages.success(
-                        request,
-                        f"Successfully set {updated_count} entries inactive.",
-                    )
             else:
                 messages.warning(request, "No entries were selected.")
             return redirect("equipment:component_type_table")
