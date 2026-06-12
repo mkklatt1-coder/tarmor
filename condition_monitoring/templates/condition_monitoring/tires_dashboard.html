@@ -31,7 +31,6 @@
     <h2>Tire and Rim Management Dashboard</h2>
     <br>
 
-    <!-- Top Row: Financial Performance Charts -->
     <div class="dashboard-grid">
         <div class="dash-card full-card">
             <h4>Capital Investment vs Scrap Value Waste Losses by Machine</h4>
@@ -41,7 +40,6 @@
         </div>
     </div>
 
-    <!-- Middle Row: Scrap Distribution Breakdown Pie Graphs -->
     <div class="dashboard-grid">
         <div class="dash-card">
             <h4>Scrap Tires Distribution (Failure Modes)</h4>
@@ -57,9 +55,8 @@
         </div>
     </div>
 
-    <!-- Bottom Row: Realtime Wear Profiles & Structural Safety Lists -->
+    
     <div class="dashboard-grid">
-        <!-- Wear Profile List -->
         <div class="dash-card">
             <h4>Top Accelerated Tire Wear Profiles (32nds / 1000 Hrs)</h4>
             <div class="table-container" style="max-height: 280px; overflow-y: auto;">
@@ -83,7 +80,6 @@
             </div>
         </div>
 
-        <!-- Overdue Rims -->
         <div class="dash-card">
             <h4>CRITICAL: Overdue Rim NDT Inspections</h4>
             <div class="table-container" style="max-height: 280px; overflow-y: auto;">
@@ -108,7 +104,6 @@
     </div>
 
     <div class="dashboard-grid">
-        <!-- Upcoming Rims -->
         <div class="dash-card full-card">
             <h4>Warning: Upcoming Rim Inspections (< 6 Months Baseline Window)</h4>
             <div class="table-container" style="max-height: 250px; overflow-y: auto;">
@@ -134,7 +129,6 @@
     </div>
 </div>
 
-<!-- Load Chart.js CDN Core -->
 <script src="{% static 'js/chart.umd.min.js' %}"></script>
 
 <script>
@@ -152,7 +146,6 @@
 
         const globalColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#4287f5', '#11b062', '#e07110'];
 
-        // 1. COMBINED FINANCIAL INVESTMENT VS LOSS BAR CHART
         new Chart(document.getElementById('financialChart').getContext('2d'), {
             type: 'bar',
             data: {
@@ -165,14 +158,12 @@
             options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Value ($ USD)' } } } }
         });
 
-        // 2. SCRAP TIRES PIE CHART
         new Chart(document.getElementById('tireScrapChart').getContext('2d'), {
             type: 'pie',
             data: { labels: tireLabels, datasets: [{ data: tireCounts, backgroundColor: globalColors }] },
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // 3. SCRAP RIMS PIE CHART
         new Chart(document.getElementById('rimScrapChart').getContext('2d'), {
             type: 'pie',
             data: { labels: rimLabels, datasets: [{ data: rimCounts, backgroundColor: globalColors }] },

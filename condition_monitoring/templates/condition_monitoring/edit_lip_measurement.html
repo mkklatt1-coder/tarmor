@@ -1,9 +1,12 @@
 {% extends "core/base.html" %}
 {% load static %}
+
 {% block title %}
     Edit Lip Measurements
 {% endblock %}
+
 {% block top_navigation %}{% endblock %}
+
 {% block sidebar %}
 <div class="leftnavbar">
     <ul>
@@ -24,6 +27,7 @@
     </form>
 </div>
 {% endblock %}
+
 {% block content %}
 <div class="main">
     <h2>Edit Lip Measurements &nbsp;&nbsp;
@@ -93,6 +97,7 @@
         </div>
     </form>
 </div>
+
 <script>
     function submitForm() {
         document.getElementById('lipMeasForm').submit();

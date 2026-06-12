@@ -49,7 +49,6 @@
         <label>QM Number:</label> 
         {{ lookup_form.qm_number }}
         
-        <!-- Native datalist displays both the document code and descriptive keywords side-by-side -->
         <datalist id="qm-lookup-list">
             {% for doc in all_qm_suggestions %}
                 <option value="{{ doc.qm_number }}" label="{{ doc.description|default:'' }}">

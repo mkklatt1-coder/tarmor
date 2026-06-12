@@ -1,12 +1,17 @@
 {% extends "core/base.html" %}
+{% load static %}
+
 {% block title %} Purchase Detail {% endblock %}
+
 {% block top_navigation %}{% endblock %}
+
 {% block sidebar %}
 <ul>
     <li><a href="{% url 'purchasing:create_purchase' %}">Create Purchase</a></li>
     <li><a href="{% url 'core:home' %}">Main</a></li>
 </ul>
 {% endblock %}
+
 {% block content %}
 <h1>Purchase {{ purchase.purchase_number }}</h1>
 <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%;">

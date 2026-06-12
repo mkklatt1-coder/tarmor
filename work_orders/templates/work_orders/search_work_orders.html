@@ -24,9 +24,9 @@
     
     <h3> 
         &nbsp; Search Criteria &nbsp;
-            <input type="image" src="{% static 'images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-wo" >
+            <input type="image" src="{% static 'Images/mag_glass.jpg' %}" alt="Submit" class='logo' form="search-wo" >
             <a href="{% url 'work_orders:search_work_orders' %}">
-            <img src="{% static 'images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
+            <img src="{% static 'Images/broom.jpg' %}" alt="Clear Filters" class='logo' style="cursor: pointer;">
         </a>
     </h3>
     <form id="search-wo"  method="GET" action="{% url 'work_orders:search_work_orders' %}">

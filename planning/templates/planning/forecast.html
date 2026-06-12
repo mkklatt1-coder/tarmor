@@ -22,13 +22,12 @@
     <h2>Quality Maintenance Forecast</h2>
     <br>
 
-    <!-- STEP 1: The Trigger Button -->
     <div class="form-container">
         <form method="GET" action="{% url 'planning:forecast' %}">
             <p>Check for maintenance due between <strong>{{ today }}</strong> and <strong>{{ fortnight }}</strong>.</p>
             <button type="submit" name="run_check" value="1" class="button">Preview</button>
             {% if preview_items %}
-                <img src="{% static 'images/broom.jpg' %}" alt="Clear" class="logo" style="cursor: pointer; margin-left: 15px;" 
+                <img src="{% static 'Images/broom.jpg' %}" alt="Clear" class="logo" style="cursor: pointer; margin-left: 15px;" 
                      onclick="window.location.href='{% url 'planning:forecast' %}'">
             {% endif %}
         </form>
